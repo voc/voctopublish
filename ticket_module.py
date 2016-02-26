@@ -25,6 +25,7 @@ class Ticket:
         self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
         self.profile_media_enable = self._validate('Publishing.Media.EnableProfile')
         self.media_enable = self._validate_('Publishing.Media.Enable')
+        self.mime_type = self._validate_('Publishing.Media.MimeType')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')

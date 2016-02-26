@@ -246,58 +246,9 @@ def media_from_tracker(t):
         # remember that this is multi language release
         multi_language = True
 
-        # prepare file names
-        outfile1 = str(t['Publishing.Path']) + str(t['Fahrplan.ID']) + "-" + t[
-            'EncodingProfile.Slug'] + "-audio1." + t['EncodingProfile.Extension']
-        outfilename1 = str(t['Fahrplan.ID']) + "-" + t['EncodingProfile.Slug'] + "-audio1." + t[
-            'EncodingProfile.Extension']
-        outfile2 = str(t['Publishing.Path']) + str(t['Fahrplan.ID']) + "-" + t[
-            'EncodingProfile.Slug'] + "-audio2." + t['EncodingProfile.Extension']
-        outfilename2 = str(t['Fahrplan.ID']) + "-" + t['EncodingProfile.Slug'] + "-audio2." + t[
-            'EncodingProfile.Extension']
-        languages = language.rsplit('-')
-        filename1 = str(t['Encoding.LanguageTemplate']) % (str(languages[0])) + '.' + str(
-            t['EncodingProfile.Extension'])
-        filename2 = str(t['Encoding.LanguageTemplate']) % (str(languages[1])) + '.' + str(
-            t['EncodingProfile.Extension'])
-
-        # mux two videos which one language each
-        logger.debug('remuxing with original audio to ' + outfile1)
-
-        if subprocess.call(
-                ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', video_base + local_filename, '-map', '0:0', '-map',
-                 '0:1', '-c', 'copy', '-movflags', 'faststart', outfile1]) != 0:
-            raise RuntimeError('error remuxing ' + local_filename + ' to ' + outfile1)
-
-        logger.debug('remuxing with translated audio to ' + outfile2)
-
-        if subprocess.call(
-                ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', video_base + local_filename, '-map', '0:0', '-map',
-                 '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
-            raise RuntimeError('error remuxing ' + local_filename + ' to ' + outfile2)
-
-        try:
-            upload_file(t, local_filename, filename, folder, sftp)
-            create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4',
-                             'h264-hd-web', video_base, str(languages[0]), True, True, t)
-        except RuntimeError as err:
-
-            # The error string sometime break the signature setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
-            setTicketFailed(ticket_id, "Publishing failed: runtime error \n", url, group, host, secret)
-            logging.error("Publishing failed: \n" + str(err))
-            sys.exit(-1)
-        try:
-            upload_file(t, local_filename, filename, folder, sftp)
-            create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4',
-                             'h264-hd-web', video_base, str(languages[1]), True, True, t)
-        except RuntimeError as err:
-            setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
-            logging.error("Publishing failed: \n" + str(err))
-            sys.exit(-1)
-
             # publish the media file on media
     if 'Publishing.Media.MimeType' not in t:
-        setTicketFailed(ticket_id,
+        setTicketFailed(t.ticket_id,
                         'Publishing failed: No mime type, please use property Publishing.Media.MimeType in encoding '
                         'profile! \n' + str('Error '), url, group, host, secret)
 
@@ -323,6 +274,36 @@ def media_from_tracker(t):
         setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
         logging.error('Publishing failed: \n' + str(err))
         sys.exit(-1)
+
+def mux_to_single_language(t):
+    """
+
+    :return:
+    """
+    languages = t.language.rsplit('-')
+
+    for i, lang in enumerate(languages):
+        outfilename = t.fahrplan_id + "-" + t.profile_slug + "-audio" + str(i) + "." + t.profile_extension
+        outfile = t.video_base + outfile
+        filename = t.language_template % languages[i] + '.' + t.profile_extension
+
+        logger.debug('remuxing' + t.local_filename + ' to ' + outfile)
+        try:
+            subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', t.video_base + t.local_filename, '-map', '0:0', '-map',
+             '0:1', '-c', 'copy', '-movflags', 'faststart', outfile])
+        except:
+            raise RuntimeError('error remuxing ' + t.local_filename + ' to ' + outfile)
+
+        try:
+            upload_file(t, outfile, filename, folder, sftp)
+        except:
+            raise RuntimeError('error uploading ' + outfile)
+
+        try:
+            create_recording(outfilename, filename, api_url, t.download_base_url, api_key, t.guid, 'video/mp4',
+                         'h264-hd-web', t.video_base, str(languages[i]), True, True, t)
+        except:
+            raise RuntimeError('creating recording ' + outfile)
 
 
 def youtube_from_tracker():
