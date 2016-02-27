@@ -1,4 +1,25 @@
+#    Copyright (C) 2016  derpeter
+#    derpeter@berlin.ccc.de
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 class Ticket:
+    """
+    This class is inspired by the c3tt ticket system. If handles all information we got from the tracker
+    and adds some additional information.
+    """
     def __init__(self, ticket, ticket_id):
         self.__tracker_ticket = ticket
         self.ticket_id = ticket_id
@@ -9,6 +30,7 @@ class Ticket:
         self.subtitle = self._validate_('Fahrplan.Subtitle')
         self.acronym = self._validate_('Project.Slug')
         self.abstract = self._validate_('Fahrplan.Abstract')
+        self.date = self._validate_('Fahrplan.Date')
         self.profile_extension = self._validate_('EncodingProfile.Extension')
         self.profile_slug = self._validate_('EncodingProfile.Slug')
         self.filename = self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
@@ -17,27 +39,33 @@ class Ticket:
         self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
         self.video_base = self._validate_('Publishing.Path')
         self.output = self.video_base # TODO remove
-        self.download_base_url = self._validate_('Publishing.Base.Url')
         self.language = self._validate_('Record.Language')
         self.language_index = int(self._validate_('Encoding.LanguageIndex'))
         self.language_template = self._validate_('Encoding.LanguageTemplate')
+        self.download_base_url = self._validate_('Publishing.Base.Url')
+        self.pusblishing_path = self._validate_('Pusblishing.Path')
         self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
         self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
         self.profile_media_enable = self._validate('Publishing.Media.EnableProfile')
         self.media_enable = self._validate_('Publishing.Media.Enable')
         self.mime_type = self._validate_('Publishing.Media.MimeType')
+        self.media_thump_path = self._validate_('Publishing.Media.Thumbpath')
+        self.media_host = self._validate_('Publishing.Media.Host')
+        self.media_user = self._validate_('Publishing.Media.User')
+        self.media_path = self._validate_('Publishing.Media.Path')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')
             
-        self.tags = [self.acronym]
+        self.tags = [self.acronym, self.ticket_id]
         if 'Media.Tags' in ticket:
-            self.tags = self._validate_('Media.Tags').replace(' ', '').split(',')
+            self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
         
         # check if this event has already been published to youtube
         self.has_youtube_url = False
         if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
             self.has_youtube_url = True
+
 
     def _validate_(self, key):
         value = None

@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-#    Copyright (C) 2014  derpeter
+#    Copyright (C) 2016  derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -16,277 +15,311 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # generate thumbs
 
-import subprocess
-import urllib.request, urllib.parse, urllib.error
-import requests
-import json
-import sys
-import os
-import time
-import logging
-import paramiko
 import errno
-logger = logging.getLogger()
+import json
+import logging
+import os
+import subprocess
+import sys
+import time
 
-# SCP functions  
-# Connect to the upload host.  
-def connect_ssh(ticket):
-    logger.info("## Establishing SSH connection ##")
-    client = paramiko.SSHClient()
-    #client.get_host_keys().add(upload_host,'ssh-rsa', key)
-    client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    try:
-        client.connect(ticket['Publishing.Media.Host'], username=ticket['Publishing.Media.User'], password="notused")
-    except paramiko.SSHException:
-        logger.error("SSH negotiation failed")
-        sys.exit(1)
-    except paramiko.AuthenticationException:
-        logger.error("Authentication failed. Please check credentials")
-        sys.exit(1)
-    except paramiko.BadHostKeyException:
-        logger.error ("Bad host key. Check your known_hosts file")
-        sys.exit(1)
-    except paramiko.PasswordRequiredException:
-        logger.error("Password required. No ssh key in the agent?")
-        sys.exit(1)
-    except:
-        logger.error("Could not open ssh connection")
-        sys.exit(1)
-        
-    logger.info("SSH connection established")
-    sftp_client = paramiko.SFTPClient.from_transport(client.get_transport())
-    sftp_client.keep_ssh = client #this prevents the garbage collector from stealing our client instance
-    return sftp_client
+import paramiko
+import requests
 
-#== push the thumbs to the upload host
-def upload_thumbs(ticket,sftp):
-    logger.info("## uploading thumbs ##")
-    
-    # check if ssh connection is open
-    if sftp is None:
-        sftp = connect_ssh(ticket)
-    thumbs_ext = {".jpg","_preview.jpg"}
-    for ext in thumbs_ext:
+from ticket_module import Ticket
+
+
+class MediaApiClient:
+    def __init__(self, t: Ticket):
+        self.logger = logging.getLogger()
+        self.t = t
+        self.ssh = None
+        self.sftp = None
+
+    def connect_ssh(self):
+        """
+        Open an SSH connection to the media.ccc.de CDN master
+        """
+        self.logger.info("## Establishing SSH connection ##")
+        self.ssh = paramiko.SSHClient()
+        # TODO set hostkey handling via config
+        # client.get_host_keys().add(upload_host,'ssh-rsa', key)
+        self.ssh.load_system_host_keys()
+        # self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            logger.debug("Uploading " + ticket['Publishing.Path'] + ticket['local_filename_base'] + ext + " to " + ticket['Publishing.Media.Thumbpath'] + str(ticket['local_filename_base']) + ext)
-            sftp.put(str(ticket['Publishing.Path']) + str(ticket['local_filename_base']) + ext, str(ticket['Publishing.Media.Thumbpath']) + str(ticket['local_filename_base']) + ext)
-        except paramiko.SSHException as err:
-            logger.error("could not upload thumb because of SSH problem")
-            logger.error(err)
+            self.ssh.connect(self.t.media_host, username=self.t.media_user)
+        except paramiko.AuthenticationException:
+            self.logger.error("Authentication failed. Please check credentials")
             sys.exit(1)
-        except IOError as err:
-            logger.error("could not create file in upload directory")
-            logger.error(err)
+        except paramiko.BadHostKeyException:
+            self.logger.error("Bad host key. Check your known_hosts file")
             sys.exit(1)
-            
-    print ("uploading thumbs done")
+        except paramiko.PasswordRequiredException:
+            self.logger.error("Password required. No ssh key in the agent?")
+            sys.exit(1)
+        except paramiko.SSHException:
+            self.logger.error("SSH negotiation failed")
+            sys.exit(1)
 
-#== uploads a file from path relative to the output dir to the same path relative to the upload_dir
-def upload_file(ticket, local_filename, filename, folder, sftp):
-    logger.info("## uploading "+ ticket['Publishing.Path'] + filename + " ##")
-    
-    # Check if ssh connection is open.
-    if sftp is None:
-        sftp = connect_ssh(ticket)
-  
-    # Check if the directory exists and if not create it.
-    # This only works for the format subdiers not for the event itself
-    try:
-        sftp.stat(ticket['Publishing.Media.Path'] + folder)
-    except IOError as e:
-        if e.errno == errno.ENOENT:
+        self.sftp = self.ssh.open_sftp()
+        self.logger.info("SSH connection established")
+
+    def upload_thumbs(self):
+        """
+        Upload thumbnails to the media.ccc.de CDN master.
+        :param t:
+        :param sftp:
+        """
+        self.logger.info("## uploading thumbs ##")
+
+        # check if ssh connection is open
+        if self.ssh is None:
+            self.connect_ssh()
+
+        thumbs_ext = {".jpg", "_preview.jpg"}
+        for ext in thumbs_ext:
             try:
-                sftp.mkdir(ticket['Publishing.Media.Path'] + folder)
-            except IOError as e:
-                logger.error(e)
-    
-    # Check if the file already exists and remove it
-    try: 
-        sftp.stat(ticket['Publishing.Media.Path'] + folder + "/" + filename)
-    except IOError:
-        pass #if the file not exists we can can go to the upload
-    else:   
+                self.logger.debug(
+                    'Uploading ' + self.t.path + self.t.filename_base + ext + " to " + self.t.media_thump_path + self.t.local_filename_base + ext)
+                self.sftp.put(self.t.pusblishing_path + self.t.local_filename_base + ext,
+                              self.t.media_thump_path + self.t.local_filename_base + ext)
+            except paramiko.SSHException as err:
+                self.logger.error("could not upload thumb because of SSH problem")
+                self.logger.error(err)
+                sys.exit(1)
+            except IOError as err:
+                self.logger.error("could not create file in upload directory")
+                self.logger.error(err)
+                sys.exit(1)
+
+        print("uploading thumbs done")
+
+    def upload_file(self, local_filename, filename, folder):
+        """
+        Uploads a file from path relative to the output dir to the same path relative to the upload_dir
+        We can't use the file and folder names from the ticket here as we need to change these for multi language audio
+
+        :param local_filename:
+        :param filename:
+        :param folder:
+        """
+        self.logger.info("## uploading " + self.t.pusblishing_path + filename + " ##")
+
+        # Check if ssh connection is open.
+        if self.sftp is None:
+            self.connect_ssh()
+
+        # Check if the directory exists and if not create it.
+        # This only works for the format subdiers not for the event itself
         try:
-            sftp.remove(ticket['Publishing.Media.Path'] + folder + "/" +  filename )
+            self.sftp.stat(self.t.media_path + folder)
         except IOError as e:
-            logger.error(e)
-            
-    # Upload the file
-    try:
-        sftp.put(str(ticket['Publishing.Path']) + local_filename, ticket['Publishing.Media.Path'] + folder + "/" +  filename )
-    except paramiko.SSHException as err:
-        logger.error("could not upload recording because of SSH problem")
-        logger.error(err)
-    except IOError as err:
-        logger.error("could not create file in upload directory")
-        logger.error(err)
-            
-    logger.info("uploading " + filename + " done")
+            if e.errno == errno.ENOENT:
+                try:
+                    self.sftp.mkdir(self.t.media_path + folder)
+                except IOError as e:
+                    self.logger.error(e)
 
-
-#== generate thumbnails for media.ccc.de
-def make_thumbs(ticket):    
-    logger.info(("## generating thumbs for "  + str(ticket['Publishing.Path'])  + str(ticket['local_filename']) + " ##"))
-
-    try:
-        #todo this doesnt have to be a subprocess, build thumbs in python
-        subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh", str(ticket['Publishing.Path']) + str(ticket['local_filename']), str(ticket['Publishing.Path'])])
-    except subprocess.CalledProcessError as err:
-        logger.error("A fault occurred")
-        logger.error("Fault code: %d" % err.returncode)
-        logger.error("Fault string: %s" % err.output)
-        logger.error("Command %s" % err.cmd)
-        raise RuntimeError(err.cmd)
-        return False
-         
-    logger.info("thumbnails created")
-    return True
-    
-#=== make a new event on media
-def create_event(ticket, api_url, api_key, orig_language):
-    logger.info(("## generating new event on " + api_url + " ##"))
-    
-    #prepare some variables for the api call
-    local_filename_base = ticket['local_filename_base']
-    url = api_url + 'events'
-    
-    if 'Fahrplan.Person_list' in ticket:
-        people = ticket['Fahrplan.Person_list'].split(', ') 
-    else:
-        people = [ ]
-     
-    if 'Media.Tags' in ticket:
-        tags = ticket['Media.Tags'].replace(' ', '').split(',')
-    else:
-        tags = [ ticket['Project.Slug'] ]
- 
-    if orig_language == None:
-        orig_language = ''
-    
-    
-       
-    # have a look at https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/events_controller.rb this changes in blink of an eye
-    # DONT EVEN BLINK !!!!    
-    headers = {'CONTENT-TYPE' : 'application/json'}
-    payload = {'api_key' : api_key,
-	       'acronym' : str(ticket['Project.Slug']),
-               'event' : {
-      	                  'guid' : str(ticket['Fahrplan.GUID']),
-                          'slug' : str(ticket['Publishing.Media.Slug']),
-                          'title' : str(ticket['Fahrplan.Title']),
-                          'subtitle' : str(ticket['Fahrplan.Subtitle']),
-                          'link' : "https://c3voc.de",
-                          'original_language': orig_language,
-                          'thumb_filename' : str(local_filename_base) + ".jpg",
-                          'poster_filename' : str(local_filename_base) + "_preview.jpg",
-                          'conference_id' : str(ticket['Publishing.Media.Slug']),
-                          'description' : str(ticket['Fahrplan.Abstract']),
-                          'date' : str(ticket['Fahrplan.Date']),
-                          'persons': people,
-                          'tags': tags,
-                          'promoted' : False,
-                          'release_date' : str(time.strftime("%Y-%m-%d"))
-                        }
-    }     
-    logger.debug(payload)
-
-    #call media api (and ignore SSL this should be fixed on media site)
-    try:
-        logger.debug("api url: " + url)
-        r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-    except requests.packages.urllib3.exceptions.MaxRetryError as err:
-        raise RuntimeError("Error during creating of event: " + str(err))
-
-    return r
-#=== get filesize and length of the media file
-def get_file_details(ticket, local_filename, video_base, ret):
-    if local_filename == None:
-        raise RuntimeError("Error: No filename supplied.")
-        return False
-        
-    global filesize    
-    filesize = os.stat(video_base + local_filename).st_size
-    filesize = int(filesize / 1024 / 1024)
-    
-    try:
-        global r
-        r = subprocess.check_output('ffprobe -print_format flat -show_format -loglevel quiet ' + video_base + local_filename +' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ', shell=True)
-    except:
-        raise RuntimeError("ERROR: could not get duration " + exc_value)
-        return False
-    #result = commands.getstatusoutput("ffprobe " + output + path + filename + " 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,// ")
-    global length
-    length = int(r.decode())
-    
-    if ticket['EncodingProfile.Slug'] not in ["mp3", "opus", "mp3-2", "opus-2"]:    
+        # Check if the file already exists and remove it
         try:
-            r = subprocess.check_output('ffmpeg -i ' + video_base + local_filename + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',shell=True)
-        except:
-            raise RuntimeError("ERROR: could not get duration ")
-            return False
-        resolution = r.decode()
-        resolution = resolution.partition('x')
-        width = resolution[0]
-        height = resolution[2]
-    else: #we have an audio only release so we set a 0 resolution
-         width = 0
-         height = 0
-    
-    if length == 0:
-        raise RuntimeError("Error: file length is 0")
-        return False
-    else:
-        logger.debug("filesize: " + str(filesize) + " length: " + str(length))
-        ret.append(filesize)
-        ret.append(length)
-        ret.append(width)
-        ret.append(height)
-        return True
+            self.sftp.stat(self.t.media_path + folder + "/" + filename)
+        except IOError:
+            pass  # if the file not exists we can can go to the upload
+        else:
+            try:
+                self.sftp.remove(self.t.media_path + folder + "/" + filename)
+            except IOError as e:
+                self.logger.error(e)
 
-#=== create_recording a file on media
-def create_recording(local_filename, filename, api_url, download_base_url, api_key, guid, mime_type, folder, video_base, language, hq, html5, ticket):
-    logger.info(("## publishing "+ filename + " to " + api_url + " ##"))
-    
-    # make sure we have the file size and length
-    ret = []
-    if not get_file_details(ticket, local_filename, video_base, ret):
-        return False
-        
-    # have a look at https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/recordings_controller.rb and DONT EVEN BLINK!!!
-    url = api_url + 'recordings'
-    headers = {'CONTENT-TYPE' : 'application/json'}
-    payload = {'api_key' : api_key,
-               'guid' : guid,
-	       'acronym' : ticket['Project.Slug'],
-               'recording' : {'folder' : folder,
-                              'filename' : filename,
-                              'mime_type' : mime_type,
-                              'language' : language,
-                              'high_quality' : hq,
-                              'html5' : html5,
-                              'size' : str(ret[0]),
-                              'width' : str(ret[2]),
-                              'height' : str(ret[3]),
-                              'length' : str(ret[1])
-                            }
-               }
-    logger.debug(payload)
-    try:
-        r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-    except requests.exceptions.SSLError:
-        raise RuntimeError("ssl cert error")
-        return False
-    except requests.packages.urllib3.exceptions.MaxRetryError as err:
-        raise RuntimeError("Error during creating of event: " + str(err))
-        return False
-    except:
-        raise RuntimeError("Unhandelt ssl / retry problem")
-        return False
-    
-    if r.status_code != 200 and r.status_code != 201:
-        raise RuntimeError(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
-        return False
-    
-    logger.info(("publishing " + filename + " done"))
-    return True
+        # Upload the file
+        try:
+            self.sftp.put(self.t.pusblishing_path + local_filename,
+                          self.t.media_path + folder + "/" + filename)
+        except paramiko.SSHException as err:
+            self.logger.error("could not upload recording because of SSH problem")
+            self.logger.error(err)
+        except IOError as err:
+            self.logger.error("could not create file in upload directory")
+            self.logger.error(err)
+
+        self.logger.info("uploading " + filename + " done")
+
+    # generate thumbnails for media.ccc.de
+    def make_thumbs(self):
+        """
+        This function calls the thumbnail generator script
+        :return:
+        """
+        self.logger.info(
+            ("## generating thumbs for " + self.t.pusblishing_path + self.t.local_filename + " ##"))
+
+        try:
+            # todo this doesn't have to be a subprocess, build thumbs in python
+            subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh",
+                                   self.t.pusblishing_path + self.t.local_filename,
+                                   self.t.pusblishing_path])
+        except subprocess.CalledProcessError as err:
+            self.logger.error("A fault occurred")
+            self.logger.error("Fault code: %d" % err.returncode)
+            self.logger.error("Fault string: %s" % err.output)
+            self.logger.error("Command %s" % err.cmd)
+
+        self.logger.info("thumbnails created")
+
+    def create_event(self, api_url, api_key, orig_language):
+        """
+        # create a new event on the media.ccc.de API host
+
+        :param api_url:
+        :param api_key:
+        :param orig_language:
+        :return:
+        """
+        self.logger.info(("## generating new event on " + api_url + " ##"))
+
+        # prepare some variables for the api call
+        url = api_url + 'events'
+
+        if orig_language is None:
+            orig_language = ''
+
+        # API code https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/events_controller.rb
+        headers = {'CONTENT-TYPE': 'application/json'}
+        payload = {'api_key': api_key,
+                   'acronym': self.t.profile_slug,
+                   'event': {
+                       'guid': self.t.guid,
+                       'slug': self.t.slug,
+                       'title': self.t.title,
+                       'subtitle': self.t.subtitle,
+                       'link': "https://c3voc.de",  # todo do somesthing more usefull here
+                       'original_language': orig_language,
+                       'thumb_filename': self.t.local_filename_base + ".jpg",
+                       'poster_filename': self.t.local_filename_base + "_preview.jpg",
+                       'conference_id': self.t.slug,
+                       'description': self.t.abstract,
+                       'date': self.t.date,
+                       'persons': self.t.people,
+                       'tags': self.t.tags,
+                       'promoted': False,
+                       'release_date': str(time.strftime("%Y-%m-%d"))
+                   }
+                   }
+        self.logger.debug(payload)
+
+        # call media API
+        r = ''
+        try:
+            self.logger.debug("api url: " + url)
+            # TODO make ssl verify a config option
+            # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
+            r = requests.post(url, headers=headers, data=json.dumps(payload))
+        except requests.packages.urllib3.exceptions.MaxRetryError as err:
+            raise RuntimeError("Error during creating of event: " + str(err))
+
+        return r
+
+    def get_file_details(self, local_filename, ret):
+        """
+        get file size and length of the media file
+        :param local_filename:
+        :param ret:
+        :return:
+        """
+        if local_filename is None:
+            raise RuntimeError('Error: No filename supplied.')
+
+        file_size = os.stat(self.t.video_base + local_filename).st_size
+        file_size = int(file_size / 1024 / 1024)
+
+        try:
+            global r
+            r = subprocess.check_output(
+                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.video_base + local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
+                shell=True)
+        except:
+            raise RuntimeError("ERROR: could not get duration " + r)
+
+        length = int(r.decode())
+
+        if self.t.slug not in ["mp3", "opus", "mp3-2", "opus-2"]:
+            try:
+                r = subprocess.check_output(
+                    'ffmpeg -i ' + self.t.video_base + local_filename + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
+                    shell=True)
+            except:
+                raise RuntimeError("ERROR: could not get duration ")
+
+            resolution = r.decode()
+            resolution = resolution.partition('x')
+            width = resolution[0]
+            height = resolution[2]
+        else:  # we have an audio only release so we set a 0 resolution
+            width = 0
+            height = 0
+
+        if length == 0:
+            raise RuntimeError("Error: file length is 0")
+        else:
+            self.logger.debug("filesize: " + str(file_size) + " length: " + str(length))
+            ret.append(file_size)
+            ret.append(length)
+            ret.append(width)
+            ret.append(height)
+            return True
+
+    def create_recording(self, local_filename, filename, api_url, api_key, folder, language, hq, html5):
+        """
+        create_recording a file on media
+        :param local_filename:
+        :param filename:
+        :param api_url:
+        :param api_key:
+        :param folder:
+        :param language:
+        :param hq:
+        :param html5:
+        :return:
+        """
+        self.logger.info(("## publishing " + filename + " to " + api_url + " ##"))
+
+        # make sure we have the file size and length
+        ret = []
+        if not self.get_file_details(local_filename, ret):
+            return False
+
+        # API code https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/recordings_controller.rb
+        url = api_url + 'recordings'
+        headers = {'CONTENT-TYPE': 'application/json'}
+        payload = {'api_key': api_key,
+                   'guid': self.t.guid,
+                   'acronym': self.t.slug,
+                   'recording': {'folder': folder,
+                                 'filename': filename,
+                                 'mime_type': self.t.mime_type,
+                                 'language': language,
+                                 'high_quality': hq,
+                                 'html5': html5,
+                                 'size': str(ret[0]),
+                                 'width': str(ret[2]),
+                                 'height': str(ret[3]),
+                                 'length': str(ret[1])
+                                 }
+                   }
+        self.logger.debug(payload)
+        try:
+            # TODO ssl verify by config
+            # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
+            r = requests.post(url, headers=headers, data=json.dumps(payload))
+        except requests.exceptions.SSLError:
+            raise RuntimeError("ssl cert error")
+        except requests.packages.urllib3.exceptions.MaxRetryError as err:
+            raise RuntimeError("Error during creating of event: " + str(err))
+        except:
+            raise RuntimeError("Unhandelt ssl / retry problem")
+
+        if r.status_code != 200 and r.status_code != 201:
+            raise RuntimeError(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
+
+        self.logger.info(("publishing " + filename + " done"))
+        return True

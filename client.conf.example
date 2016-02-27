@@ -1,67 +1,34 @@
 [general]
-#data source for publishing: c3tt, CMD, file (file meta data)
+# data source for publishing: c3tt, CMD, file (file meta data)
 source = "c3tt"
-#destination of the publishing: media (media.ccc.de), auphonic,
-dest = "media"
-#run with debug output
+# valid values are: warning, error, info, debug
 debug = INFO
-# base dir for video input files (local) in case of C3TT this will be overwritten!!
-video_base = "/mnt/" 
-# base dir for video output files (local) in case of C3TT this will be overwritten!!!
-output = "/mnt/" 
-#define paths to the scripts
-post = "postprocessing/"
-#path to the thumb export.
-#this is also used as postfix for the publishing dir
-thumb_path = "thumbs/"
+# validation should only be turned off for debugging
+validate_tls = True
+validate_host_key = True
 
 [C3Tracker]
 group = <key>
 secret =  <key>
-#only set host if you don't wont to use local maschine name
+#only set host if you don't wont to use local machine name
 host = None
 url = <server>
 from_state = encoding
 to_state = releasing
 
 [media.ccc.de]
-## API informations
+enable = True
 api_url =  <api-url>
 api_key =  <key>
-## release host information
-# SFTP data
-upload_host = <ftp-target>
-upload_user = <user>
-upload_pw =  <pw> 
-#it is recommended to use key login. PW musts be set but can be random
-upload_path = /srv/releases/public/
-download_thumb_base_url = <url>
-download_base_url = <base_url>
 
 [youtube]
+enable = True
 secret = <youtube-api-secret>
 client_id = <youtube-client-id>
 
 [twitter]
+enable = True
 token = <user token>
 token_secret = <user secret>
 consumer_key = <consumer key>
 consumer_secret = <consumer secret>
-
-[conference]
-rec_path = <path>
-image_path = <path>
-webgen_loc = <webgen>
-
-[env]
-# base dir for video input files (local)
-#in case of C3TT this will be overwritten!!
-video_base = /mnt/
-# base dir for video output files (local)
-#in case of C3TT this will be overwritten!!!
-output = /mnt/ 
-#define paths to the scripts
-post = postprocessing/
-#path to the thumb export.
-#this is also used as postfix for the publishing dir
-thumb_path = thumbs/
