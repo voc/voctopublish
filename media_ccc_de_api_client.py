@@ -216,7 +216,7 @@ def get_file_details(ticket, local_filename, video_base, ret):
         r = subprocess.check_output('ffprobe -print_format flat -show_format -loglevel quiet ' + video_base + local_filename +' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ', shell=True)
         length = int(r.decode())
     except:
-        raise RuntimeError("ERROR: could not get duration" + str(r))
+        raise RuntimeError("ERROR: could not get duration: " + str(r))
         return False
     #result = commands.getstatusoutput("ffprobe " + output + path + filename + " 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,// ")
     
