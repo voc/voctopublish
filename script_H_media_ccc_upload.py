@@ -32,7 +32,6 @@ import logging
 
 from c3t_rpc_client import * 
 from media_ccc_de_api_client import *
-from auphonic_client import *
 from youtube_client import *
 from twitter_client import *
 
