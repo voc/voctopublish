@@ -410,5 +410,8 @@ iCanHazTicket()
 choose_target_from_properties()
 logging.info("set ticket done")
 setTicketDone(ticket_id, url, group, host, secret)
-send_tweet(ticket, token, token_secret, consumer_key, consumer_secret)
-
+try:
+    send_tweet(ticket, token, token_secret, consumer_key, consumer_secret)
+except Exception as err:
+    logging.error("Error tweeting (bur releasing succeeded): \n" + str(err))
+    sys.exit(0)
