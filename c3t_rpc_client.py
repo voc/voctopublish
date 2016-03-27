@@ -172,6 +172,6 @@ def setTicketDone(id, url, group, host, secret):
     
 ### set ticket status on failed an supply a error text
 def setTicketFailed(id,error , url, group, host, secret):
-    enc_error = error.encode('ascii', 'xmlcharrefreplace')
+    enc_error = str(error)
     tmp_args = [id, enc_error]
     xml = open_rpc("C3TT.setTicketFailed", tmp_args , url, group, host, secret)
