@@ -40,19 +40,19 @@ def connect_ssh(ticket):
         client.connect(ticket['Publishing.Media.Host'], username=ticket['Publishing.Media.User'], password="notused")
     except paramiko.SSHException:
         logger.error("SSH negotiation failed")
-        sys.exit(1)
+        raise RuntimeError("SFTP-Error: SSH negotiation failed")
     except paramiko.AuthenticationException:
         logger.error("Authentication failed. Please check credentials")
-        sys.exit(1)
+        raise RuntimeError("SFTP-Error: Authentication failed. Please check credentials")
     except paramiko.BadHostKeyException:
         logger.error ("Bad host key. Check your known_hosts file")
-        sys.exit(1)
+        raise RuntimeError ("SFTP-Error: Bad host key. Check your known_hosts file")
     except paramiko.PasswordRequiredException:
         logger.error("Password required. No ssh key in the agent?")
-        sys.exit(1)
+        raise RuntimeError("SFTP-Error: Password required. No ssh key in the agent?")
     except:
         logger.error("Could not open ssh connection")
-        sys.exit(1)
+        raise RuntimeError("SFTP-Error: Could not open ssh connection")
         
     logger.info("SSH connection established")
     sftp_client = paramiko.SFTPClient.from_transport(client.get_transport())
@@ -74,11 +74,11 @@ def upload_thumbs(ticket,sftp):
         except paramiko.SSHException as err:
             logger.error("could not upload thumb because of SSH problem")
             logger.error(err)
-            sys.exit(1)
+            raise RuntimeError("SFTP-Error: could not upload thumb because of SSH problem - "+str(err))
         except IOError as err:
             logger.error("could not create file in upload directory")
             logger.error(err)
-            sys.exit(1)
+            raise RuntimeError("SFTP-Error: could not create file in upload directory - "+str(err))
             
     print ("uploading thumbs done")
 
@@ -118,9 +118,11 @@ def upload_file(ticket, local_filename, filename, folder, sftp):
     except paramiko.SSHException as err:
         logger.error("could not upload recording because of SSH problem")
         logger.error(err)
+        raise RuntimeError("SFTP-Error: could not upload recording because of SSH problem - " +str(err))
     except IOError as err:
         logger.error("could not create file in upload directory")
         logger.error(err)
+        raise RuntimeError("SFTP-Error: could not create file in upload directory - " +str(err))
             
     logger.info("uploading " + filename + " done")
 
