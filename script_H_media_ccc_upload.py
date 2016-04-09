@@ -295,6 +295,7 @@ def mediaFromTracker():
                 
             elif r.status_code == 422:
                 logger.info("event already exists. => publishing")
+                logger.info("  server said: " + r.text)
             else:
                 raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
 
