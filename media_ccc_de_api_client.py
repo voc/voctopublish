@@ -175,7 +175,7 @@ def create_event(ticket, api_url, api_key, orig_language):
 	       'acronym' : str(ticket['Publishing.Media.Slug']),
                'event' : {
       	                  'guid' : str(ticket['Fahrplan.GUID']),
-                          'slug' : str(ticket['Publishing.Media.Slug']),
+                          'slug' : str(ticket['Fahrplan.Slug']),
                           'title' : str(ticket['Fahrplan.Title']),
                           'subtitle' : str(ticket['Fahrplan.Subtitle']),
                           'link' : "https://c3voc.de",
