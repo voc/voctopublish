@@ -228,8 +228,8 @@ def get_file_details(ticket, local_filename, video_base, ret):
             return False
         resolution = r.decode()
         resolution = resolution.partition('x')
-        width = resolution[0]
-        height = resolution[2]
+        width = resolution[0].strip()
+        height = resolution[2].strip()
     else: #we have an audio only release so we set a 0 resolution
          width = 0
          height = 0
