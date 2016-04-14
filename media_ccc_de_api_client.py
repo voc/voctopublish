@@ -172,7 +172,7 @@ def create_event(ticket, api_url, api_key, orig_language):
     # DONT EVEN BLINK !!!!    
     headers = {'CONTENT-TYPE' : 'application/json'}
     payload = {'api_key' : api_key,
-	       'acronym' : str(ticket['Project.Slug']),
+	       'acronym' : str(ticket['Publishing.Media.Slug']),
                'event' : {
       	                  'guid' : str(ticket['Fahrplan.GUID']),
                           'slug' : str(ticket['Publishing.Media.Slug']),
@@ -259,7 +259,7 @@ def create_recording(local_filename, filename, api_url, download_base_url, api_k
     headers = {'CONTENT-TYPE' : 'application/json'}
     payload = {'api_key' : api_key,
                'guid' : guid,
-	       'acronym' : ticket['Project.Slug'],
+	       'acronym' : str(ticket['Publishing.Media.Slug']),
                'recording' : {'folder' : folder,
                               'filename' : filename,
                               'mime_type' : mime_type,
