@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import configparser
+# import configparser
 
 from c3t_rpc_client import *
 from media_ccc_de_api_client import *
@@ -35,7 +35,7 @@ class Publisher:
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # uncomment the next line to add filename and linenumber to logging output
+        # uncomment the next line to add filename and line number to logging output
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
         ch.setFormatter(formatter)
         logger.addHandler(ch)
@@ -96,7 +96,6 @@ class Publisher:
             self.consumer_key = self.config['twitter']['consumer_key']
             self.consumer_secret = self.config['twitter']['consumer_secret']
 
-
     def choose_target_from_properties(self):
         """
         Decide based on the information provided by the tracker where to publish.
@@ -114,7 +113,6 @@ class Publisher:
         if ticket.profile_media_enable == "yes" and ticket.media_enabel == "yes":
             logging.debug("publishing on media")
             media_from_tracker(ticket)
-
 
     def get_ticket_from_tracker(self):
         """
