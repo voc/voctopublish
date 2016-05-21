@@ -275,7 +275,16 @@ def mediaFromTracker():
          
         #get original language. We assume this is always the first language
         langs = language.rsplit('-')
-        orig_language = str(langs[0]) 
+        # FIXME: media don't create events when wrong language is set
+        first_language = str(langs[0])
+        if re.match('^de$', first_language):
+            orig_language = 'deu'
+        elif re.match('^en$', first_language):
+            orig_language = 'eng'
+        else:
+            orig_language = first_language
+
+
         
         #create the event
         #TODO at the moment we just try this and look on the error. We should store event id and ask the api
