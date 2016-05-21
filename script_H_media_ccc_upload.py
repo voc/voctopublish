@@ -322,7 +322,14 @@ def mediaFromTracker():
             sys.exit(-1) 
         lang_id = int(ticket['Encoding.LanguageIndex'])
         langs = language.rsplit('-')
+        # FIXME: media don't create recordings when wrong language is set
         language = str(langs[lang_id])
+        if re.match('^de$', language):
+            language = 'deu'
+        elif re.match('^en$', language):
+            language = 'eng'
+        else:
+            language
         filename = str(ticket['Encoding.LanguageTemplate']) % (language)
         filename = filename + '.' + str(ticket['EncodingProfile.Extension'])
         #filename = str(slug + '-' + str(ticket['Fahrplan.ID']) + '-' + language + '-' + str(ticket['Encoding.LanguageTemplate']) + '.' + str(ticket['EncodingProfile.Extension'] )
