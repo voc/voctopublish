@@ -215,7 +215,14 @@ def iCanHazTicket():
         profile_extension = ticket['EncodingProfile.Extension']
         profile_slug = ticket['EncodingProfile.Slug']
         if 'Record.Language' in ticket:
+            # FIXME:
             language = str(ticket['Record.Language'])
+            if re.match('^de$', language):
+                language = 'deu'
+            elif re.match('^en$', language):
+                language = 'eng'
+
+
         else:
             logging.error("No Record.Language propertie in ticket")
             setTicketFailed(ticket_id, "No Record.Language propertie in ticket", url, group, host, secret)
@@ -305,6 +312,12 @@ def mediaFromTracker():
             elif r.status_code == 422:
                 logger.info("event already exists. => publishing")
                 logger.info("  server said: " + r.text)
+                if not os.path.isfile(str(ticket['Publishing.Path']) + str(local_filename_base) + ".jpg"):
+                    if not make_thumbs(ticket):
+                        raise RuntimeError("ERROR: Generating thumbs:")
+                    else:
+                        # upload thumbnails
+                        upload_thumbs(ticket, sftp)
             else:
                 raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
 
@@ -315,7 +328,7 @@ def mediaFromTracker():
             
 
     else: 
-        #get the language of the encoding. We handle here multi lang releases
+        # get the language of the encoding. We handle here multi lang releases
         if not 'Encoding.LanguageIndex' in ticket:
             logging.error("Encoding.LanguageIndex")
             setTicketFailed(ticket_id, "Creating event failed, Encoding.LanguageIndex not defined", url, group, host, secret)
