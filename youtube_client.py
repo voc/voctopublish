@@ -259,12 +259,13 @@ def getChannelId(accessToken):
     )
 
     if 200 != r.status_code:
-        raise RuntimeError('fetching a fresh authToken failed with error-code %u: %s' % (r.status_code, r.text))
+        raise RuntimeError('fetching channelID failed with error-code %u: %s' % (r.status_code, r.text))
 
     data = r.json()
     channel = data['items'][0]
 
-    logger.info("successfully fetched Chanel-ID %s with name %s" % (channel['id'], channel['brandingSettings']['channel']['title']))
+    # logger.info("successfully fetched Channel-ID %s with name %s" % (channel['id'], channel['brandingSettings']['channel']['title']))
+    logger.info("successfully fetched Channel-ID %s " % (channel['id']))
     return channel['id']
 
 
