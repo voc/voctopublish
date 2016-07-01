@@ -280,10 +280,10 @@ def mediaFromTracker():
     #if we have an audio file we skip this part 
     if profile_slug != "mp3" and profile_slug != "opus" and profile_slug != "mp3-2" and profile_slug != "opus-2":
          
-        #get original language. We assume this is always the first language
-        langs = language.rsplit('-')
         # FIXME: media don't create events when wrong language is set
-        first_language = str(langs[0])
+        langs = language.rsplit('-')
+        #get original language. We assume this is always the first language
+        first_language = str(ticket['Record.Language.0'])
         if re.match('^de$', first_language):
             orig_language = 'deu'
         elif re.match('^en$', first_language):
@@ -291,6 +291,7 @@ def mediaFromTracker():
         else:
             orig_language = first_language
 
+        logger.debug("assuming original language is: " + orig_language)
 
         
         #create the event
