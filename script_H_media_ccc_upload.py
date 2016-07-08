@@ -359,10 +359,10 @@ def mediaFromTracker():
         logger.debug('remuxing dual-language video into two parts')
 
         #prepare filenames 
-        outfile1 = str(ticket['Publishing.Path']) + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio1." + ticket['EncodingProfile.Extension']
         outfilename1 = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio1." + ticket['EncodingProfile.Extension']
-        outfile2 = str(ticket['Publishing.Path']) + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension']
+        outfile1 = str(ticket['Publishing.Path']) + "/" + outfilename1
         outfilename2 = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension']
+        outfile2 = str(ticket['Publishing.Path']) + "/" + outfilename2
         langs = language.rsplit('-')
         filename1 = str(ticket['Encoding.LanguageTemplate']) % (str(langs[0])) + '.' + str(ticket['EncodingProfile.Extension'])
         filename2 = str(ticket['Encoding.LanguageTemplate']) % (str(langs[1])) + '.' + str(ticket['EncodingProfile.Extension'])
@@ -380,7 +380,7 @@ def mediaFromTracker():
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
 
         try:
-            upload_file(ticket, local_filename, filename, folder, sftp);
+            upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
             create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True,ticket)
         except RuntimeError as err:
             
@@ -389,7 +389,7 @@ def mediaFromTracker():
             logging.error("Publishing failed: \n" + str(err))
             sys.exit(-1) 
         try:
-            upload_file(ticket, local_filename, filename, folder, sftp);
+            upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
             create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True,ticket)
         except RuntimeError as err:
             setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
@@ -408,7 +408,7 @@ def mediaFromTracker():
         hq = False
     
     #if we have before decided to do two language web release we don't want to set the html5 flag for the master 
-    if (mutlilang):
+    if (multilang):
         html5 = False
     else:
         html5 = True
