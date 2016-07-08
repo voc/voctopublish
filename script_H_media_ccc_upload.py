@@ -349,11 +349,12 @@ def mediaFromTracker():
         #filename = str(slug + '-' + str(ticket['Fahrplan.ID']) + '-' + language + '-' + str(ticket['Encoding.LanguageTemplate']) + '.' + str(ticket['EncodingProfile.Extension'] )
         logging.debug('Choosing ' + language +' with LanguageIndex ' + str(lang_id) + ' and filename ' + filename)
     
+    multilang = False;
     if re.match('(...?)-(...?)', ticket['Record.Language']):
         #remember that this is multilang release
-        mutlilang = True;
+        multilang = True;
 
-    if profile_slug == 'hd' and multilang:
+    if profile_slug == 'hd' and (multilang):
         #if a second language is configured, remux the video to only have the one audio track and upload it twice
         logger.debug('remuxing dual-language video into two parts')
 
