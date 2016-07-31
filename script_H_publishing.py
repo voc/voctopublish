@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.4
 #    Copyright (C) 2014  derpeter
 #    derpeter@berlin.ccc.de
 #
@@ -267,7 +267,9 @@ def iCanHazTicket():
                 sys.exit(-1)
     else:
         logging.warn("No ticket for this task, exiting")
-        sys.exit(0);
+        return False
+
+    return True
 
 def mediaFromTracker():
     logging.info("creating event on " + api_url)
@@ -439,12 +441,16 @@ def youtubeFromTracker():
         logging.error("Publishing failed: \n" + str(err))
         sys.exit(-1)
 
-iCanHazTicket()
-choose_target_from_properties()
-logging.info("set ticket done")
-setTicketDone(ticket_id, url, group, host, secret)
-try:
-    send_tweet(ticket, token, token_secret, consumer_key, consumer_secret)
-except Exception as err:
-    logging.error("Error tweeting (bur releasing succeeded): \n" + str(err))
-    sys.exit(0)
+#def main():
+# 'main method'
+if iCanHazTicket():
+    choose_target_from_properties()
+    logging.info("set ticket done")
+    setTicketDone(ticket_id, url, group, host, secret)
+    try:
+        send_tweet(ticket, token, token_secret, consumer_key, consumer_secret)
+    except Exception as err:
+        logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
+
+#if __name__ == '__main__':
+#    main()
