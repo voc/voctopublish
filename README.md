@@ -6,7 +6,7 @@ It publishes recordings an handles all neccessary steps like thumbnail generatio
 ### Debian / Ubuntu
 ```
 sudo apt-get install python3 python3-requests python3-pip ffmpeg
-sudo pip-3.2 install paramiko
+sudo pip3 install paramiko
 ```
 
 ## Usage
