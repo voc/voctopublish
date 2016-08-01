@@ -84,25 +84,38 @@ def publish_youtube(ticket, clientId, clientSecret):
 
 
 def uploadVideo(ticket, accessToken, channelId):
+    title = str(ticket['Fahrplan.Title'])
+    subtitle = str(ticket['Fahrplan.Subtitle'])
+    abstract = strip_tags(ticket.get('Fahrplan.Abstract', ''))
     description = strip_tags(ticket.get('Fahrplan.Description', ''))
-    abstract_or_description = strip_tags(ticket.get('Fahrplan.Abstract', description))
     person_list = ticket.get('Fahrplan.Person_list', '')
 
-    description = '%s\n\n%s' % (abstract_or_description, person_list)
+    description =  '\n\n'.join([abstract, description, person_list])
     if 'Publishing.Media.Url' in ticket and 'Fahrplan.Slug' in ticket:
         description = os.path.join(ticket['Publishing.Media.Url'], ticket['Fahrplan.Slug']) + '\n\n' + description
 
+
+    # if persons-list is set
+    if 'Fahrplan.Person_list' in ticket:
+        persons = ticket['Fahrplan.Person_list'].split(',')
+
+        # prepend usernames if only 1 or 2 speaker
+        if len(persons) < 3:
+            title = str(ticket['Fahrplan.Person_list']) + ': ' + title
+
     if 'Publishing.YouTube.TitlePrefix' in ticket:
-        tmp_titel = str(ticket['Publishing.YouTube.TitlePrefix']) + ' ' + str(ticket['Fahrplan.Title'])
+        title = str(ticket['Publishing.YouTube.TitlePrefix']) + ' ' + title
         logger.debug('adding ' + str(ticket['Publishing.YouTube.TitlePrefix']) + ' as title prefix')
     else:
-        tmp_titel = ticket['Fahrplan.Title']
         logger.warn("No youtube title prefix found")
+
+    if 'Publishing.YouTube.TitleSuffix' in ticket:
+        title = title + ' ' + str(ticket['Publishing.YouTube.TitleSuffix'])
 
     metadata = {
         'snippet':
         {
-            'title': str(tmp_titel),
+            'title': title,
             'description': description,
             'channelId': channelId,
             'tags': selectTags(ticket)
@@ -119,14 +132,6 @@ def uploadVideo(ticket, accessToken, channelId):
     # if tags are set - copy them into the metadata dict
     if 'Publishing.YouTube.Tags' in ticket:
         metadata['snippet']['tags'] = list(map(str.strip, ticket['Publishing.YouTube.Tags'].split(',')))
-
-    # if persons-list is set
-    if 'Fahrplan.Person_list' in ticket:
-        persons = ticket['Fahrplan.Person_list'].split(',')
-
-        # prepend usernames if only 1 or 2 speaker
-        if len(persons) < 3:
-            metadata['snippet']['title'] = ticket['Fahrplan.Person_list']+': '+str(ticket['Fahrplan.Title'])
 
     translation = ticket.get('Publishing.InfileIsTranslated')
     if translation == 'de':
