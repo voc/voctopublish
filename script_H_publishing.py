@@ -33,7 +33,7 @@ import logging
 from c3t_rpc_client import * 
 from media_ccc_de_api_client import *
 from twitter_client import *
-import youtube_client as youtube
+import youtube_client
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -399,7 +399,7 @@ def mediaFromTracker():
                                       
 def youtubeFromTracker():
     try:
-        youtube = YoutubeAPI(ticket, config)
+        youtube = youtube_client.YoutubeAPI(ticket, config['youtube'])
         youtubeUrls = youtube.publish(ticket)
         props = {}
         for i, youtubeUrl in enumerate(youtubeUrls):

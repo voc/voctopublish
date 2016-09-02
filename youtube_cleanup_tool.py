@@ -26,7 +26,7 @@ def main():
     targetPlaylist  = 'PL_IxoDz1Nq2aMepxIuDN7Ek8lcjc32B1D'
 
     
-    yt = YoutubeAPI(ticket, config) 
+    yt = YoutubeAPI(ticket, config['youtube']) 
 
     r = requests.get('https://tracker.c3voc.de/api/v1/' + conference_slug + '/tickets/released.json')
     videos = r.json()

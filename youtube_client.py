@@ -31,7 +31,7 @@ class YoutubeAPI:
         if not 'Publishing.YouTube.Token' in ticket:
             raise RuntimeError('Property "Publishing.YouTube.Token" missing in ticket - did you set the YouTube-Properties on the Project?')
 
-        self.accessToken = self.get_fresh_token(ticket['Publishing.YouTube.Token'], config['youtube']['client_id'], config['youtube']['secret'])
+        self.accessToken = self.get_fresh_token(ticket['Publishing.YouTube.Token'], config['client_id'], config['secret'])
         self.channelId = self.get_channel_id(self.accessToken)
 
 
