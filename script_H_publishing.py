@@ -35,6 +35,15 @@ import media_ccc_de_api_client as media
 import youtube_client
 import twitter_client
 
+
+'''
+TODO
+* remove globals
+* remove str()
+
+
+'''
+
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
@@ -62,8 +71,7 @@ if not os.path.exists('client.conf'):
     
 config = configparser.ConfigParser()
 config.read('client.conf')
-source = config['general']['source']
-dest = config['general']['dest']
+
 
 
 tracker = c3t_rpc_client.C3TrackerAPI(config['C3Tracker'])
@@ -264,7 +272,7 @@ def mediaFromTracker():
             tracker.setTicketFailed(ticket_id, "Creating event failed, in case of audio releases make sure event exists: \n" + str(err))
             raise err
             
-
+    # audio release
     else: 
         # get the language of the encoding. We handle here multi lang releases
         if not 'Encoding.LanguageIndex' in ticket:
@@ -272,7 +280,7 @@ def mediaFromTracker():
 
         lang_id = int(ticket['Encoding.LanguageIndex'])
         langs = language.rsplit('-')
-        # FIXME: media don't create recordings when wrong language is set
+        # FIXME: media does not create recordings when wrong language is set
         language = str(langs[lang_id])
         if re.match('^de$', language):
             language = 'deu'
@@ -285,13 +293,13 @@ def mediaFromTracker():
         #filename = str(slug + '-' + str(ticket['Fahrplan.ID']) + '-' + language + '-' + str(ticket['Encoding.LanguageTemplate']) + '.' + str(ticket['EncodingProfile.Extension'] )
         logging.debug('Choosing ' + language +' with LanguageIndex ' + str(lang_id) + ' and filename ' + filename)
     
-    multilang = False;
+    multilang = False
     if re.match('(...?)-(...?)', ticket['Record.Language']):
         #remember that this is multilang release
-        multilang = True;
+        multilang = True
 
-    if profile_slug == 'hd' and (multilang):
-        #if a second language is configured, remux the video to only have the one audio track and upload it twice
+    #if a second language is configured, remux the video to only have the one audio track and upload it twice
+    if multilang and profile_slug == 'hd':
         logger.debug('remuxing dual-language video into two parts')
 
         #prepare filenames 
@@ -324,7 +332,8 @@ def mediaFromTracker():
          
     #publish the media file on media
     if not 'Publishing.Media.MimeType' in ticket:
-        tracker.setTicketFailed(ticket_id, "Publishing failed: No mime type, please use property Publishing.Media.MimeType in encoding profile! \n" + str(err))
+        raise RuntimeError("No mime type, please use property Publishing.Media.MimeType in encoding profile! \n" + str(err))
+    
     mime_type = ticket['Publishing.Media.MimeType']
     
     #set hq filed based on ticket encoding profile slug

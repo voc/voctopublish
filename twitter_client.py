@@ -15,14 +15,14 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from twitter import *
+import twitter
 import logging
 logger = logging.getLogger()
 
 
 def send_tweet(ticket, config):
     logger.info("tweeting about the release")
-    #FIXME we need a nicer solution for this but it is christmas
+    #FIXME we need a nicer solution for this but it is Christmas
     
     if ticket['EncodingProfile.Slug'] == "hd":
         target = "media.ccc.de and youtube"
@@ -40,6 +40,6 @@ def send_tweet(ticket, config):
     consumer_key = config['consumer_key']
     consumer_secret = config['consumer_secret']
     
-    t = Twitter(auth=OAuth(token, token_secret, consumer_key, consumer_secret))
+    t = twitter.Twitter(auth=twitter.OAuth(token, token_secret, consumer_key, consumer_secret))
     ret = t.statuses.update(status=message)
     logger.debug(ret)

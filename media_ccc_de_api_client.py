@@ -139,8 +139,7 @@ def make_thumbs(ticket):
         logger.error("Fault code: %d" % err.returncode)
         logger.error("Fault string: %s" % err.output)
         logger.error("Command %s" % err.cmd)
-        raise RuntimeError(err.cmd)
-        return False
+        raise RuntimeError("ERROR: Generating thumbs:" + err.cmd)
          
     logger.info("thumbnails created")
     return True
