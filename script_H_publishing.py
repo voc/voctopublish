@@ -30,9 +30,9 @@ import paramiko
 import inspect
 import logging
 
-from media_ccc_de_api_client import *
 from twitter_client import *
 import c3t_rpc_client
+import media_ccc_de_api_client as media
 import youtube_client
 
 logger = logging.getLogger()
@@ -329,11 +329,11 @@ def mediaFromTracker():
         if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', video_base + local_filename, '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
-        upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
-        create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True,ticket)
+        media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
+        media.create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True,ticket)
 
-        upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
-        create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True,ticket)
+        media.upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
+        media.create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True,ticket)
 
          
     #publish the media file on media
