@@ -228,12 +228,44 @@ class YoutubeAPI:
     
         return video['id']
     
+    def add_to_playlist(self, videoId, playlistId):
+        # documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
+        r = requests.post(
+            'https://www.googleapis.com/youtube/v3/playlistItems',
+            params={
+                'part': 'snippet'
+            },
+            headers={
+                'Authorization': 'Bearer ' + self.accessToken,
+                'Content-Type': 'application/json; charset=UTF-8',
+            },
+            data=json.dumps({
+                'snippet': {
+                    'playlistId' : playlistId, # required
+                    'resourceId': {'kind': 'youtube#video', 'videoId': videoId }, # required
+                },
+            })
         )
 
-        if 200 != r.status_code and 201 != r.status_code:
-            raise RuntimeError('uploading video failed with error-code %u: %s' % (r.status_code, r.text))
+        if 200 != r.status_code:
+            raise RuntimeError('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
-    video = r.json()
+        print(' added');
+  
+        
+    # currently a method to helb with debugging --Andi, August 2016
+    def get_playlist(self, playlistId):
+        r = requests.get(
+            'https://www.googleapis.com/youtube/v3/playlistItems',
+            params={
+                'part': 'snippet',
+                'playlistId': playlistId
+            },
+            headers={
+                'Authorization': 'Bearer ' + self.accessToken,
+                'Content-Type': 'application/json; charset=UTF-8',
+            },
+        )
 
 
         if 200 != r.status_code:

@@ -39,8 +39,13 @@ download_thumb_base_url = <url>
 download_base_url = <base_url>
 
 [youtube]
-secret = <youtube-api-secret>
 client_id = <youtube-client-id>
+secret = <youtube-api-secret>
+
+# optional, only if you want to use youtube_cleanup_tool.py
+# copy e.g. from tracker config option Publishing.YouTube.Token
+cleanup_tool_token = 
+
 
 [twitter]
 token = <user token>
