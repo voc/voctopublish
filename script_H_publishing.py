@@ -138,21 +138,6 @@ target_media = None
 language = None #language field in ticket
 lang = None
 
-def choose_target_from_properties():
-    global target_youtube
-    global target_media
-
-    logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
-    if ticket['Publishing.YouTube.EnableProfile'] == "yes" and ticket['Publishing.YouTube.Enable'] == "yes" and not has_youtube_url:
-        logging.debug("publishing on youtube")
-        target_youtube = True
-        youtubeFromTracker()
-
-    logging.debug("encoding profile media flag: " + ticket['Publishing.Media.EnableProfile'] + " project media flag: " + ticket['Publishing.Media.Enable'])
-    if ticket['Publishing.Media.EnableProfile'] == "yes" and ticket['Publishing.Media.Enable'] == "yes":
-        logging.debug("publishing on media")
-        target_media = True
-        mediaFromTracker()
 
 ################################# Here be dragons #################################
 def iCanHazTicket():
@@ -445,13 +430,28 @@ def youtubeFromTracker():
 #def main():
 # 'main method'
 if iCanHazTicket():
-    choose_target_from_properties()
+    published_to_media = False
+
+    logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
+    if ticket['Publishing.YouTube.EnableProfile'] == "yes" and ticket['Publishing.YouTube.Enable'] == "yes" and not has_youtube_url:
+        logging.debug("publishing on youtube")
+        youtubeFromTracker()
+
+    logging.debug("encoding profile media flag: " + ticket['Publishing.Media.EnableProfile'] + " project media flag: " + ticket['Publishing.Media.Enable'])
+    if ticket['Publishing.Media.EnableProfile'] == "yes" and ticket['Publishing.Media.Enable'] == "yes":
+        logging.debug("publishing on media")
+
+        mediaFromTracker()
+        published_to_media = True
+        
     logging.info("set ticket done")
     setTicketDone(ticket_id, url, group, host, secret)
-    try:
-        send_tweet(ticket, token, token_secret, consumer_key, consumer_secret)
-    except Exception as err:
-        logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
+    
+    if published_to_media:
+        try:
+            twitter_client.send_tweet(ticket, token, token_secret, consumer_key, consumer_secret)
+        except Exception as err:
+            logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
 
 #if __name__ == '__main__':
 #    main()
