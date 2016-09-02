@@ -20,8 +20,8 @@ import logging
 logger = logging.getLogger()
 
 
-def send_tweet(ticket, token, token_secret, consumer_key, consumer_secret):
-    logger.info("tweeting the release")
+def send_tweet(ticket, config):
+    logger.info("tweeting about the release")
     #FIXME we need a nicer solution for this but it is christmas
     
     if ticket['EncodingProfile.Slug'] == "hd":
@@ -34,6 +34,12 @@ def send_tweet(ticket, token, token_secret, consumer_key, consumer_secret):
     if len(title) >= (160 - len(msg)):
         title = title[0:len(msg)]
     message =  title + msg
+    
+    token = config['token'] 
+    token_secret = config['token_secret']
+    consumer_key = config['consumer_key']
+    consumer_secret = config['consumer_secret']
+    
     t = Twitter(auth=OAuth(token, token_secret, consumer_key, consumer_secret))
     ret = t.statuses.update(status=message)
     logger.debug(ret)

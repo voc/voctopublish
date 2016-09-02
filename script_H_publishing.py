@@ -30,10 +30,10 @@ import paramiko
 import inspect
 import logging
 
-from twitter_client import *
 import c3t_rpc_client
 import media_ccc_de_api_client as media
 import youtube_client
+import twitter_client
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -67,12 +67,6 @@ dest = config['general']['dest']
 
 
 tracker = c3t_rpc_client.C3TrackerAPI(config['C3Tracker'])
-
-
-token = config['twitter']['token'] 
-token_secret = config['twitter']['token_secret']
-consumer_key = config['twitter']['consumer_key']
-consumer_secret = config['twitter']['consumer_secret']
 
 if True:
     ################### media.ccc.de #################
@@ -400,7 +394,7 @@ if iCanHazTicket():
     
     if published_to_media:
         try:
-            twitter_client.send_tweet(ticket, token, token_secret, consumer_key, consumer_secret)
+            twitter_client.send_tweet(ticket, config['twitter'])
         except Exception as err:
             logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
 
