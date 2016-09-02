@@ -30,9 +30,9 @@ import paramiko
 import inspect
 import logging
 
-from c3t_rpc_client import * 
 from media_ccc_de_api_client import *
 from twitter_client import *
+import c3t_rpc_client
 import youtube_client
 
 logger = logging.getLogger()
@@ -65,40 +65,21 @@ config.read('client.conf')
 source = config['general']['source']
 dest = config['general']['dest']
 
-source = "c3tt" #TODO quickfix for strange parser behavior
 
-if source == "c3tt":
-    ################### C3 Tracker ###################
-    #project = "projectslug"
-    group = config['C3Tracker']['group']
-    secret =  config['C3Tracker']['secret']
+tracker = c3t_rpc_client.C3TrackerAPI(config['C3Tracker'])
 
-    if config['C3Tracker']['host'] == "None":
-            host = socket.getfqdn()
-    else:
-        host = config['C3Tracker']['host']
 
-    url = config['C3Tracker']['url']
-    from_state = config['C3Tracker']['from_state']
-    to_state = config['C3Tracker']['to_state']
-    token = config['twitter']['token'] 
-    token_secret = config['twitter']['token_secret']
-    consumer_key = config['twitter']['consumer_key']
-    consumer_secret = config['twitter']['consumer_secret']
+token = config['twitter']['token'] 
+token_secret = config['twitter']['token_secret']
+consumer_key = config['twitter']['consumer_key']
+consumer_secret = config['twitter']['consumer_secret']
 
 if True:
     ################### media.ccc.de #################
     #API informations
     api_url =  config['media.ccc.de']['api_url']
     api_key =  config['media.ccc.de']['api_key']
-    #download_thumb_base_url = config['media.ccc.de']['download_thumb_base_url']
-    #download_base_url = config['media.ccc.de']['download_base_url']
 
-    #release host information
-    # upload_host = config['media.ccc.de']['uplod_host']
-    # upload_user = config['media.ccc.de']['upload_user']
-    # upload_pw = config['media.ccc.de']['upload_pw'] #it is recommended to use key login. PW musts be set but can be random
-    # upload_path = config['media.ccc.de']['upload_path']
 
 
 #internal vars
@@ -129,17 +110,17 @@ lang = None
 
 ################################# Here be dragons #################################
 def iCanHazTicket():
-    logging.info("getting ticket from " + url)
+    logging.info("getting ticket from " + config['C3Tracker']['url'])
     logging.info("=========================================")
     
     #check if we got a new ticket
     global ticket_id
-    ticket_id = assignNextUnassignedForState(from_state, to_state, url, group, host, secret)
+    ticket_id = tracker.assignNextUnassignedForState(config['C3Tracker']['from_state'], config['C3Tracker']['to_state'])
     if ticket_id != False:
         #copy ticket details to local variables
         logging.info("Ticket ID:" + str(ticket_id))
         global ticket
-        ticket = getTicketProperties(str(ticket_id), url, group, host, secret)
+        ticket = tracker.getTicketProperties(str(ticket_id))
         logging.debug("Ticket: " + str(ticket))
         global acronym
         global local_filename
@@ -197,8 +178,8 @@ def iCanHazTicket():
 
 
         else:
-            logging.error("No Record.Language propertie in ticket")
-            setTicketFailed(ticket_id, "No Record.Language propertie in ticket", url, group, host, secret)
+            logging.error("No Record.Language property in ticket")
+            tracker.setTicketFailed(ticket_id, "No Record.Language property in ticket")
             sys.exit(-1)
         
         logging.debug("Language from ticket " + str(language))
@@ -227,16 +208,16 @@ def iCanHazTicket():
         
         if not os.path.isfile(video_base + local_filename):
             logging.error("Source file does not exist (%s)" % (video_base + local_filename))
-            setTicketFailed(ticket_id, "Source file does not exist (%s)" % (video_base + local_filename), url, group, host, secret)
+            tracker.setTicketFailed(ticket_id, "Source file does not exist (%s)" % (video_base + local_filename))
             sys.exit(-1)
         if not os.path.exists(output):
             logging.error("Output path does not exist (%s)" % (output))
-            setTicketFailed(ticket_id, "Output path does not exist (%s)" % (output), url, group, host, secret)
+            tracker.setTicketFailed(ticket_id, "Output path does not exist (%s)" % (output))
             sys.exit(-1)
         else: 
             if not os.access(output, os.W_OK):
                 logging.error("Output path is not writable (%s)" % (output))
-                setTicketFailed(ticket_id, "Output path is not writable (%s)" % (output), url, group, host, secret)
+                tracker.setTicketFailed(ticket_id, "Output path is not writable (%s)" % (output))
                 sys.exit(-1)
     else:
         logging.info("No ticket for this task, exiting")
@@ -299,7 +280,7 @@ def mediaFromTracker():
 
         except RuntimeError as err:
             logging.error("Creating event failed")
-            setTicketFailed(ticket_id, "Creating event failed, in case of audio releases make sure event exists: \n" + str(err), url, group, host, secret)
+            tracker.setTicketFailed(ticket_id, "Creating event failed, in case of audio releases make sure event exists: \n" + str(err))
             sys.exit(-1)
             
 
@@ -307,7 +288,7 @@ def mediaFromTracker():
         # get the language of the encoding. We handle here multi lang releases
         if not 'Encoding.LanguageIndex' in ticket:
             logging.error("Encoding.LanguageIndex")
-            setTicketFailed(ticket_id, "Creating event failed, Encoding.LanguageIndex not defined", url, group, host, secret)
+            tracker.setTicketFailed(ticket_id, "Creating event failed, Encoding.LanguageIndex not defined")
             sys.exit(-1) 
         lang_id = int(ticket['Encoding.LanguageIndex'])
         langs = language.rsplit('-')
@@ -359,21 +340,21 @@ def mediaFromTracker():
             create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True,ticket)
         except RuntimeError as err:
             
-            #The error string sometime break the signature setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
-            setTicketFailed(ticket_id, "Publishing failed: runtime error \n", url, group, host, secret)
+            #The error string sometime break the signature tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
+            tracker.setTicketFailed(ticket_id, "Publishing failed: runtime error \n")
             logging.error("Publishing failed: \n" + str(err))
             sys.exit(-1) 
         try:
             upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
             create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True,ticket)
         except RuntimeError as err:
-            setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
+            tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
             logging.error("Publishing failed: \n" + str(err))
             sys.exit(-1) 
          
     #publish the media file on media
     if not 'Publishing.Media.MimeType' in ticket:
-        setTicketFailed(ticket_id, "Publishing failed: No mime type, please use property Publishing.Media.MimeType in encoding profile! \n" + str(err), url, group, host, secret)
+        tracker.setTicketFailed(ticket_id, "Publishing failed: No mime type, please use property Publishing.Media.MimeType in encoding profile! \n" + str(err))
     mime_type = ticket['Publishing.Media.MimeType']
     
     #set hq filed based on ticket encoding profile slug
@@ -392,7 +373,7 @@ def mediaFromTracker():
         upload_file(ticket, local_filename, filename, folder, ssh);
         create_recording(local_filename, filename, api_url, download_base_url, api_key, guid, mime_type, folder, video_base, language, hq, html5,ticket)
     except RuntimeError as err:
-        setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
+        tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
         logging.error("Publishing failed: \n" + str(err))
         sys.exit(-1) 
                  
@@ -405,10 +386,10 @@ def youtubeFromTracker():
         for i, youtubeUrl in enumerate(youtubeUrls):
             props['YouTube.Url'+str(i)] = youtubeUrl
 
-        setTicketProperties(ticket_id, props, url, group, host, secret)
+        tracker.setTicketProperties(ticket_id, props)
 
     except RuntimeError as err:
-        setTicketFailed(ticket_id, "Publishing failed: \n" + str(err), url, group, host, secret)
+        tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
         logging.error("Publishing failed: \n" + str(err))
         sys.exit(-1)
 
@@ -430,7 +411,7 @@ if iCanHazTicket():
         published_to_media = True
         
     logging.info("set ticket done")
-    setTicketDone(ticket_id, url, group, host, secret)
+    tracker.setTicketDone(ticket_id)
     
     if published_to_media:
         try:

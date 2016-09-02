@@ -26,6 +26,69 @@ import logging
 
 logger = logging.getLogger()
 
+
+
+class C3TrackerAPI:
+    
+    config = {}
+    
+    def __init__(self, config):
+        self.config = config
+        
+        if self.config['host'] == "None":
+            self.config['host'] = socket.getfqdn()
+        
+
+
+    def open_rpc(self, method, args):
+        result = C3TClient(self.config['url'], method, 
+            self.config['group'], self.config['host'], self.config['secret'],
+            args
+        )
+        return result
+    
+    ### get Tracker Version
+    def getVersion():
+        tmp_args = ["1"];
+        return str(self.open_rpc("C3TT.getVersion", tmp_args))
+    
+    ### check for new ticket on tracker an get assignment 
+    def assignNextUnassignedForState(self, from_state, to_state):
+        xml = self.open_rpc("C3TT.assignNextUnassignedForState", [from_state, to_state])
+        # if get no xml there seems to be no ticket for this job
+        if xml == False:
+            return False
+        else:
+            return xml['id']
+    
+    ### set ticket properties 
+    def setTicketProperties(self, id, properties): 
+        xml = self.open_rpc("C3TT.setTicketProperties", [id, properties])
+        if xml == False:
+            logger.error("no xml in answer")
+            return False
+        else:
+            return True
+    
+    ### get ticket properties 
+    def getTicketProperties(self, id): 
+        xml = self.open_rpc("C3TT.getTicketProperties", [id])
+        if xml == False:
+            logger.error("no xml in answer")
+            return None
+        else:
+            return xml
+    
+    ### set Ticket status on done
+    def setTicketDone(self, id):
+        xml = self.open_rpc("C3TT.setTicketDone", [id])
+        logger.debug(xml)
+        
+    ### set ticket status on failed an supply a error text
+    def setTicketFailed(self, id, error):
+        xml = self.open_rpc("C3TT.setTicketFailed", [id, str(error)])
+
+
 ## client constructor #####
 # group: worker group
 # secret: client secret
@@ -124,54 +187,3 @@ def C3TClient(url, method, group, host, secret, args):
 
     #### return the result
     return result
-
-def open_rpc(method, args, url, group, host, secret):
-    result = C3TClient(url, method, group, host, secret, args)
-    return result
-
-### get Tracker Version
-def getVersion():
-    tmp_args = ["1"];
-    return str(open_rpc("C3TT.getVersion",tmp_args))
-
-### check for new ticket on tracker an get assignement 
-def assignNextUnassignedForState(from_state, to_state, url, group, host, secret):
-    tmp_args = [from_state, to_state]
-    xml = open_rpc("C3TT.assignNextUnassignedForState",tmp_args,url, group, host, secret)
-    # if get no xml there seems to be no ticket for this job
-    if xml == False:
-        return False
-    else:
-        return xml['id']
-
-### set ticket properties 
-def setTicketProperties(id, properties, url, group, host, secret):
-    tmp_args = [id, properties]
-    xml = open_rpc("C3TT.setTicketProperties", tmp_args, url, group, host, secret)
-    if xml == False:
-        logger.error("no xml in answer")
-        return False
-    else:
-        return True
-
-### get ticket properties 
-def getTicketProperties(id, url, group, host, secret):
-    tmp_args = [id]
-    xml = open_rpc("C3TT.getTicketProperties", tmp_args, url, group, host, secret)
-    if xml == False:
-        logger.error("no xml in answer")
-        return None
-    else:
-        return xml
-
-### set Ticket status on done
-def setTicketDone(id, url, group, host, secret):
-    tmp_args = [id]
-    xml = open_rpc("C3TT.setTicketDone", tmp_args , url, group, host, secret)
-    logger.debug(xml)
-    
-### set ticket status on failed an supply a error text
-def setTicketFailed(id, error, url, group, host, secret):
-    enc_error = str(error)
-    tmp_args = [id, enc_error]
-    xml = open_rpc("C3TT.setTicketFailed", tmp_args , url, group, host, secret)
