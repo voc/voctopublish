@@ -32,8 +32,8 @@ import logging
 
 from c3t_rpc_client import * 
 from media_ccc_de_api_client import *
-from youtube_client import *
 from twitter_client import *
+import youtube_client as youtube
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -429,7 +429,8 @@ def auphonicFromTracker():
 
 def youtubeFromTracker():
     try:
-        youtubeUrls = publish_youtube(ticket, config['youtube']['client_id'], config['youtube']['secret'])
+        youtube = YoutubeAPI(ticket, config)
+        youtubeUrls = youtube.publish(ticket)
         props = {}
         for i, youtubeUrl in enumerate(youtubeUrls):
             props['YouTube.Url'+str(i)] = youtubeUrl
