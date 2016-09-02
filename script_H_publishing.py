@@ -100,18 +100,6 @@ if True:
     # upload_pw = config['media.ccc.de']['upload_pw'] #it is recommended to use key login. PW musts be set but can be random
     # upload_path = config['media.ccc.de']['upload_path']
 
-#if we don't use the tracker we need to get the informations from the config file
-if source != 'c3tt':
-    #################### conference information ######################
-    rec_path = config['conference']['rec_path']
-    image_path = config['conference']['image_path']
-    webgen_loc = config['conference']['webgen_loc']
-
-    ################### script environment ########################
-    # base dir for video input files (local)
-    video_base = config['env']['video_base']
-    # base dir for video output files (local)
-    output = config['env']['output']
 
 #internal vars
 ticket = None
@@ -251,7 +239,7 @@ def iCanHazTicket():
                 setTicketFailed(ticket_id, "Output path is not writable (%s)" % (output), url, group, host, secret)
                 sys.exit(-1)
     else:
-        logging.warn("No ticket for this task, exiting")
+        logging.info("No ticket for this task, exiting")
         return False
 
     return True
@@ -409,9 +397,6 @@ def mediaFromTracker():
         sys.exit(-1) 
                  
                                       
-def auphonicFromTracker():
-    logging.info("Pushing file to Auphonic")
-
 def youtubeFromTracker():
     try:
         youtube = YoutubeAPI(ticket, config)
