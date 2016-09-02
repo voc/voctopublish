@@ -89,6 +89,12 @@ class C3TrackerAPI:
         xml = self.open_rpc("C3TT.setTicketFailed", [id, str(error)])
 
 
+class C3TError(Exception):
+    def __init__(self, errors):
+        super(Exception, self).__init__("C3T Error ")
+        self.errors = errors
+
+
 ## client constructor #####
 # group: worker group
 # secret: client secret
@@ -142,22 +148,22 @@ def C3TClient(url, method, group, host, secret, args):
         logger.error("A fault occurred")
         logger.error("Fault code: %d" % err.faultCode)
         logger.error("Fault string: %s" % err.faultString)
-        sys.exit(-1)
+        raise C3TError(err)
     except xmlrpc.client.ProtocolError as err:
         logger.error("A protocol error occurred")
         logger.error("URL: %s" % err.url)
         logger.error("HTTP/HTTPS headers: %s" % err.headers)
         logger.error("Error code: %d" % err.errcode)
         logger.error("Error message: %s" % err.errmsg)
-        sys.exit(-1)
+        raise C3TError(err)
     except socket.gaierror as err:
         logger.error("A socket error occurred")
         logger.error(err)
-        sys.exit(-1)
+        raise C3TError(err)
     except xmlrpc.client.ProtocolError as err:
         logger.error("A Protocol occurred")
         logger.error(err)
-        sys.exit(-1)
+        raise C3TError(err)
     
     #### call the given method with args
     try:
@@ -165,25 +171,24 @@ def C3TClient(url, method, group, host, secret, args):
         result = getattr(proxy,method)(*args)
     except xml.parsers.expat.ExpatError as err:
         logger.error("A expat err occured")
-        logger.error(err)
-        sys.exit(-1)
+        raise C3TError(err)
     except xmlrpc.client.Fault as err:
         logger.error("A fault occurred")
         logger.error("Fault code: %d" % err.faultCode)
         logger.error("Fault string: %s" % err.faultString)
-        sys.exit(-1)
+        raise C3TError(err)
     except xmlrpc.client.ProtocolError as err:
         logger.error("A protocol error occurred")
         logger.error("URL: %s" % err.url)
         logger.error("HTTP/HTTPS headers: %s" % err.headers)
         logger.error("Error code: %d" % err.errcode)
         logger.error("Error message: %s" % err.errmsg)
-        sys.exit(-1)
+        raise C3TError(err)
     except OSError as err:
         logger.error("A OS error occurred")
         logger.error("Error code: %d" % err.errcode)
         logger.error("Error message: %s" % err.errmsg)
-        sys.exit(-1)
+        raise C3TError(err)
 
     #### return the result
     return result

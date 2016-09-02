@@ -207,18 +207,12 @@ def iCanHazTicket():
         logging.debug("Data for media: guid: " + guid + " slug: " + slug + " acronym: " + acronym  + " filename: "+ filename + " title: " + title + " local_filename: " + local_filename + ' video_base: ' + video_base + ' output: ' + output + ' people: ' + ", ".join(people) + ' tags: ' + ", ".join(tags) + ' language: ' + language)
         
         if not os.path.isfile(video_base + local_filename):
-            logging.error("Source file does not exist (%s)" % (video_base + local_filename))
-            tracker.setTicketFailed(ticket_id, "Source file does not exist (%s)" % (video_base + local_filename))
-            sys.exit(-1)
+            raise RuntimeError("Source file does not exist (%s)" % (video_base + local_filename))
         if not os.path.exists(output):
-            logging.error("Output path does not exist (%s)" % (output))
-            tracker.setTicketFailed(ticket_id, "Output path does not exist (%s)" % (output))
-            sys.exit(-1)
+            raise RuntimeError("Output path does not exist (%s)" % (output))
         else: 
             if not os.access(output, os.W_OK):
-                logging.error("Output path is not writable (%s)" % (output))
-                tracker.setTicketFailed(ticket_id, "Output path is not writable (%s)" % (output))
-                sys.exit(-1)
+                raise RuntimeError("Output path is not writable (%s)" % (output))
     else:
         logging.info("No ticket for this task, exiting")
         return False
@@ -280,16 +274,16 @@ def mediaFromTracker():
 
         except RuntimeError as err:
             logging.error("Creating event failed")
+            #TODO 
             tracker.setTicketFailed(ticket_id, "Creating event failed, in case of audio releases make sure event exists: \n" + str(err))
-            sys.exit(-1)
+            raise err
             
 
     else: 
         # get the language of the encoding. We handle here multi lang releases
         if not 'Encoding.LanguageIndex' in ticket:
-            logging.error("Encoding.LanguageIndex")
-            tracker.setTicketFailed(ticket_id, "Creating event failed, Encoding.LanguageIndex not defined")
-            sys.exit(-1) 
+            raise RuntimeError("Creating event failed, Encoding.LanguageIndex not defined")
+
         lang_id = int(ticket['Encoding.LanguageIndex'])
         langs = language.rsplit('-')
         # FIXME: media don't create recordings when wrong language is set
@@ -334,23 +328,13 @@ def mediaFromTracker():
 
         if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', video_base + local_filename, '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
+        
+        upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
+        create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True,ticket)
 
-        try:
-            upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
-            create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True,ticket)
-        except RuntimeError as err:
-            
-            #The error string sometime break the signature tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
-            tracker.setTicketFailed(ticket_id, "Publishing failed: runtime error \n")
-            logging.error("Publishing failed: \n" + str(err))
-            sys.exit(-1) 
-        try:
-            upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
-            create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True,ticket)
-        except RuntimeError as err:
-            tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
-            logging.error("Publishing failed: \n" + str(err))
-            sys.exit(-1) 
+        upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
+        create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True,ticket)
+
          
     #publish the media file on media
     if not 'Publishing.Media.MimeType' in ticket:
@@ -369,49 +353,50 @@ def mediaFromTracker():
     else:
         html5 = True
     
-    try:
-        upload_file(ticket, local_filename, filename, folder, ssh);
-        create_recording(local_filename, filename, api_url, download_base_url, api_key, guid, mime_type, folder, video_base, language, hq, html5,ticket)
-    except RuntimeError as err:
-        tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
-        logging.error("Publishing failed: \n" + str(err))
-        sys.exit(-1) 
+
+    media.upload_file(ticket, local_filename, filename, folder, ssh);
+    media.create_recording(local_filename, filename, api_url, download_base_url, api_key, guid, mime_type, folder, video_base, language, hq, html5,ticket)
+
                  
                                       
 def youtubeFromTracker():
-    try:
-        youtube = youtube_client.YoutubeAPI(ticket, config['youtube'])
-        youtubeUrls = youtube.publish(ticket)
-        props = {}
-        for i, youtubeUrl in enumerate(youtubeUrls):
-            props['YouTube.Url'+str(i)] = youtubeUrl
+    youtube = youtube_client.YoutubeAPI(ticket, config['youtube'])
+    youtubeUrls = youtube.publish(ticket)
+    props = {}
+    for i, youtubeUrl in enumerate(youtubeUrls):
+        props['YouTube.Url'+str(i)] = youtubeUrl
 
-        tracker.setTicketProperties(ticket_id, props)
-
-    except RuntimeError as err:
-        tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
-        logging.error("Publishing failed: \n" + str(err))
-        sys.exit(-1)
+    tracker.setTicketProperties(ticket_id, props)
 
 #def main():
 # 'main method'
 if iCanHazTicket():
     published_to_media = False
 
-    logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
-    if ticket['Publishing.YouTube.EnableProfile'] == "yes" and ticket['Publishing.YouTube.Enable'] == "yes" and not has_youtube_url:
-        logging.debug("publishing on youtube")
-        youtubeFromTracker()
+    try:
+        logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
+        if ticket['Publishing.YouTube.EnableProfile'] == "yes" and ticket['Publishing.YouTube.Enable'] == "yes" and not has_youtube_url:
+            logging.debug("publishing on youtube")
+            youtubeFromTracker()
+    
+        logging.debug("encoding profile media flag: " + ticket['Publishing.Media.EnableProfile'] + " project media flag: " + ticket['Publishing.Media.Enable'])
+        if ticket['Publishing.Media.EnableProfile'] == "yes" and ticket['Publishing.Media.Enable'] == "yes":
+            logging.debug("publishing on media")
+    
+            mediaFromTracker()
+            published_to_media = True
+            
+        logging.info("set ticket done")
+        tracker.setTicketDone(ticket_id)
 
-    logging.debug("encoding profile media flag: " + ticket['Publishing.Media.EnableProfile'] + " project media flag: " + ticket['Publishing.Media.Enable'])
-    if ticket['Publishing.Media.EnableProfile'] == "yes" and ticket['Publishing.Media.Enable'] == "yes":
-        logging.debug("publishing on media")
+    except c3t_rpc_client.C3TError as err:
+        # we can not notify the tracker, as we might go into an endless loop  
+        logging.error("Tracker communication failed: \n" + str(err))
 
-        mediaFromTracker()
-        published_to_media = True
-        
-    logging.info("set ticket done")
-    tracker.setTicketDone(ticket_id)
+    #except RuntimeError as err: # TODO: what's the difference between an RuntimeError an an Exception? --Andi
+    except Exception as err:
+        tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
+        logging.error("Publishing failed: \n" + str(err))
     
     if published_to_media:
         try:
