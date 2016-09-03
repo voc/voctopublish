@@ -92,7 +92,7 @@ class MediaAPI:
         return r
     
      #=== create_recording a file on media
-    def create_recording(self, ticket, local_filename, filename, download_base_url, mime_type, folder, video_base, language, hq, html5):
+    def create_recording(self, ticket, local_filename, filename, download_base_url, mime_type, folder, video_base, language, html5):
         logger.info(("## publishing "+ filename + " to " + self.config['api_url'] + " ##"))
         
         # make sure we have the file size and length
@@ -108,7 +108,7 @@ class MediaAPI:
                                   'filename' : filename,
                                   'mime_type' : mime_type,
                                   'language' : language,
-                                  'high_quality' : hq,
+                                  'high_quality' : ('hd' in ticket['EncodingProfile.Slug']),
                                   'html5' : html5,
                                   'size' : str(file_details['size']),
                                   'width' : str(file_details['width']),

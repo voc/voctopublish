@@ -296,10 +296,10 @@ def mediaFromTracker(ticket):
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
         media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True)
+        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True)
 
         media.upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True)
+        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True)
 
          
     #publish the media file on media
@@ -307,12 +307,6 @@ def mediaFromTracker(ticket):
         raise RuntimeError("No mime type, please use property Publishing.Media.MimeType in encoding profile! \n" + str(err))
     
     mime_type = ticket['Publishing.Media.MimeType']
-    
-    #set hq filed based on ticket encoding profile slug
-    if 'hd' in ticket['EncodingProfile.Slug']:
-        hq = True
-    else:
-        hq = False
     
     #if we have before decided to do two language web release we don't want to set the html5 flag for the master 
     if (multilang):
@@ -322,7 +316,7 @@ def mediaFromTracker(ticket):
     
 
     media.upload_file(ticket, local_filename, filename, folder, ssh);
-    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, api_key, mime_type, folder, video_base, language, hq, html5)
+    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, mime_type, folder, video_base, language, html5)
 
                  
                                       
