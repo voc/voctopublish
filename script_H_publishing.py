@@ -182,7 +182,7 @@ def process_ticket(ticket):
     
     if not 'Fahrplan.Abstract' in ticket:
         ticket['Fahrplan.Abstract'] = ''
-    if not 'Frahrplan.Subtitle' in ticket:
+    if not 'Fahrplan.Subtitle' in ticket:
         ticket['Fahrplan.Subtitle'] = ''
 
     
@@ -190,10 +190,7 @@ def process_ticket(ticket):
     title = ticket['Fahrplan.Title']
     folder = ticket['EncodingProfile.MirrorFolder']
     
-    #if 'Fahrplan.Subtitle' in ticket:
-    subtitle = ticket['Fahrplan.Subtitle']
-    #if 'Fahrplan.Abstract' in ticket:
-    #        description = ticket['Fahrplan.Abstract']
+
          
     if not os.path.isfile(ticket['Publishing.Path'] + local_filename):
         raise RuntimeError("Source file does not exist (%s)" % (ticket['Publishing.Path'] + local_filename))
