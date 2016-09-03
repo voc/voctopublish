@@ -122,11 +122,10 @@ def process_ticket(ticket):
                                         split(',')
     else:
             tags = [ ticket['Project.Slug'] ]
-    local_filename = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "." + ticket['EncodingProfile.Extension']
-    ticket['local_filename'] = local_filename
-    local_filename_base =  str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug']
+
+    ticket['local_filename_base'] = str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug']
+    ticket['local_filename'] = ticket['local_filename_base'] + "." + ticket['EncodingProfile.Extension']
     
-    ticket['local_filename_base'] = local_filename_base
     
     download_base_url =  str(ticket['Publishing.Base.Url'])
     profile_extension = ticket['EncodingProfile.Extension']
@@ -155,8 +154,8 @@ def process_ticket(ticket):
     
 
          
-    if not os.path.isfile(ticket['Publishing.Path'] + local_filename):
-        raise RuntimeError("Source file does not exist (%s)" % (ticket['Publishing.Path'] + local_filename))
+    if not os.path.isfile(ticket['Publishing.Path'] + ticket['local_filename']):
+        raise RuntimeError("Source file does not exist (%s)" % (ticket['Publishing.Path'] + ticket['local_filename']))
     if not os.path.exists(ticket['Publishing.Path']):
         raise RuntimeError("Output path does not exist (%s)" % (ticket['Publishing.Path']))
     else: 
@@ -196,7 +195,7 @@ def mediaFromTracker(ticket):
             raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
         
         #generate the thumbnails (will not overwrite existing thumbs)
-        if not os.path.isfile(str(ticket['Publishing.Path']) + str(local_filename_base) + ".jpg"):
+        if not os.path.isfile(ticket['Publishing.Path'] + ticket['local_filename_base'] + ".jpg"):
             media.make_thumbs(ticket)
             media.upload_thumbs(ticket, sftp)
         else:
@@ -245,12 +244,12 @@ def mediaFromTracker(ticket):
         #mux two videos wich one language each
         logger.debug('remuxing with original audio to '+outfile1)
         
-        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + local_filename, '-map', '0:0', '-map', '0:1', '-c', 'copy', '-movflags', 'faststart', outfile1]) != 0:
+        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + ticket['local_filename'], '-map', '0:0', '-map', '0:1', '-c', 'copy', '-movflags', 'faststart', outfile1]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile1)
 
         logger.debug('remuxing with translated audio to '+outfile2)
 
-        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + local_filename, '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
+        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + ticket['local_filename'], '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
         media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
@@ -267,8 +266,8 @@ def mediaFromTracker(ticket):
         html5 = True
     
 
-    media.upload_file(ticket, local_filename, filename, folder, ssh);
-    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, folder, language, html5)
+    media.upload_file(ticket, ticket['local_filename'], filename, folder, ssh);
+    mediaAPI.create_recording(ticket, ticket['local_filename'], filename, download_base_url, folder, language, html5)
 
                  
                                       
