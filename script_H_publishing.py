@@ -29,6 +29,7 @@ import configparser
 import paramiko
 import inspect
 import logging
+import re
 import traceback
 
 import c3t_rpc_client
@@ -41,7 +42,7 @@ import twitter_client
 TODO
 * remove globals
 * remove str()
-
+* replace all/most setTicketFailed with raise RuntimeError()
 
 '''
 
@@ -97,8 +98,6 @@ description = None
 profile_slug = None
 folder = None
 mime_type = None
-target_youtube = None
-target_media = None
 language = None #language field in ticket
 lang = None
 
@@ -214,21 +213,25 @@ def process_ticket(ticket):
 
     return True
 
-def mediaFromTracker():
+def mediaFromTracker(ticket):
     logging.info("creating event on " + api_url)
     logging.info("=========================================")
     global language
     global filename
     mutlilang = False
-    #** create a event on media
     
-    #if we have an audio file we skip this part 
-    if profile_slug != "mp3" and profile_slug != "opus" and profile_slug != "mp3-2" and profile_slug != "opus-2":
+    
+    
+    #** create a event on media
+    # if we have an audio file we skip this part, as we need to generate thumbs 
+    if ticket['EncodingProfile.Slug'] not in ["mp3", "opus", "mp3-2", "opus-2"]:
          
-        # FIXME: media don't create events when wrong language is set
+        # FIXME: media does not create events when wrong language is set
         langs = language.rsplit('-')
         #get original language. We assume this is always the first language
         first_language = str(ticket['Record.Language.0'])
+        
+        # TODO warum werden hier reguläre Ausdrücke benutzt wenn man doch eingentlich einfach == verwenden könnte... --Andi
         if re.match('^de$', first_language):
             orig_language = 'deu'
         elif re.match('^en$', first_language):
@@ -271,6 +274,7 @@ def mediaFromTracker():
         if not 'Encoding.LanguageIndex' in ticket:
             raise RuntimeError("Creating event failed, Encoding.LanguageIndex not defined")
 
+        #TODO when is Encoding.LanguageIndex set?
         lang_id = int(ticket['Encoding.LanguageIndex'])
         langs = language.rsplit('-')
         # FIXME: media does not create recordings when wrong language is set
@@ -312,7 +316,6 @@ def mediaFromTracker():
 
         logger.debug('remuxing with translated audio to '+outfile2)
 
-
         if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', video_base + local_filename, '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
@@ -347,7 +350,7 @@ def mediaFromTracker():
 
                  
                                       
-def youtubeFromTracker():
+def youtubeFromTracker(ticket):
     youtube = youtube_client.YoutubeAPI(ticket, config['youtube'])
     youtubeUrls = youtube.publish(ticket)
     props = {}
@@ -368,15 +371,16 @@ try:
         published_to_media = False
 
         logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
-        if ticket['Publishing.YouTube.EnableProfile'] == "yes" and ticket['Publishing.YouTube.Enable'] == "yes" and not has_youtube_url:
-            logging.debug("publishing on youtube")
-            youtubeFromTracker()
+        if ticket['Publishing.YouTube.Enable'] == "yes" and ticket['Publishing.YouTube.EnableProfile'] == "yes":
+            if 'YouTube.Url0' in ticket and ticket['YouTube.Url0'] != "":        
+                logging.debug("publishing on youtube")
+                youtubeFromTracker(ticket)
     
         logging.debug("encoding profile media flag: " + ticket['Publishing.Media.EnableProfile'] + " project media flag: " + ticket['Publishing.Media.Enable'])
         if ticket['Publishing.Media.EnableProfile'] == "yes" and ticket['Publishing.Media.Enable'] == "yes":
             logging.debug("publishing on media")
     
-            mediaFromTracker()
+            mediaFromTracker(ticket)
             published_to_media = True
             
         logging.info("set ticket done")
