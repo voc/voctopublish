@@ -78,28 +78,12 @@ config.read('client.conf')
 tracker = c3t_rpc_client.C3TrackerAPI(config['C3Tracker'])
 mediaAPI = media.MediaAPI(config['media.ccc.de'])
 
-#internal vars
-ticket = None
-filesize = 0
-length = 0
 sftp = None
 ssh = None
-title = None
-frab_data = None
-acronyms = None
-guid = None
-filename = None
-debug = 0
-slug = None
-rpc_client = None
-title = None
-subtitle = None 
-description = None
-profile_slug = None
-folder = None
-mime_type = None
-language = None #language field in ticket
-lang = None
+
+#internal vars
+ticket = None
+
 
 
 ################################# Here be dragons #################################
@@ -122,29 +106,7 @@ def get_ticket_from_tracker():
     return ticket
 
 def process_ticket(ticket):
-    #copy ticket details to local variables
-    global acronym
-    global local_filename
-    global local_filename_base
-    global profile_extension
-    global profile_slug
-    global video_base
-    global output
-    global filename
-    global guid
-    global slug
-    global title
-    global subtitle 
-    global description
-    global download_base_url
-    global folder
-    global has_youtube_url
-    global people
-    global tags
-    global language #language field in ticket
     
-    
-    #TODO add here some try magic to catch missing properties
 
     #slug = ticket['Fahrplan.Slug']    
 
@@ -182,6 +144,7 @@ def process_ticket(ticket):
     
     if not 'Fahrplan.Abstract' in ticket:
         ticket['Fahrplan.Abstract'] = ''
+    #TODO add here some try magic to catch missing properties
     if not 'Fahrplan.Subtitle' in ticket:
         ticket['Fahrplan.Subtitle'] = ''
 
@@ -206,8 +169,7 @@ def process_ticket(ticket):
 def mediaFromTracker(ticket):
     logging.info("creating event on " + api_url)
     logging.info("=========================================")
-    global language
-    global filename
+
     mutlilang = False
     
     
