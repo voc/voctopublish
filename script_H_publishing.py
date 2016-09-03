@@ -111,7 +111,6 @@ def process_ticket(ticket):
 
 
     acronym = ticket['Project.Slug']
-    filename = str(ticket['EncodingProfile.Basename']) + "." + str(ticket['EncodingProfile.Extension'])
     title = ticket['Fahrplan.Title']
     if 'Fahrplan.Person_list' in ticket:
             people = ticket['Fahrplan.Person_list'].split(', ') 
@@ -186,6 +185,7 @@ def mediaFromTracker(ticket):
         else:
             logger.info("thumbs exist. skipping")
 
+        filename = ticket['EncodingProfile.Basename'] + "." + ticket['EncodingProfile.Extension']  
             
     # audio release
     else: 
@@ -198,9 +198,7 @@ def mediaFromTracker(ticket):
         langs = language.rsplit('-')
         # FIXME: media does not create recordings when wrong language is set
         language = str(langs[lang_id])
-        filename = str(ticket['Encoding.LanguageTemplate']) % (language)
-        filename = filename + '.' + str(ticket['EncodingProfile.Extension'])
-        #filename = str(slug + '-' + str(ticket['Fahrplan.ID']) + '-' + language + '-' + str(ticket['Encoding.LanguageTemplate']) + '.' + str(ticket['EncodingProfile.Extension'] )
+        filename = ticket['Encoding.LanguageTemplate'] % (language) + ticket['EncodingProfile.Extension']
         logging.debug('Choosing ' + language +' with LanguageIndex ' + str(lang_id) + ' and filename ' + filename)
 
     #publish the media file on media
