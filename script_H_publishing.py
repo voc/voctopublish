@@ -106,9 +106,9 @@ def get_ticket_from_tracker():
     return ticket
 
 def process_ticket(ticket):
-    
 
-    #slug = ticket['Fahrplan.Slug']    
+    #TODO add here some try magic to catch missing properties
+
 
     acronym = ticket['Project.Slug']
     filename = str(ticket['EncodingProfile.Basename']) + "." + str(ticket['EncodingProfile.Extension'])
@@ -138,19 +138,11 @@ def process_ticket(ticket):
         logging.error("No Record.Language property in ticket")
         raise RuntimeError("No Record.Language property in ticket")
     
-    logging.debug("Language from ticket " + str(language))
-    
-    
     if not 'Fahrplan.Abstract' in ticket:
         ticket['Fahrplan.Abstract'] = ''
-    #TODO add here some try magic to catch missing properties
     if not 'Fahrplan.Subtitle' in ticket:
         ticket['Fahrplan.Subtitle'] = ''
 
-    
-
-    title = ticket['Fahrplan.Title']
-    folder = ticket['EncodingProfile.MirrorFolder']
     
 
          
@@ -169,18 +161,11 @@ def mediaFromTracker(ticket):
     logging.info("creating event on " + api_url)
     logging.info("=========================================")
 
-    mutlilang = False
-    
     
     
     #** create a event on media
     # if we have an audio file we skip this part, as we need to generate thumbs 
-    if ticket['EncodingProfile.Slug'] not in ["mp3", "opus", "mp3-2", "opus-2"]:
-         
-        # FIXME: media does not create events when wrong language is set
-        langs = language.rsplit('-')
-
-
+    if not ticket['EncodingProfile.Slug'] in ["mp3", "opus", "mp3-2", "opus-2"]:
         
         #create the event
         #TODO at the moment we just try this and look on the error. 

@@ -144,6 +144,8 @@ def C3TClient(url, method, group, host, secret, args):
     logger.debug('creating XML RPC proxy: ' + url + "?group=" + group + "&hostname=" + host)
     try:
         proxy = xmlrpc.client.ServerProxy(url + "?group=" + group + "&hostname=" + host);
+    
+    
     except xmlrpc.client.Fault as err:
         logger.error("A fault occurred")
         logger.error("Fault code: %d" % err.faultCode)
@@ -168,7 +170,9 @@ def C3TClient(url, method, group, host, secret, args):
     #### call the given method with args
     try:
         logger.debug(method + str(args))
-        result = getattr(proxy,method)(*args)
+        result = getattr(proxy, method)(*args)
+        
+        
     except xml.parsers.expat.ExpatError as err:
         logger.error("A expat err occured")
         raise C3TError(err)
