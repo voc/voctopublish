@@ -41,7 +41,6 @@ class MediaAPI:
         logger.info(("## generating new event on " + self.config['api_url'] + " ##"))
         
         #prepare some variables for the api call
-        local_filename_base = ticket['local_filename_base']
         url = api_url + 'events'
         
         if 'Fahrplan.Person_list' in ticket:
@@ -70,8 +69,8 @@ class MediaAPI:
                               'subtitle' : str(ticket['Fahrplan.Subtitle']),
                               'link' : "https://c3voc.de",
                               'original_language': orig_language,
-                              'thumb_filename' : str(local_filename_base) + ".jpg",
-                              'poster_filename' : str(local_filename_base) + "_preview.jpg",
+                              'thumb_filename' : ticket['local_filename_base'] + ".jpg",
+                              'poster_filename' : ticket['local_filename_base'] + "_preview.jpg",
                               'conference_id' : str(ticket['Publishing.Media.Slug']),
                               'description' : str(ticket['Fahrplan.Abstract']),
                               'date' : str(ticket['Fahrplan.Date']),
@@ -92,11 +91,11 @@ class MediaAPI:
         return r
     
      #=== create_recording a file on media
-    def create_recording(self, ticket, local_filename, filename, download_base_url, mime_type, folder, video_base, language, html5):
+    def create_recording(self, ticket, local_filename, filename, download_base_url, mime_type, folder, language, html5):
         logger.info(("## publishing "+ filename + " to " + self.config['api_url'] + " ##"))
         
         # make sure we have the file size and length
-        file_details = get_file_details(ticket, local_filename, video_base)
+        file_details = get_file_details(ticket, local_filename)
 
         # have a look at https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/recordings_controller.rb and DONT EVEN BLINK!!!
         url = self.config['api_url'] + 'recordings'
@@ -254,15 +253,16 @@ def make_thumbs(ticket):
     return True
 
 #=== get filesize and length of the media file
-def get_file_details(ticket, local_filename, video_base):
+def get_file_details(ticket, local_filename):
     if local_filename == None:
         raise RuntimeError("Error: No filename supplied.")
         
-    filesize = os.stat(video_base + local_filename).st_size
+    filepath = ticket['Publishing.Path'] + local_filename
+    filesize = os.stat(filepath).st_size
     filesize = int(filesize / 1024 / 1024)
                               
     try:
-        r = subprocess.check_output('ffprobe -print_format flat -show_format -loglevel quiet ' + video_base + local_filename +' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ', shell=True)
+        r = subprocess.check_output('ffprobe -print_format flat -show_format -loglevel quiet ' + filepath +' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ', shell=True)
         length = int(r.decode())
     except:
         raise RuntimeError("ERROR: could not file details: " + str(r))
@@ -275,7 +275,7 @@ def get_file_details(ticket, local_filename, video_base):
     height = 0
     if ticket['EncodingProfile.Slug'] not in ["mp3", "opus", "mp3-2", "opus-2"]:    
         try:
-            r = subprocess.check_output('ffmpeg -i ' + video_base + local_filename + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',shell=True)
+            r = subprocess.check_output('ffmpeg -i ' + filepath + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',shell=True)
             resolution = r.decode()
             resolution = resolution.partition('x')
             width = resolution[0].strip()

@@ -166,8 +166,6 @@ def process_ticket(ticket):
     
     ticket['local_filename_base'] = local_filename_base
     
-    video_base = str(ticket['Publishing.Path'])
-    output = str(ticket['Publishing.Path'])
     download_base_url =  str(ticket['Publishing.Base.Url'])
     profile_extension = ticket['EncodingProfile.Extension']
 
@@ -197,13 +195,13 @@ def process_ticket(ticket):
     #if 'Fahrplan.Abstract' in ticket:
     #        description = ticket['Fahrplan.Abstract']
          
-    if not os.path.isfile(video_base + local_filename):
-        raise RuntimeError("Source file does not exist (%s)" % (video_base + local_filename))
-    if not os.path.exists(output):
-        raise RuntimeError("Output path does not exist (%s)" % (output))
+    if not os.path.isfile(ticket['Publishing.Path'] + local_filename):
+        raise RuntimeError("Source file does not exist (%s)" % (ticket['Publishing.Path'] + local_filename))
+    if not os.path.exists(ticket['Publishing.Path']):
+        raise RuntimeError("Output path does not exist (%s)" % (ticket['Publishing.Path']))
     else: 
-        if not os.access(output, os.W_OK):
-            raise RuntimeError("Output path is not writable (%s)" % (output))
+        if not os.access(ticket['Publishing.Path'], os.W_OK):
+            raise RuntimeError("Output path is not writable (%s)" % (ticket['Publishing.Path']))
 
 
     return True
@@ -292,19 +290,19 @@ def mediaFromTracker(ticket):
         #mux two videos wich one language each
         logger.debug('remuxing with original audio to '+outfile1)
         
-        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', video_base + local_filename, '-map', '0:0', '-map', '0:1', '-c', 'copy', '-movflags', 'faststart', outfile1]) != 0:
+        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + local_filename, '-map', '0:0', '-map', '0:1', '-c', 'copy', '-movflags', 'faststart', outfile1]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile1)
 
         logger.debug('remuxing with translated audio to '+outfile2)
 
-        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', video_base + local_filename, '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
+        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + local_filename, '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
         media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, 'h264-hd-web', video_base, str(langs[0]), True)
+        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, 'h264-hd-web', str(langs[0]), True)
 
         media.upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, 'h264-hd-web', video_base, str(langs[1]), True)
+        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, 'h264-hd-web', str(langs[1]), True)
 
          
     #if we have before decided to do two language web release we don't want to set the html5 flag for the master 
@@ -315,7 +313,7 @@ def mediaFromTracker(ticket):
     
 
     media.upload_file(ticket, local_filename, filename, folder, ssh);
-    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, folder, video_base, language, html5)
+    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, folder, language, html5)
 
                  
                                       
