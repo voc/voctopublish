@@ -64,7 +64,7 @@ class MediaAPI:
                               'slug' : str(ticket['Fahrplan.Slug']),
                               'title' : str(ticket['Fahrplan.Title']),
                               'subtitle' : str(ticket['Fahrplan.Subtitle']),
-                              'link' : "https://c3voc.de",
+                              'link' : "https://c3voc.de", #TODO
                               'original_language':  str(ticket['Record.Language.0']),  #gWe assume this is always the first language
                               'thumb_filename' : ticket['local_filename_base'] + ".jpg",
                               'poster_filename' : ticket['local_filename_base'] + "_preview.jpg",
@@ -122,6 +122,7 @@ class MediaAPI:
         except:
             raise RuntimeError("Unhandled ssl / retry problem")
 
+        # TODO: if recording already exits, try to update metadata instead
         
         if r.status_code != 200 and r.status_code != 201:
             raise RuntimeError(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))

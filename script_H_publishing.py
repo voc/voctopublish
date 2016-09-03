@@ -255,6 +255,9 @@ try:
         process_ticket(ticket)
         
         published_to_media = False
+        
+        #TODO for multi lang file: here and reuse same files for media and youtube
+        # or delegate remuxing to tracker...
 
         logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
         if ticket['Publishing.YouTube.Enable'] == "yes" and ticket['Publishing.YouTube.EnableProfile'] == "yes":
