@@ -109,24 +109,9 @@ def process_ticket(ticket):
 
     #TODO add here some try magic to catch missing properties
 
-
-    acronym = ticket['Project.Slug']
-    title = ticket['Fahrplan.Title']
-    if 'Fahrplan.Person_list' in ticket:
-            people = ticket['Fahrplan.Person_list'].split(', ') 
-    else:
-            people = [ ]
-    if 'Media.Tags' in ticket:
-            tags = ticket['Media.Tags'].replace(' ', ''). \
-                                        split(',')
-    else:
-            tags = [ ticket['Project.Slug'] ]
-
     ticket['local_filename_base'] = str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug']
     ticket['local_filename'] = ticket['local_filename_base'] + "." + ticket['EncodingProfile.Extension']
     
-    profile_extension = ticket['EncodingProfile.Extension']
-
     if not 'Record.Language' in ticket:
         logging.error("No Record.Language property in ticket")
         raise RuntimeError("No Record.Language property in ticket")
