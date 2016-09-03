@@ -245,28 +245,22 @@ def mediaFromTracker(ticket):
         #create the event
         #TODO at the moment we just try this and look on the error. 
         #         maybe check if event exists; lookup via uuid
-        try:
-            r = mediaAPI.create_event(ticket, orig_language)
-            if r.status_code in [200, 201]:
-                logger.info("new event created")
-            elif r.status_code == 422:
-                logger.info("event already exists. => publishing")
-                logger.info("  server said: " + r.text)
-            else:
-                raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
-            
-            #generate the thumbnails (will not overwrite existing thumbs)
-            if not os.path.isfile(str(ticket['Publishing.Path']) + str(local_filename_base) + ".jpg"):
-                media.make_thumbs(ticket)
-                media.upload_thumbs(ticket, sftp)
-            else:
-                logger.info("thumbs exist. skipping")
-                
-        except RuntimeError as err:
-            logging.error("Creating event failed")
-            #TODO 
-            tracker.setTicketFailed(ticket['Id'], "Creating event failed, in case of audio releases make sure event exists: \n" + str(err))
-            raise err
+        r = mediaAPI.create_event(ticket, orig_language)
+        if r.status_code in [200, 201]:
+            logger.info("new event created")
+        elif r.status_code == 422:
+            logger.info("event already exists. => publishing")
+            logger.info("  server said: " + r.text)
+        else:
+            raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
+        
+        #generate the thumbnails (will not overwrite existing thumbs)
+        if not os.path.isfile(str(ticket['Publishing.Path']) + str(local_filename_base) + ".jpg"):
+            media.make_thumbs(ticket)
+            media.upload_thumbs(ticket, sftp)
+        else:
+            logger.info("thumbs exist. skipping")
+
             
     # audio release
     else: 
