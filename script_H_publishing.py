@@ -73,16 +73,8 @@ config = configparser.ConfigParser()
 config.read('client.conf')
 
 
-
 tracker = c3t_rpc_client.C3TrackerAPI(config['C3Tracker'])
-
-if True:
-    ################### media.ccc.de #################
-    #API informations
-    api_url =  config['media.ccc.de']['api_url']
-    api_key =  config['media.ccc.de']['api_key']
-
-
+mediaAPI = media.MediaAPI(config['media.ccc.de'])
 
 #internal vars
 ticket = None
@@ -250,7 +242,7 @@ def mediaFromTracker():
         #TODO at the moment we just try this and look on the error. 
         #         maybe check if event exists; lookup via uuid
         try:
-            r = create_event(ticket, api_url, api_key, orig_language)
+            r = mediaAPI.create_event(ticket, orig_language)
             if r.status_code in [200, 201]:
                 logger.info("new event created")
             elif r.status_code == 422:
@@ -324,10 +316,10 @@ def mediaFromTracker():
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
         media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
-        media.create_recording(outfilename1, filename1, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True,ticket)
+        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True, True)
 
         media.upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
-        media.create_recording(outfilename2, filename2, api_url, download_base_url, api_key, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True,ticket)
+        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True, True)
 
          
     #publish the media file on media
@@ -350,7 +342,7 @@ def mediaFromTracker():
     
 
     media.upload_file(ticket, local_filename, filename, folder, ssh);
-    media.create_recording(local_filename, filename, api_url, download_base_url, api_key, guid, mime_type, folder, video_base, language, hq, html5,ticket)
+    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, api_key, mime_type, folder, video_base, language, hq, html5)
 
                  
                                       
