@@ -103,113 +103,114 @@ lang = None
 
 
 ################################# Here be dragons #################################
-def iCanHazTicket():
+def get_ticket_from_tracker():
     logging.info("getting ticket from " + config['C3Tracker']['url'])
     logging.info("=========================================")
     
     #check if we got a new ticket
     global ticket_id
     ticket_id = tracker.assignNextUnassignedForState(config['C3Tracker']['from_state'], config['C3Tracker']['to_state'])
-    if ticket_id != False:
-        #copy ticket details to local variables
-        logging.info("Ticket ID:" + str(ticket_id))
-        global ticket
-        ticket = tracker.getTicketProperties(str(ticket_id))
-        logging.debug("Ticket: " + str(ticket))
-        global acronym
-        global local_filename
-        global local_filename_base
-        global profile_extension
-        global profile_slug
-        global video_base
-        global output
-        global filename
-        global guid
-        global slug
-        global title
-        global subtitle 
-        global description
-        global download_base_url
-        global folder
-        global has_youtube_url
-        global people
-        global tags
-        global language #language field in ticket
-        
-        #TODO add here some try magic to catch missing properties
-
-        slug = ticket['Fahrplan.Slug']	
-
-        guid = ticket['Fahrplan.GUID']
-        acronym = ticket['Project.Slug']
-        filename = str(ticket['EncodingProfile.Basename']) + "." + str(ticket['EncodingProfile.Extension'])
-        title = ticket['Fahrplan.Title']
-        if 'Fahrplan.Person_list' in ticket:
-                people = ticket['Fahrplan.Person_list'].split(', ') 
-        else:
-                people = [ ]
-        if 'Media.Tags' in ticket:
-                tags = ticket['Media.Tags'].replace(' ', ''). \
-                                            split(',')
-        else:
-                tags = [ ticket['Project.Slug'] ]
-        local_filename = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "." + ticket['EncodingProfile.Extension']
-        ticket['local_filename'] = local_filename
-        local_filename_base =  str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug']
-        ticket['local_filename_base'] = local_filename_base
-        video_base = str(ticket['Publishing.Path'])
-        output = str(ticket['Publishing.Path'])
-        download_base_url =  str(ticket['Publishing.Base.Url'])
-        profile_extension = ticket['EncodingProfile.Extension']
-        profile_slug = ticket['EncodingProfile.Slug']
-        if 'Record.Language' in ticket:
-            # FIXME:
-            language = str(ticket['Record.Language'])
-            if re.match('^de$', language):
-                language = 'deu'
-            elif re.match('^en$', language):
-                language = 'eng'
-
-
-        else:
-            logging.error("No Record.Language property in ticket")
-            tracker.setTicketFailed(ticket_id, "No Record.Language property in ticket")
-            sys.exit(-1)
-        
-        logging.debug("Language from ticket " + str(language))
-        
-        
-        if not 'Fahrplan.Abstract' in ticket:
-            ticket['Fahrplan.Abstract'] = ''
-        if not 'Frahrplan.Subtitle' in ticket:
-            ticket['Fahrplan.Subtitle'] = ''
-
-        
-        
-        if 'YouTube.Url0' in ticket and ticket['YouTube.Url0'] != "":
-                has_youtube_url = True
-        else:
-                has_youtube_url = False
-        title = ticket['Fahrplan.Title']
-        folder = ticket['EncodingProfile.MirrorFolder']
-        
-        #if 'Fahrplan.Subtitle' in ticket:
-        subtitle = ticket['Fahrplan.Subtitle']
-        #if 'Fahrplan.Abstract' in ticket:
-        #        description = ticket['Fahrplan.Abstract']
-      
-        logging.debug("Data for media: guid: " + guid + " slug: " + slug + " acronym: " + acronym  + " filename: "+ filename + " title: " + title + " local_filename: " + local_filename + ' video_base: ' + video_base + ' output: ' + output + ' people: ' + ", ".join(people) + ' tags: ' + ", ".join(tags) + ' language: ' + language)
-        
-        if not os.path.isfile(video_base + local_filename):
-            raise RuntimeError("Source file does not exist (%s)" % (video_base + local_filename))
-        if not os.path.exists(output):
-            raise RuntimeError("Output path does not exist (%s)" % (output))
-        else: 
-            if not os.access(output, os.W_OK):
-                raise RuntimeError("Output path is not writable (%s)" % (output))
-    else:
+    if ticket_id == False:
         logging.info("No ticket for this task, exiting")
         return False
+    
+    logging.info("Ticket ID:" + str(ticket_id))
+    ticket = tracker.getTicketProperties(ticket_id)
+    ticket['Id'] = ticket_id
+    
+    logging.debug("Ticket: " + str(ticket))
+
+    return ticket
+
+def process_ticket(ticket):
+    #copy ticket details to local variables
+    global acronym
+    global local_filename
+    global local_filename_base
+    global profile_extension
+    global profile_slug
+    global video_base
+    global output
+    global filename
+    global guid
+    global slug
+    global title
+    global subtitle 
+    global description
+    global download_base_url
+    global folder
+    global has_youtube_url
+    global people
+    global tags
+    global language #language field in ticket
+    
+    
+    #TODO add here some try magic to catch missing properties
+
+    #slug = ticket['Fahrplan.Slug']    
+
+    acronym = ticket['Project.Slug']
+    filename = str(ticket['EncodingProfile.Basename']) + "." + str(ticket['EncodingProfile.Extension'])
+    title = ticket['Fahrplan.Title']
+    if 'Fahrplan.Person_list' in ticket:
+            people = ticket['Fahrplan.Person_list'].split(', ') 
+    else:
+            people = [ ]
+    if 'Media.Tags' in ticket:
+            tags = ticket['Media.Tags'].replace(' ', ''). \
+                                        split(',')
+    else:
+            tags = [ ticket['Project.Slug'] ]
+    local_filename = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "." + ticket['EncodingProfile.Extension']
+    ticket['local_filename'] = local_filename
+    local_filename_base =  str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug']
+    
+    ticket['local_filename_base'] = local_filename_base
+    
+    video_base = str(ticket['Publishing.Path'])
+    output = str(ticket['Publishing.Path'])
+    download_base_url =  str(ticket['Publishing.Base.Url'])
+    profile_extension = ticket['EncodingProfile.Extension']
+
+    if 'Record.Language' in ticket:
+        # FIXME:
+        language = str(ticket['Record.Language'])
+        if re.match('^de$', language):
+            language = 'deu'
+        elif re.match('^en$', language):
+            language = 'eng'
+
+
+    else:
+        logging.error("No Record.Language property in ticket")
+        raise RuntimeError("No Record.Language property in ticket")
+    
+    logging.debug("Language from ticket " + str(language))
+    
+    
+    if not 'Fahrplan.Abstract' in ticket:
+        ticket['Fahrplan.Abstract'] = ''
+    if not 'Frahrplan.Subtitle' in ticket:
+        ticket['Fahrplan.Subtitle'] = ''
+
+    
+
+    title = ticket['Fahrplan.Title']
+    folder = ticket['EncodingProfile.MirrorFolder']
+    
+    #if 'Fahrplan.Subtitle' in ticket:
+    subtitle = ticket['Fahrplan.Subtitle']
+    #if 'Fahrplan.Abstract' in ticket:
+    #        description = ticket['Fahrplan.Abstract']
+         
+    if not os.path.isfile(video_base + local_filename):
+        raise RuntimeError("Source file does not exist (%s)" % (video_base + local_filename))
+    if not os.path.exists(output):
+        raise RuntimeError("Output path does not exist (%s)" % (output))
+    else: 
+        if not os.access(output, os.W_OK):
+            raise RuntimeError("Output path is not writable (%s)" % (output))
+
 
     return True
 
