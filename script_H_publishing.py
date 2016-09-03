@@ -174,11 +174,6 @@ def process_ticket(ticket):
     if 'Record.Language' in ticket:
         # FIXME:
         language = str(ticket['Record.Language'])
-        if re.match('^de$', language):
-            language = 'deu'
-        elif re.match('^en$', language):
-            language = 'eng'
-
 
     else:
         logging.error("No Record.Language property in ticket")
@@ -229,15 +224,8 @@ def mediaFromTracker(ticket):
         # FIXME: media does not create events when wrong language is set
         langs = language.rsplit('-')
         #get original language. We assume this is always the first language
-        first_language = str(ticket['Record.Language.0'])
-        
-        # TODO warum werden hier reguläre Ausdrücke benutzt wenn man doch eingentlich einfach == verwenden könnte... --Andi
-        if re.match('^de$', first_language):
-            orig_language = 'deu'
-        elif re.match('^en$', first_language):
-            orig_language = 'eng'
-        else:
-            orig_language = first_language
+        orig_language = str(ticket['Record.Language.0'])
+
 
         logger.debug("assuming original language is: " + orig_language)
 
@@ -273,12 +261,6 @@ def mediaFromTracker(ticket):
         langs = language.rsplit('-')
         # FIXME: media does not create recordings when wrong language is set
         language = str(langs[lang_id])
-        if re.match('^de$', language):
-            language = 'deu'
-        elif re.match('^en$', language):
-            language = 'eng'
-        else:
-            language
         filename = str(ticket['Encoding.LanguageTemplate']) % (language)
         filename = filename + '.' + str(ticket['EncodingProfile.Extension'])
         #filename = str(slug + '-' + str(ticket['Fahrplan.ID']) + '-' + language + '-' + str(ticket['Encoding.LanguageTemplate']) + '.' + str(ticket['EncodingProfile.Extension'] )
