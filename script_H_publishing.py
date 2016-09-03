@@ -127,11 +127,7 @@ def process_ticket(ticket):
     
     profile_extension = ticket['EncodingProfile.Extension']
 
-    if 'Record.Language' in ticket:
-        # FIXME:
-        language = str(ticket['Record.Language'])
-
-    else:
+    if not 'Record.Language' in ticket:
         logging.error("No Record.Language property in ticket")
         raise RuntimeError("No Record.Language property in ticket")
     
@@ -140,6 +136,8 @@ def process_ticket(ticket):
     if not 'Fahrplan.Subtitle' in ticket:
         ticket['Fahrplan.Subtitle'] = ''
 
+    if not 'Publishing.Media.MimeType' in ticket:
+        raise RuntimeError("No mime type, please use property Publishing.Media.MimeType in encoding profile!")
     
 
          
@@ -158,6 +156,8 @@ def mediaFromTracker(ticket):
     logging.info("creating event on " + api_url)
     logging.info("=========================================")
 
+
+    language = ticket['Record.Language']
     
     
     #** create a event on media
@@ -200,9 +200,6 @@ def mediaFromTracker(ticket):
         logging.debug('Choosing ' + language +' with LanguageIndex ' + str(lang_id) + ' and filename ' + filename)
 
     #publish the media file on media
-    if not 'Publishing.Media.MimeType' in ticket:
-        raise RuntimeError("No mime type, please use property Publishing.Media.MimeType in encoding profile!")
-    
     
     multilang = False
     if re.match('(...?)-(...?)', ticket['Record.Language']):
