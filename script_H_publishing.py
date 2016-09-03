@@ -29,6 +29,7 @@ import configparser
 import paramiko
 import inspect
 import logging
+import traceback
 
 import c3t_rpc_client
 import media_ccc_de_api_client as media
@@ -108,7 +109,6 @@ def get_ticket_from_tracker():
     logging.info("=========================================")
     
     #check if we got a new ticket
-    global ticket_id
     ticket_id = tracker.assignNextUnassignedForState(config['C3Tracker']['from_state'], config['C3Tracker']['to_state'])
     if ticket_id == False:
         logging.info("No ticket for this task, exiting")
@@ -262,7 +262,7 @@ def mediaFromTracker():
         except RuntimeError as err:
             logging.error("Creating event failed")
             #TODO 
-            tracker.setTicketFailed(ticket_id, "Creating event failed, in case of audio releases make sure event exists: \n" + str(err))
+            tracker.setTicketFailed(ticket['Id'], "Creating event failed, in case of audio releases make sure event exists: \n" + str(err))
             raise err
             
     # audio release
@@ -354,14 +354,19 @@ def youtubeFromTracker():
     for i, youtubeUrl in enumerate(youtubeUrls):
         props['YouTube.Url'+str(i)] = youtubeUrl
 
-    tracker.setTicketProperties(ticket_id, props)
+    tracker.setTicketProperties(ticket['Id'], props)
 
 #def main():
 # 'main method'
-if iCanHazTicket():
-    published_to_media = False
 
-    try:
+try:
+    ticket = get_ticket_from_tracker()
+    
+    if ticket:
+        process_ticket(ticket)
+        
+        published_to_media = False
+
         logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
         if ticket['Publishing.YouTube.EnableProfile'] == "yes" and ticket['Publishing.YouTube.Enable'] == "yes" and not has_youtube_url:
             logging.debug("publishing on youtube")
@@ -375,22 +380,24 @@ if iCanHazTicket():
             published_to_media = True
             
         logging.info("set ticket done")
-        tracker.setTicketDone(ticket_id)
+        tracker.setTicketDone(ticket['Id'])
 
-    except c3t_rpc_client.C3TError as err:
-        # we can not notify the tracker, as we might go into an endless loop  
-        logging.error("Tracker communication failed: \n" + str(err))
+        if published_to_media:
+            try:
+                twitter_client.send_tweet(ticket, config['twitter'])
+            except Exception as err:
+                logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
 
-    #except RuntimeError as err: # TODO: what's the difference between an RuntimeError an an Exception? --Andi
-    except Exception as err:
-        tracker.setTicketFailed(ticket_id, "Publishing failed: \n" + str(err))
-        logging.error("Publishing failed: \n" + str(err))
-    
-    if published_to_media:
-        try:
-            twitter_client.send_tweet(ticket, config['twitter'])
-        except Exception as err:
-            logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
+except c3t_rpc_client.C3TError as err:
+    # we can not notify the tracker, as we might go into an endless loop  
+    logging.error("Tracker communication failed: \n" + str(err))
+
+#except RuntimeError as err: # TODO: what's the difference between an RuntimeError an an Exception? --Andi
+except Exception as err:
+    tracker.setTicketFailed(ticket['Id'], traceback.format_exc())
+    logging.error("Publishing failed: \n" + traceback.format_exc())
+    raise err
+
 
 #if __name__ == '__main__':
 #    main()
