@@ -88,7 +88,7 @@ class MediaAPI:
         return r
     
      #=== create_recording a file on media
-    def create_recording(self, ticket, local_filename, filename, download_base_url, mime_type, folder, language, html5):
+    def create_recording(self, ticket, local_filename, filename, mime_type, folder, language, html5):
         logger.info(("## publishing "+ filename + " to " + self.config['api_url'] + " ##"))
         
         # make sure we have the file size and length

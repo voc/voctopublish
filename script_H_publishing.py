@@ -125,8 +125,6 @@ def process_ticket(ticket):
     ticket['local_filename_base'] = str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug']
     ticket['local_filename'] = ticket['local_filename_base'] + "." + ticket['EncodingProfile.Extension']
     
-    
-    download_base_url =  str(ticket['Publishing.Base.Url'])
     profile_extension = ticket['EncodingProfile.Extension']
 
     if 'Record.Language' in ticket:
@@ -236,10 +234,10 @@ def mediaFromTracker(ticket):
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
         media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, 'h264-hd-web', str(langs[0]), True)
+        mediaAPI.create_recording(ticket, outfilename1, filename1, 'h264-hd-web', str(langs[0]), True)
 
         media.upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, 'h264-hd-web', str(langs[1]), True)
+        mediaAPI.create_recording(ticket, outfilename2, filename2, 'h264-hd-web', str(langs[1]), True)
 
          
     #if we have before decided to do two language web release we don't want to set the html5 flag for the master 
@@ -250,7 +248,7 @@ def mediaFromTracker(ticket):
     
 
     media.upload_file(ticket, ticket['local_filename'], filename, folder, ssh);
-    mediaAPI.create_recording(ticket, ticket['local_filename'], filename, download_base_url, folder, language, html5)
+    mediaAPI.create_recording(ticket, ticket['local_filename'], filename, folder, language, html5)
 
                  
                                       
