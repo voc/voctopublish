@@ -196,6 +196,8 @@ def mediaFromTracker(ticket):
         logger.debug('remuxing dual-language video into two parts')
 
         #prepare filenames 
+        infile = ticket['Publishing.Path'] + ticket['local_filename']
+        
         outfilename1 = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio1." + ticket['EncodingProfile.Extension']
         outfile1 = str(ticket['Publishing.Path']) + "/" + outfilename1
         outfilename2 = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension']
@@ -207,12 +209,12 @@ def mediaFromTracker(ticket):
         #mux two videos wich one language each
         logger.debug('remuxing with original audio to '+outfile1)
         
-        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + ticket['local_filename'], '-map', '0:0', '-map', '0:1', '-c', 'copy', '-movflags', 'faststart', outfile1]) != 0:
+        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:1', '-c', 'copy', '-movflags', 'faststart', outfile1]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile1)
 
         logger.debug('remuxing with translated audio to '+outfile2)
 
-        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', ticket['Publishing.Path'] + ticket['local_filename'], '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
+        if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:2', '-c', 'copy', '-movflags', 'faststart', outfile2]) != 0:
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
         media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
