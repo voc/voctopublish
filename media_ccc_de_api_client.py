@@ -106,7 +106,7 @@ class MediaAPI:
                    'acronym' : str(ticket['Publishing.Media.Slug']),
                    'recording' : {'folder' : folder,
                                   'filename' : filename,
-                                  'mime_type' : mime_type,
+                                  'mime_type' : ticket['Publishing.Media.MimeType'],
                                   'language' : language,
                                   'high_quality' : ('hd' in ticket['EncodingProfile.Slug']),
                                   'html5' : html5,

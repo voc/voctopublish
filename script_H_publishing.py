@@ -265,6 +265,11 @@ def mediaFromTracker(ticket):
         filename = filename + '.' + str(ticket['EncodingProfile.Extension'])
         #filename = str(slug + '-' + str(ticket['Fahrplan.ID']) + '-' + language + '-' + str(ticket['Encoding.LanguageTemplate']) + '.' + str(ticket['EncodingProfile.Extension'] )
         logging.debug('Choosing ' + language +' with LanguageIndex ' + str(lang_id) + ' and filename ' + filename)
+
+    #publish the media file on media
+    if not 'Publishing.Media.MimeType' in ticket:
+        raise RuntimeError("No mime type, please use property Publishing.Media.MimeType in encoding profile!")
+    
     
     multilang = False
     if re.match('(...?)-(...?)', ticket['Record.Language']):
@@ -296,18 +301,12 @@ def mediaFromTracker(ticket):
             raise RuntimeError('error remuxing '+infile+' to '+outfile2)
         
         media.upload_file(ticket, outfilename1, filename1, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, guid, 'video/mp4', 'h264-hd-web', video_base, str(langs[0]), True)
+        mediaAPI.create_recording(ticket, outfilename1, filename1, download_base_url, 'h264-hd-web', video_base, str(langs[0]), True)
 
         media.upload_file(ticket, outfilename2, filename2, 'h264-hd-web', sftp);
-        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, 'video/mp4', 'h264-hd-web', video_base, str(langs[1]), True)
+        mediaAPI.create_recording(ticket, outfilename2, filename2, download_base_url, 'h264-hd-web', video_base, str(langs[1]), True)
 
          
-    #publish the media file on media
-    if not 'Publishing.Media.MimeType' in ticket:
-        raise RuntimeError("No mime type, please use property Publishing.Media.MimeType in encoding profile! \n" + str(err))
-    
-    mime_type = ticket['Publishing.Media.MimeType']
-    
     #if we have before decided to do two language web release we don't want to set the html5 flag for the master 
     if (multilang):
         html5 = False
@@ -316,7 +315,7 @@ def mediaFromTracker(ticket):
     
 
     media.upload_file(ticket, local_filename, filename, folder, ssh);
-    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, mime_type, folder, video_base, language, html5)
+    mediaAPI.create_recording(ticket, local_filename, filename, download_base_url, folder, video_base, language, html5)
 
                  
                                       
