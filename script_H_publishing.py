@@ -392,11 +392,14 @@ except c3t_rpc_client.C3TError as err:
     # we can not notify the tracker, as we might go into an endless loop  
     logging.error("Tracker communication failed: \n" + str(err))
 
-#except RuntimeError as err: # TODO: what's the difference between an RuntimeError an an Exception? --Andi
+# Runtime errors occur when the script is missing ticket attributes or files
+except RuntimeError as err:
+    tracker.setTicketFailed(ticket['Id'], str(err))
+    logging.error("Publishing failed: " + str(err))
+# Exceptions are errors in the publishing Python source code   
 except Exception as err:
     tracker.setTicketFailed(ticket['Id'], traceback.format_exc())
     logging.error("Publishing failed: \n" + traceback.format_exc())
-    raise err
 
 
 #if __name__ == '__main__':
