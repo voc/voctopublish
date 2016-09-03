@@ -37,7 +37,7 @@ class MediaAPI:
         self.config = config
     
     #=== make a new event on media
-    def create_event(self, ticket, orig_language):
+    def create_event(self, ticket):
         logger.info(("## generating new event on " + self.config['api_url'] + " ##"))
         
         #prepare some variables for the api call
@@ -53,9 +53,6 @@ class MediaAPI:
         else:
             tags = [ ticket['Project.Slug'] ]
      
-        if orig_language == None:
-            orig_language = ''
-        
          
         # have a look at https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/events_controller.rb this changes in blink of an eye
         # DONT EVEN BLINK !!!!    
@@ -68,7 +65,7 @@ class MediaAPI:
                               'title' : str(ticket['Fahrplan.Title']),
                               'subtitle' : str(ticket['Fahrplan.Subtitle']),
                               'link' : "https://c3voc.de",
-                              'original_language': orig_language,
+                              'original_language':  str(ticket['Record.Language.0']),  #gWe assume this is always the first language
                               'thumb_filename' : ticket['local_filename_base'] + ".jpg",
                               'poster_filename' : ticket['local_filename_base'] + "_preview.jpg",
                               'conference_id' : str(ticket['Publishing.Media.Slug']),

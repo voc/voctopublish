@@ -221,17 +221,13 @@ def mediaFromTracker(ticket):
          
         # FIXME: media does not create events when wrong language is set
         langs = language.rsplit('-')
-        #get original language. We assume this is always the first language
-        orig_language = str(ticket['Record.Language.0'])
 
-
-        logger.debug("assuming original language is: " + orig_language)
 
         
         #create the event
         #TODO at the moment we just try this and look on the error. 
         #         maybe check if event exists; lookup via uuid
-        r = mediaAPI.create_event(ticket, orig_language)
+        r = mediaAPI.create_event(ticket)
         if r.status_code in [200, 201]:
             logger.info("new event created")
         elif r.status_code == 422:
