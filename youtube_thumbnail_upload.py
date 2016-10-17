@@ -22,7 +22,7 @@ def main():
     
     conference_slug = 'subscribe8'  # see tracker project
     
-    yt = YoutubeAPI(ticket, config['youtube']) 
+    yt = youtube_client.YoutubeAPI(ticket, config['youtube']) 
 
     r = requests.get('https://tracker.c3voc.de/api/v1/' + conference_slug + '/tickets/released.json')
     videos = r.json()
@@ -40,32 +40,6 @@ def main():
 
     #print( "%i of %i published files (including webm and audio releases) are on youtube" % (i, len(videos)) )
 
-
-# Extend YoutubeAPI class from youtube_client.py with a small feature...
-class YoutubeAPI (youtube_client.YoutubeAPI):
-    
-    def update_thumbnail(self, videoId, thumnail):
-        # https://developers.google.com/youtube/v3/docs/thumbnails/set
-
-        fp = open(thumnail, 'rb')
-
-        r = requests.post(
-            'https://www.googleapis.com/upload/youtube/v3/thumbnails/set',
-            params={
-                'videoId': videoId
-            },
-            headers={
-                'Authorization': 'Bearer ' + self.accessToken,
-                'Content-Type': 'image/png',
-            },
-            data=fp.read()
-        )
-
-        if 200 != r.status_code:
-            raise RuntimeError('Video update failed with error-code %u: %s' % (r.status_code, r.text))
-
-        print(' updated');
-        return
 
 if __name__ == "__main__":
     main()

@@ -360,6 +360,28 @@ class YoutubeAPI:
     
         return tags
 
+    def update_thumbnail(self, videoId, thumnail):
+        # https://developers.google.com/youtube/v3/docs/thumbnails/set
+
+        fp = open(thumnail, 'rb')
+
+        r = requests.post(
+            'https://www.googleapis.com/upload/youtube/v3/thumbnails/set',
+            params={
+                'videoId': videoId
+            },
+            headers={
+                'Authorization': 'Bearer ' + self.accessToken,
+                'Content-Type': 'image/png',
+            },
+            data=fp.read()
+        )
+
+        if 200 != r.status_code:
+            raise RuntimeError('Video update failed with error-code %u: %s' % (r.status_code, r.text))
+
+        print(' updated');
+        return
 
 
 class MLStripper(HTMLParser):
