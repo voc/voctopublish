@@ -18,16 +18,10 @@
 import argparse
 import sys
 import os
-import urllib.request, urllib.parse, urllib.error
 import requests
 import subprocess
-import xmlrpc.client
-import socket
-import xml.etree.ElementTree as ET
 import json
 import configparser
-import paramiko
-import inspect
 import logging
 import re
 import traceback
@@ -40,9 +34,7 @@ import twitter_client
 
 '''
 TODO
-* remove globals
-* remove str()
-* replace all/most setTicketFailed with raise RuntimeError()
+* remove str()?
 
 '''
 
@@ -176,7 +168,7 @@ def mediaFromTracker(ticket):
     else: 
         # get the language of the encoding. We handle here multi lang releases
         if not 'Encoding.LanguageIndex' in ticket:
-            raise RuntimeError("Creating event failed, Encoding.LanguageIndex not defined")
+            raise RuntimeError("Encoding.LanguageIndex not defined")
 
         #TODO when is Encoding.LanguageIndex set?
         lang_id = int(ticket['Encoding.LanguageIndex'])

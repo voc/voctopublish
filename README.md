@@ -5,8 +5,8 @@ It publishes recordings an handles all neccessary steps like thumbnail generatio
 ## Depencies
 ### Debian / Ubuntu
 ```
-sudo apt-get install python3 python3-requests python3-pip ffmpeg
-sudo pip3 install paramiko
+sudo apt-get install python3 python3-requests python3-pip python3-cryptography ffmpeg
+sudo pip3 install paramiko twitter
 ```
 
 ## Usage
