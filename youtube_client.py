@@ -39,15 +39,15 @@ class YoutubeAPI:
     def publish(self, ticket):
         logger.info("publishing Ticket %s (%s) to youtube" % (ticket['Fahrplan.ID'], ticket['Fahrplan.Title']))
     
-        infile = str(ticket['Publishing.Path']) + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "." + ticket['EncodingProfile.Extension']
+        infile = os.path.join(ticket['Publishing.Path'], str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "." + ticket['EncodingProfile.Extension'])
     
         # if a second language is configured, remux the video to only have the one audio track and upload it twice
         multi_lang = re.match('(..)-(..)', ticket['Record.Language'])
         if multi_lang:
             logger.debug('remuxing dual-language video into two parts')
     
-            outfile1 = str(ticket['Publishing.Path']) + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio1." + ticket['EncodingProfile.Extension']
-            outfile2 = str(ticket['Publishing.Path']) + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension']
+            outfile1 = os.path.join(ticket['Publishing.Path'], + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio1." + ticket['EncodingProfile.Extension'])
+            outfile2 = os.path.join(ticket['Publishing.Path'] + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension'])
             youtubeUrls = []
     
             logger.debug('remuxing with original audio to '+outfile1)
@@ -56,7 +56,7 @@ class YoutubeAPI:
             if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:1', '-c', 'copy', outfile1]) != 0:
                 raise RuntimeError('error remuxing '+infile+' to '+outfile1)
     
-            videoId = uploadVideo(ticket, accessToken, channelId)
+            videoId = uploadVideo(ticket)
             youtubeUrls.append('https://www.youtube.com/watch?v='+videoId)
     
             logger.debug('remuxing with translated audio to '+outfile2)
@@ -65,7 +65,7 @@ class YoutubeAPI:
             if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:2', '-c', 'copy', outfile2]) != 0:
                 raise RuntimeError('error remuxing '+infile+' to '+outfile2)
     
-            videoId = uploadVideo(ticket, accessToken, channelId)
+            videoId = uploadVideo(ticket)
             youtubeUrls.append('https://www.youtube.com/watch?v='+videoId)
     
             logger.info("deleting remuxed versions: %s and %s" % (outfile1, outfile2))
@@ -76,7 +76,7 @@ class YoutubeAPI:
     
         else:
             ticket['Publishing.Infile'] = infile
-            videoId = self.upload(ticket, accessToken, channelId)
+            videoId = self.upload(ticket)
     
             videoUrl = 'https://www.youtube.com/watch?v='+videoId
             logger.info("successfully published Ticket to %s" % videoUrl)
@@ -117,15 +117,15 @@ class YoutubeAPI:
             {
                 'title': title,
                 'description': description,
-                'channelId': channelId,
-                'tags': selectTags(ticket)
+                'channelId': self.channelId,
+                'tags': self.selectTags(ticket)
             },
             'status':
             {
                 'privacyStatus': ticket.get('Publishing.YouTube.Privacy', 'private'),
                 'embeddable': True,
                 'publicStatsViewable': True,
-                'license': 'creativeCommon',
+                'license': 'creativeCommon', #TODO
             },
         }
     
@@ -192,7 +192,7 @@ class YoutubeAPI:
                 'part': 'snippet,status'
             },
             headers={
-                'Authorization': 'Bearer '+accessToken,
+                'Authorization': 'Bearer ' + self.accessToken,
                 'Content-Type': 'application/json; charset=UTF-8',
                 'X-Upload-Content-Type': mimetype,
                 'X-Upload-Content-Length': size,
@@ -212,7 +212,7 @@ class YoutubeAPI:
             r = requests.put(
                 r.headers['location'],
                 headers={
-                    'Authorization': 'Bearer '+accessToken,
+                    'Authorization': 'Bearer ' + self.accessToken,
                     'Content-Type': mimetype,
                 },
                 data=fp
@@ -319,7 +319,7 @@ class YoutubeAPI:
         return channel['id']
     
     
-    def selectTags(ticket):
+    def selectTags(self, ticket):
         tags = []
     
         if 'Fahrplan.Track' in ticket:

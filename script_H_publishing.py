@@ -78,6 +78,7 @@ config.read('client.conf')
 tracker = c3t_rpc_client.C3TrackerAPI(config['C3Tracker'])
 mediaAPI = media.MediaAPI(config['media.ccc.de'])
 
+#TODO
 sftp = None
 ssh = None
 
@@ -107,15 +108,15 @@ def get_ticket_from_tracker():
 
 def process_ticket(ticket):
 
-    #TODO add here some try magic to catch missing properties
-
     ticket['local_filename_base'] = str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug']
     ticket['local_filename'] = ticket['local_filename_base'] + "." + ticket['EncodingProfile.Extension']
+    ticket['local_filepath'] = os.path.join(ticket['Publishing.Path'], ticket['local_filename'])
     
     if not 'Record.Language' in ticket:
         logging.error("No Record.Language property in ticket")
         raise RuntimeError("No Record.Language property in ticket")
     
+    # TODO remove and use ticket.get('Fahrplan.Abstract', '') instead when used
     if not 'Fahrplan.Abstract' in ticket:
         ticket['Fahrplan.Abstract'] = ''
     if not 'Fahrplan.Subtitle' in ticket:
@@ -126,14 +127,15 @@ def process_ticket(ticket):
     
 
          
-    if not os.path.isfile(ticket['Publishing.Path'] + ticket['local_filename']):
-        raise RuntimeError("Source file does not exist (%s)" % (ticket['Publishing.Path'] + ticket['local_filename']))
     if not os.path.exists(ticket['Publishing.Path']):
         raise RuntimeError("Output path does not exist (%s)" % (ticket['Publishing.Path']))
     else: 
         if not os.access(ticket['Publishing.Path'], os.W_OK):
             raise RuntimeError("Output path is not writable (%s)" % (ticket['Publishing.Path']))
 
+    if not os.path.isfile(ticket['local_filepath']):
+        raise RuntimeError("Source file does not exist (%s)" % (ticket['local_filepath']))
+ 
 
     return True
 
@@ -199,9 +201,9 @@ def mediaFromTracker(ticket):
         infile = ticket['Publishing.Path'] + ticket['local_filename']
         
         outfilename1 = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio1." + ticket['EncodingProfile.Extension']
-        outfile1 = str(ticket['Publishing.Path']) + "/" + outfilename1
+        outfile1 = os.path.join(ticket['Publishing.Path'], outfilename1)
         outfilename2 = str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension']
-        outfile2 = str(ticket['Publishing.Path']) + "/" + outfilename2
+        outfile2 = os.path.join(ticket['Publishing.Path'], outfilename2)
         langs = language.rsplit('-')
         filename1 = str(ticket['Encoding.LanguageTemplate']) % (str(langs[0])) + '.' + str(ticket['EncodingProfile.Extension'])
         filename2 = str(ticket['Encoding.LanguageTemplate']) % (str(langs[1])) + '.' + str(ticket['EncodingProfile.Extension'])
@@ -245,55 +247,58 @@ def youtubeFromTracker(ticket):
 
     tracker.setTicketProperties(ticket['Id'], props)
 
-#def main():
+def main():
 # 'main method'
 
-try:
-    ticket = get_ticket_from_tracker()
-    
-    if ticket:
-        process_ticket(ticket)
+    try:
+        ticket = get_ticket_from_tracker()
         
-        published_to_media = False
-        
-        #TODO for multi lang file: here and reuse same files for media and youtube
-        # or delegate remuxing to tracker...
-
-        logging.debug("encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
-        if ticket['Publishing.YouTube.Enable'] == "yes" and ticket['Publishing.YouTube.EnableProfile'] == "yes":
-            if 'YouTube.Url0' in ticket and ticket['YouTube.Url0'] != "":        
-                logging.debug("publishing on youtube")
-                youtubeFromTracker(ticket)
-    
-        logging.debug("encoding profile media flag: " + ticket['Publishing.Media.EnableProfile'] + " project media flag: " + ticket['Publishing.Media.Enable'])
-        if ticket['Publishing.Media.EnableProfile'] == "yes" and ticket['Publishing.Media.Enable'] == "yes":
-            logging.debug("publishing on media")
-    
-            mediaFromTracker(ticket)
-            published_to_media = True
+        if ticket:
+            process_ticket(ticket)
             
-        logging.info("set ticket done")
-        tracker.setTicketDone(ticket['Id'])
+            published_to_media = False
+            
+            #TODO for multi lang file: split audio out here and reuse same files for media and youtube
 
-        if published_to_media:
-            try:
-                twitter_client.send_tweet(ticket, config['twitter'])
-            except Exception as err:
-                logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
+            if ticket['Publishing.YouTube.Enable'] == "yes" and ticket['Publishing.YouTube.EnableProfile'] == "yes":
+                if not ('YouTube.Url0' in ticket and ticket['YouTube.Url0'] != ""): 
+                    logging.debug("publishing on youtube")
+                    youtubeFromTracker(ticket)
+                else:
+                    logging.debug("No YouTube upload: Video was already uploaded")
+            else:
+                logging.debug("No YouTube upload: encoding profile youtube flag: " + ticket['Publishing.YouTube.EnableProfile'] + " project youtube flag: " + ticket['Publishing.YouTube.Enable'])
+         
+            if ticket['Publishing.Media.EnableProfile'] == "yes" and ticket['Publishing.Media.Enable'] == "yes":
+                logging.debug("publishing on media")
+            
+                mediaFromTracker(ticket)
+                published_to_media = True
+            else:
+                logging.debug("No voctoweb upload: encoding profile media flag: " + ticket['Publishing.Media.EnableProfile'] + " project media flag: " + ticket['Publishing.Media.Enable'])
+                
+            logging.info("set ticket done")
+            tracker.setTicketDone(ticket['Id'])
 
-except c3t_rpc_client.C3TError as err:
-    # we can not notify the tracker, as we might go into an endless loop  
-    logging.error("Tracker communication failed: \n" + str(err))
+            if published_to_media:
+                try:
+                    twitter_client.send_tweet(ticket, config['twitter'])
+                except Exception as err:
+                    logging.error("Error tweeting (but releasing succeeded): \n" + str(err))
 
-# Runtime errors occur when the script is missing ticket attributes or files
-except RuntimeError as err:
-    tracker.setTicketFailed(ticket['Id'], str(err))
-    logging.error("Publishing failed: " + str(err))
-# Exceptions are errors in the publishing Python source code   
-except Exception as err:
-    tracker.setTicketFailed(ticket['Id'], traceback.format_exc())
-    logging.error("Publishing failed: \n" + traceback.format_exc())
+    except c3t_rpc_client.C3TError as err:
+        # we can not notify the tracker, as we might go into an endless loop  
+        logging.error("Tracker communication failed: \n" + str(err))
+
+    # Runtime errors occur when the script is missing ticket attributes or files
+    except RuntimeError as err:
+        tracker.setTicketFailed(ticket['Id'], str(err))
+        logging.error("Publishing failed: " + str(err))
+    # Exceptions are errors in the publishing Python source code   
+    except Exception as err:
+        tracker.setTicketFailed(ticket['Id'], traceback.format_exc())
+        logging.error("Publishing failed: \n" + traceback.format_exc())
 
 
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    main()
