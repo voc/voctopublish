@@ -33,7 +33,7 @@ do
 done
 
 WINNER=$(python2 $BASEDIR/select.py $TMPDIR/*.png)
-ffmpeg -loglevel error -i $WINNER -filter_complex:v 'scale=192:-1, pad=192:144:0:((oh-ih)/2)' -f image2 -vcodec mjpeg -q:v 0 $outjpg
-ffmpeg -loglevel error -i $WINNER -filter_complex:v 'scale=640:360' -f image2 -vcodec mjpeg -q:v 0 $outjpg_preview
+ffmpeg -loglevel error -i $WINNER -filter_complex:v 'scale=400:-1' -f image2 -vcodec mjpeg -q:v 0 $outjpg
+ffmpeg -loglevel error -i $WINNER                                  -f image2 -vcodec mjpeg -q:v 0 $outjpg_preview
 
 rm -rf $TMPDIR
