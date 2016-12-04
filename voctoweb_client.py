@@ -29,9 +29,8 @@ import requests
 from ticket_module import Ticket
 
 
-class MediaApiClient:
+class VoctowebClient:
     def __init__(self, t: Ticket):
-        self.logger = logging.getLogger()
         self.t = t
         self.ssh = None
         self.sftp = None
@@ -40,7 +39,7 @@ class MediaApiClient:
         """
         Open an SSH connection to the media.ccc.de CDN master
         """
-        self.logger.info("## Establishing SSH connection ##")
+        logging.info("Establishing SSH connection")
         self.ssh = paramiko.SSHClient()
         # TODO set hostkey handling via config
         # client.get_host_keys().add(upload_host,'ssh-rsa', key)
@@ -49,20 +48,20 @@ class MediaApiClient:
         try:
             self.ssh.connect(self.t.media_host, username=self.t.media_user)
         except paramiko.AuthenticationException:
-            self.logger.error("Authentication failed. Please check credentials")
+            logging.error("Authentication failed. Please check credentials")
             sys.exit(1)
         except paramiko.BadHostKeyException:
-            self.logger.error("Bad host key. Check your known_hosts file")
+            logging.error("Bad host key. Check your known_hosts file")
             sys.exit(1)
         except paramiko.PasswordRequiredException:
-            self.logger.error("Password required. No ssh key in the agent?")
+            logging.error("Password required. No ssh key in the agent?")
             sys.exit(1)
         except paramiko.SSHException:
-            self.logger.error("SSH negotiation failed")
+            logging.error("SSH negotiation failed")
             sys.exit(1)
 
         self.sftp = self.ssh.open_sftp()
-        self.logger.info("SSH connection established")
+        logging.info("SSH connection established")
 
     def upload_thumbs(self):
         """
@@ -70,7 +69,7 @@ class MediaApiClient:
         :param t:
         :param sftp:
         """
-        self.logger.info("## uploading thumbs ##")
+        logging.info("## uploading thumbs ##")
 
         # check if ssh connection is open
         if self.ssh is None:
@@ -79,17 +78,17 @@ class MediaApiClient:
         thumbs_ext = {".jpg", "_preview.jpg"}
         for ext in thumbs_ext:
             try:
-                self.logger.debug(
+                logging.debug(
                     'Uploading ' + self.t.path + self.t.filename_base + ext + " to " + self.t.media_thump_path + self.t.local_filename_base + ext)
-                self.sftp.put(self.t.pusblishing_path + self.t.local_filename_base + ext,
+                self.sftp.put(self.t.video_base + self.t.local_filename_base + ext,
                               self.t.media_thump_path + self.t.local_filename_base + ext)
             except paramiko.SSHException as err:
-                self.logger.error("could not upload thumb because of SSH problem")
-                self.logger.error(err)
+                logging.error("could not upload thumb because of SSH problem")
+                logging.error(err)
                 sys.exit(1)
             except IOError as err:
-                self.logger.error("could not create file in upload directory")
-                self.logger.error(err)
+                logging.error("could not create file in upload directory")
+                logging.error(err)
                 sys.exit(1)
 
         print("uploading thumbs done")
@@ -103,7 +102,7 @@ class MediaApiClient:
         :param filename:
         :param folder:
         """
-        self.logger.info("## uploading " + self.t.pusblishing_path + filename + " ##")
+        logging.info("uploading " + self.t.video_base + filename)
 
         # Check if ssh connection is open.
         if self.sftp is None:
@@ -118,7 +117,7 @@ class MediaApiClient:
                 try:
                     self.sftp.mkdir(self.t.media_path + folder)
                 except IOError as e:
-                    self.logger.error(e)
+                    logging.error(e)
 
         # Check if the file already exists and remove it
         try:
@@ -129,20 +128,20 @@ class MediaApiClient:
             try:
                 self.sftp.remove(self.t.media_path + folder + "/" + filename)
             except IOError as e:
-                self.logger.error(e)
+                logging.error(e)
 
         # Upload the file
         try:
-            self.sftp.put(self.t.pusblishing_path + local_filename,
+            self.sftp.put(self.t.video_base + local_filename,
                           self.t.media_path + folder + "/" + filename)
         except paramiko.SSHException as err:
-            self.logger.error("could not upload recording because of SSH problem")
-            self.logger.error(err)
+            logging.error("could not upload recording because of SSH problem")
+            logging.error(err)
         except IOError as err:
-            self.logger.error("could not create file in upload directory")
-            self.logger.error(err)
+            logging.error("could not create file in upload directory")
+            logging.error(err)
 
-        self.logger.info("uploading " + filename + " done")
+        logging.info("uploading " + filename + " done")
 
     # generate thumbnails for media.ccc.de
     def make_thumbs(self):
@@ -150,21 +149,21 @@ class MediaApiClient:
         This function calls the thumbnail generator script
         :return:
         """
-        self.logger.info(
-            ("## generating thumbs for " + self.t.pusblishing_path + self.t.local_filename + " ##"))
+        logging.info(
+            ("generating thumbs for " + self.t.video_base + self.t.local_filename))
 
         try:
             # todo this doesn't have to be a subprocess, build thumbs in python
             subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh",
-                                   self.t.pusblishing_path + self.t.local_filename,
-                                   self.t.pusblishing_path])
+                                   self.t.video_base + self.t.local_filename,
+                                   self.t.video_base])
         except subprocess.CalledProcessError as err:
-            self.logger.error("A fault occurred")
-            self.logger.error("Fault code: %d" % err.returncode)
-            self.logger.error("Fault string: %s" % err.output)
-            self.logger.error("Command %s" % err.cmd)
+            logging.error("A fault occurred")
+            logging.error("Fault code: %d" % err.returncode)
+            logging.error("Fault string: %s" % err.output)
+            logging.error("Command %s" % err.cmd)
 
-        self.logger.info("thumbnails created")
+        logging.info("thumbnails created")
 
     def create_event(self, api_url, api_key, orig_language):
         """
@@ -175,7 +174,7 @@ class MediaApiClient:
         :param orig_language:
         :return:
         """
-        self.logger.info(("## generating new event on " + api_url + " ##"))
+        logging.info(("generating new event on " + api_url))
 
         # prepare some variables for the api call
         url = api_url + 'events'
@@ -186,7 +185,7 @@ class MediaApiClient:
         # API code https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': api_key,
-                   'acronym': self.t.profile_slug,
+                   'acronym': self.t.media_slug,
                    'event': {
                        'guid': self.t.guid,
                        'slug': self.t.slug,
@@ -196,7 +195,7 @@ class MediaApiClient:
                        'original_language': orig_language,
                        'thumb_filename': self.t.local_filename_base + ".jpg",
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
-                       'conference_id': self.t.slug,
+                       'conference_id': self.t.media_slug,
                        'description': self.t.abstract,
                        'date': self.t.date,
                        'persons': self.t.people,
@@ -205,12 +204,11 @@ class MediaApiClient:
                        'release_date': str(time.strftime("%Y-%m-%d"))
                    }
                    }
-        self.logger.debug(payload)
+        logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
         # call media API
         r = ''
         try:
-            self.logger.debug("api url: " + url)
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
             r = requests.post(url, headers=headers, data=json.dumps(payload))
@@ -261,7 +259,7 @@ class MediaApiClient:
         if length == 0:
             raise RuntimeError("Error: file length is 0")
         else:
-            self.logger.debug("filesize: " + str(file_size) + " length: " + str(length))
+            logging.debug("filesize: " + str(file_size) + " length: " + str(length))
             ret.append(file_size)
             ret.append(length)
             ret.append(width)
@@ -271,17 +269,17 @@ class MediaApiClient:
     def create_recording(self, local_filename, filename, api_url, api_key, folder, language, hq, html5):
         """
         create_recording a file on media
-        :param local_filename:
-        :param filename:
+        :param local_filename: this is not necessarily the value from the ticket
+        :param filename: this is not necessarily the value from the ticket
         :param api_url:
         :param api_key:
-        :param folder:
+        :param folder: this is not necessarily the value from the ticket
         :param language:
         :param hq:
         :param html5:
         :return:
         """
-        self.logger.info(("## publishing " + filename + " to " + api_url + " ##"))
+        logging.info(("publishing " + filename + " to " + api_url))
 
         # make sure we have the file size and length
         ret = []
@@ -306,7 +304,7 @@ class MediaApiClient:
                                  'length': str(ret[1])
                                  }
                    }
-        self.logger.debug(payload)
+        logging.debug(payload)
         try:
             # TODO ssl verify by config
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
@@ -321,5 +319,5 @@ class MediaApiClient:
         if r.status_code != 200 and r.status_code != 201:
             raise RuntimeError(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
 
-        self.logger.info(("publishing " + filename + " done"))
+        logging.info(("publishing " + filename + " done"))
         return True

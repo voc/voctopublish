@@ -14,6 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 
 class Ticket:
     """
@@ -43,16 +44,17 @@ class Ticket:
         self.language_index = int(self._validate_('Encoding.LanguageIndex'))
         self.language_template = self._validate_('Encoding.LanguageTemplate')
         self.download_base_url = self._validate_('Publishing.Base.Url')
-        self.pusblishing_path = self._validate_('Pusblishing.Path')
+        self.publishing_path = self._validate_('Publishing.Path')
         self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
         self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
-        self.profile_media_enable = self._validate('Publishing.Media.EnableProfile')
+        self.profile_media_enable = self._validate_('Publishing.Media.EnableProfile')
         self.media_enable = self._validate_('Publishing.Media.Enable')
         self.mime_type = self._validate_('Publishing.Media.MimeType')
         self.media_thump_path = self._validate_('Publishing.Media.Thumbpath')
         self.media_host = self._validate_('Publishing.Media.Host')
         self.media_user = self._validate_('Publishing.Media.User')
         self.media_path = self._validate_('Publishing.Media.Path')
+        self.media_slug = self._validate_('Publishing.Media.Slug')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')
@@ -66,12 +68,20 @@ class Ticket:
         if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
             self.has_youtube_url = True
 
-
     def _validate_(self, key):
         value = None
         if key in self.__tracker_ticket:
-            value = str(self.__tracker_ticket[key])
-        
+            value = self.__tracker_ticket[key]
+            if not value:
+                logging.debug(key + ' is empty in ticket')
+                raise TicketException(key + ' is empty in ticket')
+            else:
+                value = str(value)
+        else:
+            logging.debug(key + ' is missing in ticket')
+            raise TicketException(key + ' is missing in ticket')
         return value
-    
-    
+
+
+class TicketException(Exception):
+    pass

@@ -136,7 +136,7 @@ def getVersion():
 ### check for new ticket on tracker an get assignement 
 def assignNextUnassignedForState(from_state, to_state, url, group, host, secret):
     tmp_args = [from_state, to_state]
-    xml = open_rpc("C3TT.assignNextUnassignedForState",tmp_args,url, group, host, secret)
+    xml = open_rpc("C3TT.assignNextUnassignedForState", tmp_args, url, group, host, secret)
     # if get no xml there seems to be no ticket for this job
     if xml == False:
         return False
