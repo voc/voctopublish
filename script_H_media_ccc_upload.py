@@ -89,7 +89,7 @@ class Publisher:
             self.api_key = self.config['media.ccc.de']['api_key']
             self.media = MediaApiClient(self.ticket)
 
-       # twitter
+        # twitter
         if self.config['twitter']['enable'] == 'True':
             self.token = self.config['twitter']['token']
             self.token_secret = self.config['twitter']['token_secret']
@@ -119,7 +119,7 @@ class Publisher:
         Get a ticket from the tracker an populate local variables
         """
 
-        logging.info('getting ticket from ' + url)
+        logging.info('getting ticket from tracker')
         logging.info('=========================================')
 
         # check if we got a new ticket

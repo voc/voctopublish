@@ -192,7 +192,7 @@ class MediaApiClient:
                        'slug': self.t.slug,
                        'title': self.t.title,
                        'subtitle': self.t.subtitle,
-                       'link': "https://c3voc.de",  # todo do somesthing more usefull here
+                       'link': "https://c3voc.de",  # todo do something more use full here
                        'original_language': orig_language,
                        'thumb_filename': self.t.local_filename_base + ".jpg",
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
