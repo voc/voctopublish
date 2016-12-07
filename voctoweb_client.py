@@ -79,15 +79,11 @@ class VoctowebClient:
                 self.sftp.put(self.t.video_base + self.t.local_filename_base + ext,
                               self.t.media_thump_path + self.t.local_filename_base + ext)
             except paramiko.SSHException as err:
-                logging.error("could not upload thumb because of SSH problem")
-                logging.error(err)
-                sys.exit(1)
+                raise VoctowebException('could not upload thumb because of SSH problem ' + str(err))
             except IOError as err:
-                logging.error("could not create file in upload directory")
-                logging.error(err)
-                sys.exit(1)
+                raise VoctowebException('could not create file in upload directory ' + str(err))
 
-        print("uploading thumbs done")
+        logging.info('uploading thumbs done')
 
     def upload_file(self, local_filename, filename, folder):
         """
