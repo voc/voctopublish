@@ -40,7 +40,7 @@ class Publisher:
         self.logger = logging.getLogger()
 
         ch = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(filename)s - %(lineno)s - %(name)s - %(levelname)s - %(message)s')
         # uncomment the next line to add filename and line number to logging output
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
 
@@ -177,8 +177,10 @@ class Publisher:
         This methods also start the scp uploads and handles multi language audio
         """
         logging.info("creating event on " + self.api_url)
-        multi_language = False
-        languages = self.ticket.language.rsplit('-')
+        #multi_language = False
+
+
+
 
         # if we have an audio file we skip this part
         if self.ticket.profile_slug not in ["mp3", "opus", "mp3-2", "opus-2"]:

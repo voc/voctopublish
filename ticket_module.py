@@ -41,7 +41,7 @@ class Ticket:
         self.video_base = self._validate_('Publishing.Path')
         self.output = self.video_base # TODO remove
         self.language = self._validate_('Record.Language')
-        self.language_index = int(self._validate_('Encoding.LanguageIndex'))
+        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
         self.download_base_url = self._validate_('Publishing.Base.Url')
         self.publishing_path = self._validate_('Publishing.Path')

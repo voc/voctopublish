@@ -44,17 +44,17 @@ class VoctowebClient:
         # TODO set hostkey handling via config
         # client.get_host_keys().add(upload_host,'ssh-rsa', key)
         self.ssh.load_system_host_keys()
-        # self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             self.ssh.connect(self.t.media_host, username=self.t.media_user)
-        except paramiko.AuthenticationException:
-            raise VoctowebException('Authentication failed. Please check credentials')
+        except paramiko.AuthenticationException as err:
+            raise VoctowebException('Authentication failed. Please check credentials ' + str(err))
         except paramiko.BadHostKeyException:
             raise VoctowebException('Bad host key. Check your known_hosts file')
-        except paramiko.PasswordRequiredException:
-            raise VoctowebException('Password required. No ssh key present?')
-        except paramiko.SSHException:
-            raise VoctowebException('SSH negotiation failed')
+        except paramiko.PasswordRequiredException as err:
+            raise VoctowebException('Password required. No ssh key present? ' + str(err) )
+        except paramiko.SSHException as err:
+            raise VoctowebException('SSH negotiation failed ' + str(err))
 
         self.sftp = self.ssh.open_sftp()
         logging.info('SSH connection established to ' + str(self.t.media_host))
@@ -127,11 +127,9 @@ class VoctowebClient:
             self.sftp.put(self.t.video_base + local_filename,
                           self.t.media_path + folder + "/" + filename)
         except paramiko.SSHException as err:
-            logging.error("could not upload recording because of SSH problem")
-            logging.error(err)
+            raise VoctowebException('could not upload recording because of SSH problem ' + str(err))
         except IOError as err:
-            logging.error("could not create file in upload directory")
-            logging.error(err)
+            raise VoctowebException('could not create file in upload directory ' +  str(err))
 
         logging.info("uploading " + filename + " done")
 
@@ -317,3 +315,5 @@ class VoctowebClient:
 
 class VoctowebException(Exception):
     pass
+    #def __inti__(self, message, erros):
+    #    super(VoctowebException, self).__init__(message)
