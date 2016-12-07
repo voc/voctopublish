@@ -39,7 +39,7 @@ class VoctowebClient:
         """
         Open an SSH connection to the media.ccc.de CDN master
         """
-        logging.info("Establishing SSH connection")
+        logging.info('Establishing SSH connection')
         self.ssh = paramiko.SSHClient()
         # TODO set hostkey handling via config
         # client.get_host_keys().add(upload_host,'ssh-rsa', key)
@@ -48,20 +48,16 @@ class VoctowebClient:
         try:
             self.ssh.connect(self.t.media_host, username=self.t.media_user)
         except paramiko.AuthenticationException:
-            logging.error("Authentication failed. Please check credentials")
-            sys.exit(1)
+            raise VoctowebException('Authentication failed. Please check credentials')
         except paramiko.BadHostKeyException:
-            logging.error("Bad host key. Check your known_hosts file")
-            sys.exit(1)
+            raise VoctowebException('Bad host key. Check your known_hosts file')
         except paramiko.PasswordRequiredException:
-            logging.error("Password required. No ssh key in the agent?")
-            sys.exit(1)
+            raise VoctowebException('Password required. No ssh key present?')
         except paramiko.SSHException:
-            logging.error("SSH negotiation failed")
-            sys.exit(1)
+            raise VoctowebException('SSH negotiation failed')
 
         self.sftp = self.ssh.open_sftp()
-        logging.info("SSH connection established")
+        logging.info('SSH connection established to ' + str(self.t.media_host))
 
     def upload_thumbs(self):
         """
@@ -321,3 +317,7 @@ class VoctowebClient:
 
         logging.info(("publishing " + filename + " done"))
         return True
+
+
+class VoctowebException(Exception):
+    pass
