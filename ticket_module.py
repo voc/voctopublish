@@ -24,6 +24,10 @@ class Ticket:
     def __init__(self, ticket, ticket_id):
         self.__tracker_ticket = ticket
         self.ticket_id = ticket_id
+        if self._validate_('EncodingProfile.IsMaster') =='yes':
+            self.master = True
+        else:
+            self.master = False
         self.slug = self._validate_('Fahrplan.Slug')
         self.guid = self._validate_('Fahrplan.GUID')
         self.fahrplan_id = self._validate_('Fahrplan.ID')

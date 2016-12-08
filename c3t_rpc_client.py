@@ -20,157 +20,197 @@ import hmac
 import socket
 import urllib
 import xml
-import sys
 import logging
 
-logger = logging.getLogger()
+from ticket_module import Ticket
 
-## client constructor #####
-# group: worker group
-# secret: client secret
-# host: client hostname (will be taken from local host if set to None)
-# url: tracker url (without the rpc)
-# method: method to access
-############################
-def C3TClient(url, method, group, host, secret, args):
-    url = url + "rpc"
-#     if host == None:
-#         host = socket.getfqdn()
-        
-    #####################
-    # generate signature
-    #####################
-    # assemble static part of signature arguments
-    # 1. URL  2. method name  3. worker group token  4. hostname
-    sig_args = urllib.parse.quote(url  + "&" + method + "&" + group + "&" + host + "&", "~")
-    
-    #### add method args
-    if len(args) > 0:
-        i = 0
-        while i < len(args):
-            arg = args[i]
-            if isinstance(arg, bytes):
-                arg = arg.decode()
-            if isinstance(arg, dict):
-                kvs = []
-                for k, v in args[i].items():
-                    kvs.append(urllib.parse.quote('['+k+']', '~')+'='+urllib.parse.quote(v, '~'))
-                arg = '&'.join(kvs)
-            else:
-                arg = urllib.parse.quote(str(arg), '~')
 
-            sig_args = str(sig_args) + str(arg)
-            if i < (len(args) -1):
-                sig_args = sig_args + urllib.parse.quote('&')
-            i = i + 1
-    
-    #### generate the hmac hash with key
-    hash =  hmac.new(bytes(secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
-    
-    #### add signature as last parameter to the arg list
-    args.append(hash.hexdigest())
-    
-    #### create xmlrpc client
-    logger.debug('creating XML RPC proxy: ' + url + "?group=" + group + "&hostname=" + host)
-    try:
-        proxy = xmlrpc.client.ServerProxy(url + "?group=" + group + "&hostname=" + host);
-    except xmlrpc.client.Fault as err:
-        logger.error("A fault occurred")
-        logger.error("Fault code: %d" % err.faultCode)
-        logger.error("Fault string: %s" % err.faultString)
-        sys.exit(-1)
-    except xmlrpc.client.ProtocolError as err:
-        logger.error("A protocol error occurred")
-        logger.error("URL: %s" % err.url)
-        logger.error("HTTP/HTTPS headers: %s" % err.headers)
-        logger.error("Error code: %d" % err.errcode)
-        logger.error("Error message: %s" % err.errmsg)
-        sys.exit(-1)
-    except socket.gaierror as err:
-        logger.error("A socket error occurred")
-        logger.error(err)
-        sys.exit(-1)
-    except xmlrpc.client.ProtocolError as err:
-        logger.error("A Protocol occurred")
-        logger.error(err)
-        sys.exit(-1)
-    
-    #### call the given method with args
-    try:
-        logger.debug(method + str(args))
-        result = getattr(proxy,method)(*args)
-    except xml.parsers.expat.ExpatError as err:
-        logger.error("A expat err occured")
-        logger.error(err)
-        sys.exit(-1)
-    except xmlrpc.client.Fault as err:
-        logger.error("A fault occurred")
-        logger.error("Fault code: %d" % err.faultCode)
-        logger.error("Fault string: %s" % err.faultString)
-        sys.exit(-1)
-    except xmlrpc.client.ProtocolError as err:
-        logger.error("A protocol error occurred")
-        logger.error("URL: %s" % err.url)
-        logger.error("HTTP/HTTPS headers: %s" % err.headers)
-        logger.error("Error code: %d" % err.errcode)
-        logger.error("Error message: %s" % err.errmsg)
-        sys.exit(-1)
-    except OSError as err:
-        logger.error("A OS error occurred")
-        logger.error("Error code: %d" % err.errcode)
-        logger.error("Error message: %s" % err.errmsg)
-        sys.exit(-1)
+class C3TClient:
+    """
+    group: worker group
+    secret: client secret
+    host: client hostname (will be taken from local host if set to None)
+    url: tracker url (without the rpc)
+    """
 
-    #### return the result
-    return result
+    def __init__(self, t: Ticket, url, group, host, secret):
+        self.t = t
+        self.url = url + "rpc"
+        self.group = group
+        self.host = host
+        self.secret = secret
 
-def open_rpc(method, args, url, group, host, secret):
-    result = C3TClient(url, method, group, host, secret, args)
-    return result
+    def __gen_signature(self, method, args):
+        """
+        generate signature
+        assemble static part of signature arguments
+        1. URL  2. method name  3. worker group token  4. hostname
+        :param method:
+        :param args:
+        :return:
+        """
+        sig_args = urllib.parse.quote(self.url + "&" + method + "&" + self.group + "&" + self.host + "&", "~")
 
-### get Tracker Version
-def getVersion():
-    tmp_args = ["1"];
-    return str(open_rpc("C3TT.getVersion",tmp_args))
+        # add method args
+        if len(args) > 0:
+            i = 0
+            while i < len(args):
+                arg = args[i]
+                if isinstance(arg, bytes):
+                    arg = arg.decode()
+                if isinstance(arg, dict):
+                    kvs = []
+                    for k, v in args[i].items():
+                        kvs.append(urllib.parse.quote('[' + k + ']', '~') + '=' + urllib.parse.quote(v, '~'))
+                    arg = '&'.join(kvs)
+                else:
+                    arg = urllib.parse.quote(str(arg), '~')
 
-### check for new ticket on tracker an get assignement 
-def assignNextUnassignedForState(from_state, to_state, url, group, host, secret):
-    tmp_args = [from_state, to_state]
-    xml = open_rpc("C3TT.assignNextUnassignedForState", tmp_args, url, group, host, secret)
-    # if get no xml there seems to be no ticket for this job
-    if xml == False:
-        return False
-    else:
-        return xml['id']
+                sig_args = str(sig_args) + str(arg)
+                if i < (len(self.args) - 1):
+                    sig_args = sig_args + urllib.parse.quote('&')
+                i += 1
 
-### set ticket properties 
-def setTicketProperties(id, properties, url, group, host, secret):
-    tmp_args = [id, properties]
-    xml = open_rpc("C3TT.setTicketProperties", tmp_args, url, group, host, secret)
-    if xml == False:
-        logger.error("no xml in answer")
-        return False
-    else:
-        return True
+        # generate the hmac hash with the key
+        hash = hmac.new(bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
+        return hash.hexdigest()
 
-### get ticket properties 
-def getTicketProperties(id, url, group, host, secret):
-    tmp_args = [id]
-    xml = open_rpc("C3TT.getTicketProperties", tmp_args, url, group, host, secret)
-    if xml == False:
-        logger.error("no xml in answer")
-        return None
-    else:
-        return xml
+    def __open_rpc(self, method, args):
+        """
+        create xmlrpc client
+        :param method:
+        :param args:
+        :return:
+        """
+        logging.debug('creating XML RPC proxy: ' + self.url + "?group=" + self.group + "&hostname=" + self.host)
+        try:
+            proxy = xmlrpc.client.ServerProxy(self.url + "?group=" + self.group + "&hostname=" + self.host)
+        except xmlrpc.client.Fault as err:
+            msg = "A fault occurred\n"
+            msg += "Fault code: %d \n" % err.faultCode
+            msg += "Fault string: %s" % err.faultString
+            raise C3TTExcption(msg) from err
 
-### set Ticket status on done
-def setTicketDone(id, url, group, host, secret):
-    tmp_args = [id]
-    xml = open_rpc("C3TT.setTicketDone", tmp_args , url, group, host, secret)
-    logger.debug(xml)
-    
-### set ticket status on failed an supply a error text
-def setTicketFailed(id,error , url, group, host, secret):
-    enc_error = error.encode('ascii', 'xmlcharrefreplace')
-    tmp_args = [id, enc_error]
-    xml = open_rpc("C3TT.setTicketFailed", tmp_args , url, group, host, secret)
+        except xmlrpc.client.ProtocolError as err:
+            msg = "A protocol error occurred\n"
+            msg += "URL: %s \n" % err.url
+            msg += "HTTP/HTTPS headers: %s\n" % err.headers
+            msg += "Error code: %d\n" % err.errcode
+            msg += "Error message: %s" % err.errmsg
+            raise C3TTExcption(msg) from err
+
+        except socket.gaierror as err:
+            msg = "A socket error occurred\n"
+            msg += err
+            raise C3TTExcption(msg) from err
+
+        except xmlrpc.client.ProtocolError as err:
+            msg = "A Protocol occurred\n"
+            msg += err
+            raise C3TTExcption(msg) from err
+
+        args.append(self.__gen_signature(method, args))
+
+        try:
+            logging.debug(method + str(args))
+            result = getattr(proxy, method)(*args)
+        except xml.parsers.expat.ExpatError as err:
+            msg = "A expat err occured\n"
+            msg += err
+            raise C3TTExcption(msg) from err
+        except xmlrpc.client.Fault as err:
+            msg = "A fault occurred\n"
+            msg += "Fault code: %d\n" % err.faultCode
+            msg += "Fault string: %s" % err.faultString
+            raise C3TTExcption(msg) from err
+        except xmlrpc.client.ProtocolError as err:
+            msg = "A protocol error occurred\n"
+            msg += "URL: %s\n" % err.url
+            msg += "HTTP/HTTPS headers: %s\n" % err.headers
+            msg += "Error code: %d\n" % err.errcode
+            msg += "Error message: %s" % err.errmsg
+            raise C3TTExcption(msg) from err
+        except OSError as err:
+            msg = "A OS error occurred\n"
+            msg += "Error code: %d\n" % err.errcode
+            msg += "Error message: %s" % err.errmsg
+            raise C3TTExcption(msg) from err
+
+        return result
+
+    def getVersion(self):
+        """
+        get Tracker Version
+        :return:
+        """
+        tmp_args = ["1"];
+        return str(self.__open_rpc("C3TT.getVersion", tmp_args))
+
+    def assignNextUnassignedForState(self, from_state, to_state):
+        """
+        check for new ticket on tracker an get assignement
+        :param from_state:
+        :param to_state:
+        :return:
+        """
+        tmp_args = [from_state, to_state]
+        ret = self.__open_rpc("C3TT.assignNextUnassignedForState", tmp_args)
+        # if get no xml there seems to be no ticket for this job
+        if not ret:
+            return False
+        else:
+            return ret['id']
+
+    def setTicketProperties(self, id, properties):
+        """
+        set ticket properties
+        :param id:
+        :param properties:
+        :return:
+        """
+        tmp_args = [id, properties]
+        ret = self.__open_rpc("C3TT.setTicketProperties", tmp_args)
+        if not ret:
+            logging.error("no xml in answer")
+            return False
+        else:
+            return True
+
+    def getTicketProperties(self, id):
+        """
+        get ticket properties
+        :param id:
+        :return:
+        """
+        tmp_args = [id]
+        ret = self.__open_rpc("C3TT.getTicketProperties", tmp_args)
+        if not ret:
+            logging.error("no xml in answer")
+            return None
+        else:
+            return ret
+
+    def setTicketDone(self, id):
+        """
+        set Ticket status on done
+        :param id:
+        :return:
+        """
+        tmp_args = [id]
+        ret = self.__open_rpc("C3TT.setTicketDone", tmp_args)
+        logging.debug(ret)
+
+    def setTicketFailed(self, id, error):
+        """
+        set ticket status on failed an supply a error text
+        :param id:
+        :param error:
+        :return:
+        """
+        enc_error = error.encode('ascii', 'xmlcharrefreplace')
+        tmp_args = [id, enc_error]
+        self.__open_rpc("C3TT.setTicketFailed", tmp_args)
+
+
+class C3TTExcption(Exception):
+    pass

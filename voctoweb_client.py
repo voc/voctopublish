@@ -20,7 +20,6 @@ import json
 import logging
 import os
 import subprocess
-import sys
 import time
 
 import paramiko
@@ -148,17 +147,13 @@ class VoctowebClient:
                                    self.t.video_base + self.t.local_filename,
                                    self.t.video_base])
         except subprocess.CalledProcessError as err:
-            logging.error("A fault occurred")
-            logging.error("Fault code: %d" % err.returncode)
-            logging.error("Fault string: %s" % err.output)
-            logging.error("Command %s" % err.cmd)
+            raise VoctowebException('Error creating thumbs ' + 'Command: ' + str(err.cmd) + ' fault string ' + str(err))
 
         logging.info("thumbnails created")
 
     def create_event(self, api_url, api_key, orig_language):
         """
-        # create a new event on the media.ccc.de API host
-
+        Create a new event on the media.ccc.de API host
         :param api_url:
         :param api_key:
         :param orig_language:
@@ -221,16 +216,15 @@ class VoctowebClient:
         file_size = int(file_size / 1024 / 1024)
 
         try:
-            global r
             r = subprocess.check_output(
-                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.video_base + local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
+                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.t.video_base + local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
                 shell=True)
         except:
-            raise RuntimeError("ERROR: could not get duration " + r)
+            raise RuntimeError("ERROR: could not get duration")
 
         length = int(r.decode())
 
-        if self.t.slug not in ["mp3", "opus", "mp3-2", "opus-2"]:
+        if self.t.mime_type.startswith('video'):
             try:
                 r = subprocess.check_output(
                     'ffmpeg -i ' + self.t.video_base + local_filename + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
@@ -274,7 +268,7 @@ class VoctowebClient:
         # make sure we have the file size and length
         ret = []
         if not self.get_file_details(local_filename, ret):
-            return False
+            raise VoctowebException('could not get file details')
 
         # API code https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/recordings_controller.rb
         url = api_url + 'recordings'
@@ -294,23 +288,24 @@ class VoctowebClient:
                                  'length': str(ret[1])
                                  }
                    }
-        logging.debug(payload)
+        logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
+
         try:
             # TODO ssl verify by config
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
             r = requests.post(url, headers=headers, data=json.dumps(payload))
-        except requests.exceptions.SSLError:
-            raise RuntimeError("ssl cert error")
+        except requests.exceptions.SSLError as err:
+            raise RuntimeError("ssl cert error " +  str(err))
         except requests.packages.urllib3.exceptions.MaxRetryError as err:
             raise RuntimeError("Error during creating of event: " + str(err))
-        except:
-            raise RuntimeError("Unhandelt ssl / retry problem")
 
         if r.status_code != 200 and r.status_code != 201:
             raise RuntimeError(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
 
+        print(r.content['id'])
+
         logging.info(("publishing " + filename + " done"))
-        return True
+        return r.content['id']
 
 
 class VoctowebException(Exception):

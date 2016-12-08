@@ -20,7 +20,6 @@ import socket
 import sys
 import logging
 import os
-import re
 import subprocess
 
 import c3t_rpc_client as c3t
@@ -40,7 +39,8 @@ class Publisher:
         self.logger = logging.getLogger()
 
         ch = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter('%(asctime)s - %(filename)s - %(lineno)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            '%(asctime)s - %(filename)s - %(lineno)s - %(name)s - %(levelname)s - %(message)s')
         # uncomment the next line to add filename and line number to logging output
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
 
@@ -91,7 +91,7 @@ class Publisher:
                 logging.debug(e)
                 sys.exit(-1)
 
-        # media
+        # voctoweb
         if self.config['media.ccc.de']['enable']:
             self.api_url = self.config['media.ccc.de']['api_url']
             self.api_key = self.config['media.ccc.de']['api_key']
@@ -121,9 +121,10 @@ class Publisher:
         if self.ticket.profile_media_enable == "yes" and self.ticket.media_enable == "yes":
             logging.debug("publishing on media")
             try:
-                self.media_from_tracker()
+                self.voctoweb_from_tracker()
             except Exception as err:
-                c3t.setTicketFailed(self.ticket.ticket_id, 'Publishing failed: \n' + str(err), self.tracker_url, self.group,
+                c3t.setTicketFailed(self.ticket.ticket_id, 'Publishing failed: \n' + str(err), self.tracker_url,
+                                    self.group,
                                     self.host, self.secret)
                 logging.error(err)
                 sys.exit(-1)
@@ -132,7 +133,6 @@ class Publisher:
         """
         Get a ticket from the tracker an populate local variables
         """
-
         logging.info('requesting ticket from tracker')
 
         # check if we got a new ticket
@@ -148,80 +148,50 @@ class Publisher:
             t = Ticket(tracker_ticket, ticket_id)
 
             if not os.path.isfile(t.video_base + t.local_filename):
-                logging.error("Source file does not exist (%s)" % (t.video_base + t.local_filename))
-                c3t.setTicketFailed(t.ticket_id, "Source file does not exist (%s)" % (t.video_base + t.local_filename),
-                                    self.tracker_url, self.group,
-                                    self.host, self.secret)
-                sys.exit(-1)
-
+                raise IOError('Source file does not exist (%s)' % (t.video_base + t.local_filename))
             if not os.path.exists(t.output):
-                logging.error("Output path does not exist (%s)" % t.output)
-                c3t.setTicketFailed(t.ticket_id, "Output path does not exist (%s)" % t.output, self.tracker_url,
-                                    self.group, self.host, self.secret)
-                sys.exit(-1)
+                raise IOError("Output path does not exist (%s)" % t.output)
             else:
                 if not os.access(t.output, os.W_OK):
-                    logging.error("Output path is not writable (%s)" % t.output)
-                    c3t.setTicketFailed(t.ticket_id, "Output path is not writable (%s)" % t.output, self.tracker_url,
-                                        self.group, self.host, self.secret)
-                    sys.exit(-1)
+                    raise IOError("Output path is not writable (%s)" % t.output)
         else:
-            logging.warning("No ticket for this task, exiting")
+            logging.info("No ticket to publish, exiting")
             sys.exit(0)
 
         return t
 
-    def media_from_tracker(self):
+    def voctoweb_from_tracker(self):
         """
-        Create a event on media a media.ccc.de instance. This includes creating a event and a recording for each media file.
+        Create a event on an voctomix instance. This includes creating a event and a recording for each media file.
         This methods also start the scp uploads and handles multi language audio
         """
         logging.info("creating event on " + self.api_url)
-        #multi_language = False
 
+        # audio files don't need the following steps
+        if self.ticket.mime_type.startswith('video'):
+            # get original language. We should always be the first language
+            orig_language = self.ticket.languages[0]
 
-
-
-        # if we have an audio file we skip this part
-        if self.ticket.profile_slug not in ["mp3", "opus", "mp3-2", "opus-2"]:
-
-            # get original language. We assume this is always the first language
-            orig_language = str(languages[0])
-
-            # create the event
+            # create the event on voctoweb
             # TODO at the moment we just try this and look on the error. We should store event id and ask the api
-            try:
-                r = self.vw.create_event(self.api_url, self.api_key, orig_language)
-                if r.status_code in [200, 201]:
-                    logging.info("new event created")
-                    # generate the thumbnails (will not overwrite existing thumbs)
-                    if not os.path.isfile(self.ticket.video_base + self.ticket.local_filename_base + ".jpg"):
-                        if not self.vw.make_thumbs():
-                            raise RuntimeError("ERROR: Generating thumbs:")
-                        else:
-                            # upload thumbnails
-                            self.vw.upload_thumbs()
-                    else:
-                        logging.info("thumbs exist. skipping")
-
-                elif r.status_code == 422:
-                    logging.info("event already exists. => publishing")
+            r = self.vw.create_event(self.api_url, self.api_key, orig_language)
+            #print(r.content)
+            if r.status_code in [200, 201]:
+                logging.info("new event created")
+                # generate the thumbnails (will not overwrite existing thumbs)
+                if not os.path.isfile(self.ticket.video_base + self.ticket.local_filename_base + ".jpg"):
+                    self.vw.make_thumbs()
+                    self.vw.upload_thumbs()
                 else:
-                    raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
+                    logging.info("thumbs exist. skipping")
 
-            except Exception as err:
-                logging.error("Creating event failed")
-                logging.debug(err)
-                c3t.setTicketFailed(self.ticket.ticket_id,
-                                "Creating event failed, in case of audio releases make sure event exists: \n" + str(
-                                    err),
-                                self.tracker_url, self.group, self.host, self.secret)
-                sys.exit(-1)
+            elif r.status_code == 422:
+                logging.info("event already exists => publishing")
+            else:
+                raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
 
-
-        if self.ticket.profile_slug == 'hd' and re.match('(..)-(..)', self.ticket.language): # todo make this more readable
-            # if a second language is configured, remux the video to only have the one audio track and upload it twice
-            logging.debug('remuxing dual-language video into two parts')
+        if self.ticket.master and len(self.ticket.languages) > 1:
+            logging.info('remuxing multi-language video into single audio files')
 
         # set hq filed based on ticket encoding profile slug
         if 'hd' in self.ticket.profile_slug:
@@ -229,23 +199,15 @@ class Publisher:
         else:
             hq = False
 
-        # if we have decided before to do multi language release we don't want to set the html5 flag for the master
-        if multi_language:
+        # if multi language release we don't want to set the html5 flag for the master
+        if len(self.ticket.languages) > 1:
             html5 = False
         else:
             html5 = True
 
-        try:
-            self.vw.upload_file(self.ticket.local_filename, self.ticket.filename, self.ticket.folder)
-            self.vw.create_recording(self.ticket.local_filename, self.ticket.filename, self.api_url, self.api_key,
-                                     self.ticket.folder,  self.language, hq, html5)
-
-        except RuntimeError as err:
-            c3t.setTicketFailed(self.ticket_id, "Publishing failed: \n" + str(err), self.tracker_url, self.group,
-                                self.host, self.secret)
-
-            logging.error('Publishing failed: \n' + str(err))
-            sys.exit(-1)
+        self.vw.upload_file(self.ticket.local_filename, self.ticket.filename, self.ticket.folder)
+        self.recording_ids['master'] = self.vw.create_recording(self.ticket.local_filename, self.ticket.filename, self.api_url, self.api_key,
+                                 self.ticket.folder, orig_language, hq, html5)
 
     def mux_to_single_language(self):
         """
@@ -275,7 +237,7 @@ class Publisher:
 
             try:
                 self.vw.create_recording(outfilename, filename, self.api_url, self.api_key, 'video/mp4',
-                                 'h264-hd-web', self.ticket.video_base, str(languages[i]), True, True)
+                                         'h264-hd-web', self.ticket.video_base, str(languages[i]), True, True)
             except:
                 raise RuntimeError('creating recording ' + outfile)
 
@@ -284,7 +246,8 @@ class Publisher:
         Publish the file to YouTube.
         """
         try:
-            youtube_urls = youtube.publish_youtube(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+            youtube_urls = youtube.publish_youtube(self.ticket, self.config['youtube']['client_id'],
+                                                   self.config['youtube']['secret'])
             props = {}
             for i, youtubeUrl in enumerate(youtube_urls):
                 props['YouTube.Url' + str(i)] = youtubeUrl
