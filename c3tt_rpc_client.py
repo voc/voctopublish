@@ -33,12 +33,12 @@ class C3TTClient:
     url: tracker url (without the rpc)
     """
 
-    def __init__(self, t: Ticket, url, group, host, secret):
-        self.t = t
+    def __init__(self, url, group, host, secret):
         self.url = url + "rpc"
         self.group = group
         self.host = host
         self.secret = secret
+        self.ticket_id = None
 
     def __gen_signature(self, method, args):
         """
@@ -61,13 +61,13 @@ class C3TTClient:
                 if isinstance(arg, dict):
                     kvs = []
                     for k, v in args[i].items():
-                        kvs.append(urllib.parse.quote('[' + k + ']', '~') + '=' + urllib.parse.quote(v, '~'))
+                        kvs.append(urllib.parse.quote('[' + str(k) + ']', '~') + '=' + urllib.parse.quote(str(v), '~'))
                     arg = '&'.join(kvs)
                 else:
                     arg = urllib.parse.quote(str(arg), '~')
 
                 sig_args = str(sig_args) + str(arg)
-                if i < (len(self.args) - 1):
+                if i < (len(args) - 1):
                     sig_args = sig_args + urllib.parse.quote('&')
                 i += 1
 
@@ -75,7 +75,7 @@ class C3TTClient:
         hash = hmac.new(bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
         return hash.hexdigest()
 
-    def __open_rpc(self, method, args):
+    def __open_rpc(self, method, args=[]):
         """
         create xmlrpc client
         :param method:
@@ -83,6 +83,9 @@ class C3TTClient:
         :return:
         """
         logging.debug('creating XML RPC proxy: ' + self.url + "?group=" + self.group + "&hostname=" + self.host)
+        if self.ticket_id:
+            args.insert(0, self.ticket_id)
+
         try:
             proxy = xmlrpc.client.ServerProxy(self.url + "?group=" + self.group + "&hostname=" + self.host)
         except xmlrpc.client.Fault as err:
@@ -137,8 +140,7 @@ class C3TTClient:
         get Tracker Version
         :return:
         """
-        tmp_args = ["1"]
-        return str(self.__open_rpc("C3TT.getVersion", tmp_args))
+        return str(self.__open_rpc("C3TT.getVersion"))
 
     def assign_next_unassigned_for_state(self, from_state, to_state):
         """
@@ -147,63 +149,56 @@ class C3TTClient:
         :param to_state:
         :return:
         """
-        tmp_args = [from_state, to_state]
-        ret = self.__open_rpc("C3TT.assignNextUnassignedForState", tmp_args)
+
+        ret = self.__open_rpc("C3TT.assignNextUnassignedForState", [from_state, to_state])
         # if get no xml there seems to be no ticket for this job
         if not ret:
             return False
         else:
+            self.ticket_id = ret['id']
             return ret['id']
 
-    def set_ticket_properties(self, ticket_id, properties):
+    def set_ticket_properties(self, properties):
         """
         set ticket properties
-        :param ticket_id:
         :param properties:
         :return:
         """
-        tmp_args = [ticket_id, properties]
-        ret = self.__open_rpc("C3TT.setTicketProperties", tmp_args)
+        ret = self.__open_rpc("C3TT.setTicketProperties", [properties])
         if not ret:
             logging.error("no xml in answer")
             return False
         else:
             return True
 
-    def get_ticket_properties(self, ticket_id):
+    def get_ticket_properties(self):
         """
         get ticket properties
         :param ticket_id:
         :return:
         """
-        tmp_args = [ticket_id]
-        ret = self.__open_rpc("C3TT.getTicketProperties", tmp_args)
+        ret = self.__open_rpc("C3TT.getTicketProperties")
         if not ret:
             logging.error("no xml in answer")
             return None
         else:
             return ret
 
-    def set_ticket_done(self, ticket_id):
+    def set_ticket_done(self):
         """
         set Ticket status on done
-        :param ticket_id:
         :return:
         """
-        tmp_args = [ticket_id]
-        ret = self.__open_rpc("C3TT.setTicketDone", tmp_args)
-        logging.debug(ret)
+        ret = self.__open_rpc("C3TT.setTicketDone")
+        logging.debug(str(ret))
 
-    def set_ticket_failed(self, ticket_id, error):
+    def set_ticket_failed(self, error):
         """
         set ticket status on failed an supply a error text
-        :param ticket_id:
         :param error:
         :return:
         """
-        enc_error = error.encode('ascii', 'xmlcharrefreplace')
-        tmp_args = [ticket_id, enc_error]
-        self.__open_rpc("C3TT.setTicketFailed", tmp_args)
+        self.__open_rpc("C3TT.setTicketFailed", [error.encode('ascii', 'xmlcharrefreplace')])
 
 
 class C3TTException(Exception):

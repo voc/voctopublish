@@ -16,6 +16,7 @@
 
 import logging
 
+
 class Ticket:
     """
     This class is inspired by the c3tt ticket system. If handles all information we got from the tracker
