@@ -29,7 +29,7 @@ class Ticket:
         # project properties
         self.acronym = self._validate_('Project.Slug')
 
-        # encoding ticket properties
+        # encoding profile properties
         if self._validate_('EncodingProfile.IsMaster') == 'yes':
             self.master = True
         else:
@@ -55,12 +55,11 @@ class Ticket:
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')
-        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
+        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
+                          if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
         # general publishing properties
-        self.video_base = self._validate_('Publishing.Path')
-        self.download_base_url = self._validate_('Publishing.Base.Url')
         self.publishing_path = self._validate_('Publishing.Path')
 
         # youtube properties
