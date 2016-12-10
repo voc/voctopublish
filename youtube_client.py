@@ -18,135 +18,147 @@
 
 
 from html.parser import HTMLParser
-import subprocess, logging, requests, json, mimetypes, os, re
+import subprocess
+import logging
+import requests
+import json
+import mimetypes
+import os
+import re
 
-logger = logging.getLogger()
+from ticket_module import Ticket
+
+logging = logging.getLogger()
 
 
+class YoutubeAPI:
+    def __init__(self, ticket: Ticket, config):
+        self.channelId = None
+        if 'Publishing.YouTube.Token' not in ticket:
+            raise YouTubeException(
+                'Property "Publishing.YouTube.Token" missing in ticket - did you set the YouTube-Properties on the Project?')
 
-class YoutubeAPI:        
-    channelId = None
-    accessToken = None
-    
-    def __init__(self, ticket, config):
-        if not 'Publishing.YouTube.Token' in ticket:
-            raise RuntimeError('Property "Publishing.YouTube.Token" missing in ticket - did you set the YouTube-Properties on the Project?')
-
-        self.accessToken = self.get_fresh_token(ticket['Publishing.YouTube.Token'], config['client_id'], config['secret'])
+        self.accessToken = self.get_fresh_token(ticket.youtube_token, config['client_id'], config['secret'])
         self.channelId = self.get_channel_id(self.accessToken)
 
-
-    # publish a file on youtube
     def publish(self, ticket):
-        logger.info("publishing Ticket %s (%s) to youtube" % (ticket['Fahrplan.ID'], ticket['Fahrplan.Title']))
-    
-        infile = os.path.join(ticket['Publishing.Path'], str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "." + ticket['EncodingProfile.Extension'])
-    
+        """
+        publish a file on youtube
+        :param ticket:
+        :return:
+        """
+        logging.info("publishing Ticket %s (%s) to youtube" % (ticket.fahrplan_id, ticket.title))
+        infile = os.path.join(ticket.publishing_path,
+                              str(ticket.fahrplan_id) + "-" + ticket.profile_slug + "." + ticket.profile_extension)
+
         # if a second language is configured, remux the video to only have the one audio track and upload it twice
         multi_lang = re.match('(..)-(..)', ticket['Record.Language'])
         if multi_lang:
-            logger.debug('remuxing dual-language video into two parts')
-    
-            outfile1 = os.path.join(ticket['Publishing.Path'], + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio1." + ticket['EncodingProfile.Extension'])
-            outfile2 = os.path.join(ticket['Publishing.Path'] + str(ticket['Fahrplan.ID']) + "-" +ticket['EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension'])
+            logging.debug('remuxing dual-language video into two parts')
+
+            outfile1 = os.path.join(ticket['Publishing.Path'],
+                                    + str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug'] + "-audio1." +
+                                    ticket['EncodingProfile.Extension'])
+            outfile2 = os.path.join(ticket['Publishing.Path'] + str(ticket['Fahrplan.ID']) + "-" + ticket[
+                'EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension'])
             youtubeUrls = []
-    
-            logger.debug('remuxing with original audio to '+outfile1)
+
+            logging.debug('remuxing with original audio to ' + outfile1)
             ticket['Publishing.Infile'] = outfile1
-    
-            if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:1', '-c', 'copy', outfile1]) != 0:
-                raise RuntimeError('error remuxing '+infile+' to '+outfile1)
-    
+
+            if subprocess.call(
+                    ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:1', '-c',
+                     'copy', outfile1]) != 0:
+                raise YouTubeException('error remuxing ' + infile + ' to ' + outfile1)
+
             videoId = uploadVideo(ticket)
-            youtubeUrls.append('https://www.youtube.com/watch?v='+videoId)
-    
-            logger.debug('remuxing with translated audio to '+outfile2)
+            youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
+
+            logging.debug('remuxing with translated audio to ' + outfile2)
             ticket['Publishing.Infile'] = outfile2
             ticket['Publishing.InfileIsTranslated'] = multi_lang.group(2)
-            if subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:2', '-c', 'copy', outfile2]) != 0:
-                raise RuntimeError('error remuxing '+infile+' to '+outfile2)
-    
+            if subprocess.call(
+                    ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:2', '-c',
+                     'copy', outfile2]) != 0:
+                raise YouTubeException('error remuxing ' + infile + ' to ' + outfile2)
+
             videoId = uploadVideo(ticket)
-            youtubeUrls.append('https://www.youtube.com/watch?v='+videoId)
-    
-            logger.info("deleting remuxed versions: %s and %s" % (outfile1, outfile2))
+            youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
+
+            logging.info("deleting remuxed versions: %s and %s" % (outfile1, outfile2))
             os.remove(outfile1)
             os.remove(outfile2)
-    
+
             return youtubeUrls
-    
+
         else:
             ticket['Publishing.Infile'] = infile
             videoId = self.upload(ticket)
-    
-            videoUrl = 'https://www.youtube.com/watch?v='+videoId
-            logger.info("successfully published Ticket to %s" % videoUrl)
-            return [videoUrl,]
-    
-    
+
+            videoUrl = 'https://www.youtube.com/watch?v=' + videoId
+            logging.info("successfully published Ticket to %s" % videoUrl)
+            return [videoUrl, ]
+
     def upload(self, ticket):
         title = str(ticket['Fahrplan.Title'])
         subtitle = str(ticket['Fahrplan.Subtitle'])
         abstract = strip_tags(ticket.get('Fahrplan.Abstract', ''))
         description = strip_tags(ticket.get('Fahrplan.Description', ''))
         person_list = ticket.get('Fahrplan.Person_list', '')
-    
-        description =  '\n\n'.join([abstract, description, person_list])
+
+        description = '\n\n'.join([abstract, description, person_list])
         if 'Publishing.Media.Url' in ticket and 'Fahrplan.Slug' in ticket:
             description = os.path.join(ticket['Publishing.Media.Url'], ticket['Fahrplan.Slug']) + '\n\n' + description
-    
-    
+
         # if persons-list is set
         if 'Fahrplan.Person_list' in ticket:
             persons = ticket['Fahrplan.Person_list'].split(',')
-    
+
             # prepend usernames if only 1 or 2 speaker
             if len(persons) < 3:
                 title = str(ticket['Fahrplan.Person_list']) + ': ' + title
-    
+
         if 'Publishing.YouTube.TitlePrefix' in ticket:
             title = str(ticket['Publishing.YouTube.TitlePrefix']) + ' ' + title
-            logger.debug('adding ' + str(ticket['Publishing.YouTube.TitlePrefix']) + ' as title prefix')
+            logging.debug('adding ' + str(ticket['Publishing.YouTube.TitlePrefix']) + ' as title prefix')
         else:
-            logger.warn("No youtube title prefix found")
-    
+            logging.warn("No youtube title prefix found")
+
         if 'Publishing.YouTube.TitleSuffix' in ticket:
             title = title + ' ' + str(ticket['Publishing.YouTube.TitleSuffix'])
-    
+
         metadata = {
             'snippet':
-            {
-                'title': title,
-                'description': description,
-                'channelId': self.channelId,
-                'tags': self.selectTags(ticket)
-            },
+                {
+                    'title': title,
+                    'description': description,
+                    'channelId': self.channelId,
+                    'tags': self.select_tags(ticket)
+                },
             'status':
-            {
-                'privacyStatus': ticket.get('Publishing.YouTube.Privacy', 'private'),
-                'embeddable': True,
-                'publicStatsViewable': True,
-                'license': 'creativeCommon', #TODO
-            },
+                {
+                    'privacyStatus': ticket.get('Publishing.YouTube.Privacy', 'private'),
+                    'embeddable': True,
+                    'publicStatsViewable': True,
+                    'license': 'creativeCommon',  # TODO
+                },
         }
-    
+
         # if tags are set - copy them into the metadata dict
         if 'Publishing.YouTube.Tags' in ticket:
             metadata['snippet']['tags'] = list(map(str.strip, ticket['Publishing.YouTube.Tags'].split(',')))
-    
+
         translation = ticket.get('Publishing.InfileIsTranslated')
         if translation == 'de':
             metadata['snippet']['title'] += ' (deutsche Übersetzung)'
-    
+
         elif translation == 'en':
             metadata['snippet']['title'] += ' (english translation)'
-    
+
         # recure limit title length to 100 (youtube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
-    
-    
-    
+
         # 1 => Film & Animation
         # 2 => Autos & Vehicles
         # 10 => Music
@@ -180,12 +192,13 @@ class YoutubeAPI:
         # 44 => Trailers
         if 'Publishing.YouTube.Category' in ticket:
             metadata['snippet']['categoryId'] = int(ticket['Publishing.YouTube.Category'])
-    
+
         (mimetype, encoding) = mimetypes.guess_type(ticket['Publishing.Infile'])
         size = os.stat(ticket['Publishing.Infile']).st_size
-    
-        logger.debug('guessed mimetype for file %s as %s and its size as %u bytes' % (ticket['Publishing.Infile'], mimetype, size))
-    
+
+        logging.debug('guessed mimetype for file %s as %s and its size as %u bytes' % (
+            ticket['Publishing.Infile'], mimetype, size))
+
         r = requests.post(
             'https://www.googleapis.com/upload/youtube/v3/videos',
             params={
@@ -200,15 +213,15 @@ class YoutubeAPI:
             },
             data=json.dumps(metadata)
         )
-    
+
         if 200 != r.status_code:
-            raise RuntimeError('Video creation failed with error-code %u: %s' % (r.status_code, r.text))
-    
-        if not 'location' in r.headers:
-            raise RuntimeError('Video creation did not return a location-header to upload to: %s' % (r.headers,))
-    
-        logger.info('successfully created video and received upload-url from %s' % (r.headers['server'] if 'server' in r.headers else '-'))
-        logger.debug('uploading video-data to %s' % r.headers['location'])
+            raise YouTubeException('Video creation failed with error-code %u: %s' % (r.status_code, r.text))
+
+        if 'location' not in r.headers:
+            raise YouTubeException('Video creation did not return a location-header to upload to: %s' % (r.headers,))
+
+        logging.info('successfully created video and received upload-url from %s' % (r.headers['server'] if 'server' in r.headers else '-'))
+        logging.debug('uploading video-data to %s' % r.headers['location'])
         with open(ticket['Publishing.Infile'], 'rb') as fp:
             r = requests.put(
                 r.headers['location'],
@@ -218,19 +231,25 @@ class YoutubeAPI:
                 },
                 data=fp
             )
-    
+
             if 200 != r.status_code and 201 != r.status_code:
-                raise RuntimeError('uploading video failed with error-code %u: %s' % (r.status_code, r.text))
-    
+                raise YouTubeException('uploading video failed with error-code %u: %s' % (r.status_code, r.text))
+
         video = r.json()
-    
-        youtubeurl = 'https://www.youtube.com/watch?v='+video['id']
-        logger.info('successfully uploaded video as %s', youtubeurl)
-    
+
+        youtube_url = 'https://www.youtube.com/watch?v=' + video['id']
+        logging.info('successfully uploaded video as %s', youtube_url)
+
         return video['id']
-    
-    def add_to_playlist(self, videoId, playlistId):
-        # documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
+
+    def add_to_playlist(self, video_id, playlist_id):
+        """
+        documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
+        :param video_id:
+        :param playlist_id:
+        :return:
+        """
+
         r = requests.post(
             'https://www.googleapis.com/youtube/v3/playlistItems',
             params={
@@ -242,25 +261,28 @@ class YoutubeAPI:
             },
             data=json.dumps({
                 'snippet': {
-                    'playlistId' : playlistId, # required
-                    'resourceId': {'kind': 'youtube#video', 'videoId': videoId }, # required
+                    'playlistId': playlist_id,  # required
+                    'resourceId': {'kind': 'youtube#video', 'videoId': video_id},  # required
                 },
             })
         )
 
         if 200 != r.status_code:
-            raise RuntimeError('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
+            raise YouTubeException('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
-        print(' added');
-  
-        
-    # currently a method to helb with debugging --Andi, August 2016
-    def get_playlist(self, playlistId):
+        print(' added')
+
+    def get_playlist(self, playlist_id):
+        """
+        currently a method to help with debugging --Andi, August 2016
+        :param playlist_id:
+        :return:
+        """
         r = requests.get(
             'https://www.googleapis.com/youtube/v3/playlistItems',
             params={
                 'part': 'snippet',
-                'playlistId': playlistId
+                'playlistId': playlist_id
             },
             headers={
                 'Authorization': 'Bearer ' + self.accessToken,
@@ -268,40 +290,39 @@ class YoutubeAPI:
             },
         )
 
-
         if 200 != r.status_code:
-            raise RuntimeError('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
+            raise YouTubeException('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
         print(json.dumps(r.json(), indent=4))
-    
-    def get_fresh_token(self, refreshToken, clientId, clientSecret):
-        logger.debug('fetching fresh Access-Token on behalf of the refreshToken %s' % refreshToken)
+
+    def get_fresh_token(self, refresh_token, client_id, client_secret):
+        logging.debug('fetching fresh Access-Token on behalf of the refreshToken %s' % refresh_token)
         r = requests.post(
-        'https://accounts.google.com/o/oauth2/token',
-        data={
-            'client_id': clientId,
-            'client_secret': clientSecret,
-            'refresh_token': refreshToken,
-            'grant_type': 'refresh_token',
-        }
+            'https://accounts.google.com/o/oauth2/token',
+            data={
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'refresh_token': refresh_token,
+                'grant_type': 'refresh_token'
+            }
         )
 
         if 200 != r.status_code:
-            raise RuntimeError('fetching a fresh authToken failed with error-code %u: %s' % (r.status_code, r.text))
+            raise YouTubeException('fetching a fresh authToken failed with error-code %u: %s' % (r.status_code, r.text))
 
         data = r.json()
-        if not 'access_token' in data:
-            raise RuntimeError('fetching a fresh authToken did not return a access_token: %s' % r.text)
+        if 'access_token' not in data:
+            raise YouTubeException('fetching a fresh authToken did not return a access_token: %s' % r.text)
 
-        logger.info("successfully fetched Access-Token %s" % data['access_token'])
+        logging.info("successfully fetched Access-Token %s" % data['access_token'])
         return data['access_token']
-    
-    def get_channel_id(self, accessToken):
-        logger.debug('fetching Channel-Info on behalf of the accessToken %s' % accessToken)
+
+    def get_channel_id(self, access_token):
+        logging.debug('fetching Channel-Info on behalf of the accessToken %s' % access_token)
         r = requests.get(
             'https://www.googleapis.com/youtube/v3/channels',
             headers={
-                'Authorization': 'Bearer '+accessToken,
+                'Authorization': 'Bearer ' + access_token,
             },
             params={
                 'part': 'id,brandingSettings',
@@ -310,66 +331,74 @@ class YoutubeAPI:
         )
 
         if 200 != r.status_code:
-            raise RuntimeError('fetching channelID failed with error-code %u: %s' % (r.status_code, r.text))
+            raise YouTubeException('fetching channelID failed with error-code %u: %s' % (r.status_code, r.text))
 
         data = r.json()
         channel = data['items'][0]
 
-        # logger.info("successfully fetched Channel-ID %s with name %s" % (channel['id'], channel['brandingSettings']['channel']['title']))
-        logger.info("successfully fetched Channel-ID %s " % (channel['id']))
+        # logging.info("successfully fetched Channel-ID %s with name %s" % (channel['id'], channel['brandingSettings']['channel']['title']))
+        logging.info("successfully fetched Channel-ID %s " % (channel['id']))
         return channel['id']
-    
-    
-    def selectTags(self, ticket):
+
+    def select_tags(self, ticket):
+        """
+        Build the tag list
+        :param ticket:
+        :return:
+        """
         tags = []
-    
+
         if 'Fahrplan.Track' in ticket:
             tags.append(ticket['Fahrplan.Track'])
-    
+
         if 'Fahrplan.Day' in ticket:
             tags.append('Day %s' % ticket['Fahrplan.Day'])
-    
+
         if 'Fahrplan.Room' in ticket:
             tags.append(ticket['Fahrplan.Room'])
-    
+
         # append language-specific tag
         language = ticket.get('Record.Language')
         if language == 'de':
             tags.append('German')
         elif language == 'en':
             tags.append('English')
-    
+
         elif language == 'de-en':
             if 'Publishing.InfileIsTranslated' in ticket:
                 tags.append('German (english translation)')
             else:
                 tags.append('German')
-    
+
         elif language == 'en-de':
             if 'Publishing.InfileIsTranslated' in ticket:
                 ## TODO
                 tags.append('English (deutsche Übersetzung)')
             else:
                 tags.append('English')
-    
+
         # if persons-list is set
         if 'Fahrplan.Person_list' in ticket:
             persons = ticket['Fahrplan.Person_list'].split(',')
-    
+
             # append person-names to tags
             tags.extend(persons)
-    
+
         return tags
 
-    def update_thumbnail(self, videoId, thumnail):
-        # https://developers.google.com/youtube/v3/docs/thumbnails/set
-
-        fp = open(thumnail, 'rb')
+    def update_thumbnail(self, video_id, thumbnail):
+        """
+        https://developers.google.com/youtube/v3/docs/thumbnails/set
+        :param video_id:
+        :param thumbnail:
+        :return:
+        """
+        fp = open(thumbnail, 'rb')
 
         r = requests.post(
             'https://www.googleapis.com/upload/youtube/v3/thumbnails/set',
             params={
-                'videoId': videoId
+                'videoId': video_id
             },
             headers={
                 'Authorization': 'Bearer ' + self.accessToken,
@@ -379,23 +408,33 @@ class YoutubeAPI:
         )
 
         if 200 != r.status_code:
-            raise RuntimeError('Video update failed with error-code %u: %s' % (r.status_code, r.text))
+            raise YouTubeException('Video update failed with error-code %u: %s' % (r.status_code, r.text))
 
-        print(' updated');
+        print(' updated')
         return
 
 
 class MLStripper(HTMLParser):
+    def error(self, message):
+        pass
+
     def __init__(self):
         super().__init__()
         self.reset()
         self.fed = []
+
     def handle_data(self, d):
         self.fed.append(d)
+
     def get_data(self):
         return ''.join(self.fed)
+
 
 def strip_tags(html):
     s = MLStripper()
     s.feed(html)
     return s.get_data()
+
+
+class YouTubeException(Exception):
+    pass
