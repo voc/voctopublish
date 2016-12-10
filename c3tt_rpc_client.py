@@ -22,8 +22,6 @@ import urllib
 import xml
 import logging
 
-from ticket_module import Ticket
-
 
 class C3TTClient:
     """
@@ -40,7 +38,7 @@ class C3TTClient:
         self.secret = secret
         self.ticket_id = None
 
-    def __gen_signature(self, method, args):
+    def _gen_signature(self, method, args):
         """
         generate signature
         assemble static part of signature arguments
@@ -72,10 +70,10 @@ class C3TTClient:
                 i += 1
 
         # generate the hmac hash with the key
-        hash = hmac.new(bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
-        return hash.hexdigest()
+        hash_ = hmac.new(bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
+        return hash_.hexdigest()
 
-    def __open_rpc(self, method, args=[]):
+    def _open_rpc(self, method, args=[]):
         """
         create xmlrpc client
         :param method:
@@ -107,7 +105,7 @@ class C3TTClient:
             msg += err
             raise C3TTException(msg) from err
 
-        args.append(self.__gen_signature(method, args))
+        args.append(self._gen_signature(method, args))
 
         try:
             logging.debug(method + str(args))
@@ -140,18 +138,17 @@ class C3TTClient:
         get Tracker Version
         :return:
         """
-        return str(self.__open_rpc("C3TT.getVersion"))
+        return str(self._open_rpc("C3TT.getVersion"))
 
     def assign_next_unassigned_for_state(self, from_state, to_state):
         """
-        check for new ticket on tracker an get assignement
+        check for new ticket on tracker an get assignment
         :param from_state:
         :param to_state:
         :return:
         """
-
-        ret = self.__open_rpc("C3TT.assignNextUnassignedForState", [from_state, to_state])
-        # if get no xml there seems to be no ticket for this job
+        ret = self._open_rpc("C3TT.assignNextUnassignedForState", [from_state, to_state])
+        # if we get no xml here there is no ticket for this job
         if not ret:
             return False
         else:
@@ -164,7 +161,7 @@ class C3TTClient:
         :param properties:
         :return:
         """
-        ret = self.__open_rpc("C3TT.setTicketProperties", [properties])
+        ret = self._open_rpc("C3TT.setTicketProperties", [properties])
         if not ret:
             logging.error("no xml in answer")
             return False
@@ -174,10 +171,9 @@ class C3TTClient:
     def get_ticket_properties(self):
         """
         get ticket properties
-        :param ticket_id:
         :return:
         """
-        ret = self.__open_rpc("C3TT.getTicketProperties")
+        ret = self._open_rpc("C3TT.getTicketProperties")
         if not ret:
             logging.error("no xml in answer")
             return None
@@ -189,7 +185,7 @@ class C3TTClient:
         set Ticket status on done
         :return:
         """
-        ret = self.__open_rpc("C3TT.setTicketDone")
+        ret = self._open_rpc("C3TT.setTicketDone")
         logging.debug(str(ret))
 
     def set_ticket_failed(self, error):
@@ -198,7 +194,7 @@ class C3TTClient:
         :param error:
         :return:
         """
-        self.__open_rpc("C3TT.setTicketFailed", [error.encode('ascii', 'xmlcharrefreplace')])
+        self._open_rpc("C3TT.setTicketFailed", [error.encode('ascii', 'xmlcharrefreplace')])
 
 
 class C3TTException(Exception):

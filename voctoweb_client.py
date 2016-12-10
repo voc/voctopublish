@@ -36,7 +36,7 @@ class VoctowebClient:
         self.ssh = None
         self.sftp = None
 
-    def connect_ssh(self):
+    def _connect_ssh(self):
         """
         Open an SSH connection to the media.ccc.de CDN master
         """
@@ -63,14 +63,12 @@ class VoctowebClient:
     def upload_thumbs(self):
         """
         Upload thumbnails to the media.ccc.de CDN master.
-        :param t:
-        :param sftp:
         """
         logging.info("## uploading thumbs ##")
 
         # check if ssh connection is open
         if self.ssh is None:
-            self.connect_ssh()
+            self._connect_ssh()
 
         thumbs_ext = {".jpg", "_preview.jpg"}
         for ext in thumbs_ext:
@@ -90,7 +88,6 @@ class VoctowebClient:
         """
         Uploads a file from path relative to the output dir to the same path relative to the upload_dir
         We can't use the file and folder names from the ticket here as we need to change these for multi language audio
-
         :param local_filename:
         :param filename:
         :param folder:
@@ -99,7 +96,7 @@ class VoctowebClient:
 
         # Check if ssh connection is open.
         if self.sftp is None:
-            self.connect_ssh()
+            self._connect_ssh()
 
         format_folder = os.path.join(self.t.media_path, folder)
 

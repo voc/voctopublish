@@ -140,11 +140,11 @@ class Publisher:
 
             if not os.path.isfile(t.video_base + t.local_filename):
                 raise IOError('Source file does not exist (%s)' % (t.video_base + t.local_filename))
-            if not os.path.exists(t.output):
-                raise IOError("Output path does not exist (%s)" % t.output)
+            if not os.path.exists(t.video_base):
+                raise IOError("Output path does not exist (%s)" % t.video_base)
             else:
-                if not os.access(t.output, os.W_OK):
-                    raise IOError("Output path is not writable (%s)" % t.output)
+                if not os.access(t.video_base, os.W_OK):
+                    raise IOError("Output path is not writable (%s)" % t.video_base)
         else:
             logging.info("No ticket to publish, exiting")
             return None

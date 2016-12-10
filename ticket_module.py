@@ -44,7 +44,6 @@ class Ticket:
         self.local_filename = self.fahrplan_id + "-" + self.slug + "." + self.profile_extension
         self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
         self.video_base = self._validate_('Publishing.Path')
-        self.output = self.video_base # TODO remove
         self.language = self._validate_('Record.Language')
         self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
