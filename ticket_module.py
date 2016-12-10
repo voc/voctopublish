@@ -66,7 +66,7 @@ class Ticket:
         self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
         self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
         # we will fill the following variables only if youtube is enabled
-        if self.profile_youtube_enable and self.youtube_enable:
+        if self.profile_youtube_enable == 'yes' and self.youtube_enable == 'yes':
             self.youtube_category = self._validate_('Publishing.YouTube.Category')
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy')
             self.youtube_tags = self._validate_('Publishing.YouTube.Tags')
@@ -81,7 +81,7 @@ class Ticket:
         self.profile_media_enable = self._validate_('Publishing.Media.EnableProfile')
         self.media_enable = self._validate_('Publishing.Media.Enable')
         # we will fill the following variables only if voctoweb is enabled
-        if self.profile_media_enable and self.media_enable:
+        if self.profile_media_enable == 'yes' and self.media_enable == 'yes':
             self.mime_type = self._validate_('Publishing.Media.MimeType')
             self.media_thump_path = self._validate_('Publishing.Media.Thumbpath')
             self.media_host = self._validate_('Publishing.Media.Host')
