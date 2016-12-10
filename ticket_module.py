@@ -25,52 +25,73 @@ class Ticket:
     def __init__(self, ticket, ticket_id):
         self.__tracker_ticket = ticket
         self.ticket_id = ticket_id
-        if self._validate_('EncodingProfile.IsMaster') =='yes':
+
+        # project properties
+        self.acronym = self._validate_('Project.Slug')
+
+        # encoding ticket properties
+        if self._validate_('EncodingProfile.IsMaster') == 'yes':
             self.master = True
         else:
             self.master = False
+        self.profile_extension = self._validate_('EncodingProfile.Extension')
+        self.profile_slug = self._validate_('EncodingProfile.Slug')
+        self.filename = self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
+        self.folder = self._validate_('EncodingProfile.MirrorFolder')
+
+        # fahrplan properties
         self.slug = self._validate_('Fahrplan.Slug')
         self.guid = self._validate_('Fahrplan.GUID')
         self.fahrplan_id = self._validate_('Fahrplan.ID')
         self.title = self._validate_('Fahrplan.Title')
         self.subtitle = self._validate_('Fahrplan.Subtitle')
-        self.acronym = self._validate_('Project.Slug')
         self.abstract = self._validate_('Fahrplan.Abstract')
         self.date = self._validate_('Fahrplan.Date')
-        self.profile_extension = self._validate_('EncodingProfile.Extension')
-        self.profile_slug = self._validate_('EncodingProfile.Slug')
-        self.filename = self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
-        self.folder = self._validate_('EncodingProfile.MirrorFolder')
         self.local_filename = self.fahrplan_id + "-" + self.slug + "." + self.profile_extension
         self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
-        self.video_base = self._validate_('Publishing.Path')
-        self.language = self._validate_('Record.Language')
-        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
-        self.language_template = self._validate_('Encoding.LanguageTemplate')
-        self.download_base_url = self._validate_('Publishing.Base.Url')
-        self.publishing_path = self._validate_('Publishing.Path')
-        self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
-        self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
-        self.profile_media_enable = self._validate_('Publishing.Media.EnableProfile')
-        self.media_enable = self._validate_('Publishing.Media.Enable')
-        self.mime_type = self._validate_('Publishing.Media.MimeType')
-        self.media_thump_path = self._validate_('Publishing.Media.Thumbpath')
-        self.media_host = self._validate_('Publishing.Media.Host')
-        self.media_user = self._validate_('Publishing.Media.User')
-        self.media_path = self._validate_('Publishing.Media.Path')
-        self.media_slug = self._validate_('Publishing.Media.Slug')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')
-            
-        self.tags = [self.acronym, self.ticket_id]
-        if 'Media.Tags' in ticket:
-            self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
-        
-        # check if this event has already been published to youtube
-        self.has_youtube_url = False
-        if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
-            self.has_youtube_url = True
+
+        # recording ticket properties
+        self.language = self._validate_('Record.Language')
+        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
+        self.language_template = self._validate_('Encoding.LanguageTemplate')
+
+        # general publishing properties
+        self.video_base = self._validate_('Publishing.Path')
+        self.download_base_url = self._validate_('Publishing.Base.Url')
+        self.publishing_path = self._validate_('Publishing.Path')
+
+        # youtube properties
+        self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
+        self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
+        # we will fill the following variables only if youtube is enabled
+        if self.profile_youtube_enable and self.youtube_enable:
+            self.youtube_category = self._validate_('Publishing.YouTube.Category')
+            self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy')
+            self.youtube_tags = self._validate_('Publishing.YouTube.Tags')
+            self.youtube_token = self._validate_('Publishing.YouTube.Token')
+            # check if this event has already been published to youtube
+            if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
+                self.has_youtube_url = True
+            else:
+                self.has_youtube_url = False
+
+        # voctoweb properties
+        self.profile_media_enable = self._validate_('Publishing.Media.EnableProfile')
+        self.media_enable = self._validate_('Publishing.Media.Enable')
+        # we will fill the following variables only if voctoweb is enabled
+        if self.profile_media_enable and self.media_enable:
+            self.mime_type = self._validate_('Publishing.Media.MimeType')
+            self.media_thump_path = self._validate_('Publishing.Media.Thumbpath')
+            self.media_host = self._validate_('Publishing.Media.Host')
+            self.media_user = self._validate_('Publishing.Media.User')
+            self.media_path = self._validate_('Publishing.Media.Path')
+            self.media_slug = self._validate_('Publishing.Media.Slug')
+            self.tags = [self.acronym, self.ticket_id]
+            if 'Media.Tags' in ticket:
+                self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
 
     def _validate_(self, key):
         value = None
