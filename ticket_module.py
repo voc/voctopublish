@@ -49,9 +49,13 @@ class Ticket:
         self.date = self._validate_('Fahrplan.Date')
         self.local_filename = self.fahrplan_id + "-" + self.slug + "." + self.profile_extension
         self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
+        self.room = self._validate_('Fahrplan.Room')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')
+        # the following are arguments that my not be present in every fahrplan
+        self.track = self._validate_('Fahrplan.Track', True)
+        self.day = self._validate_('Fahrplan.Day', True)
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')
@@ -92,7 +96,7 @@ class Ticket:
             if 'Media.Tags' in ticket:
                 self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
 
-    def _validate_(self, key):
+    def _validate_(self, key, optional=False):
         value = None
         if key in self.__tracker_ticket:
             value = self.__tracker_ticket[key]
@@ -102,8 +106,11 @@ class Ticket:
             else:
                 value = str(value)
         else:
-            logging.debug(key + ' is missing in ticket')
-            raise TicketException(key + ' is missing in ticket')
+            if optional:
+                logging.warning("optional property was not in ticket")
+            else:
+                logging.debug(key + ' is missing in ticket')
+                raise TicketException(key + ' is missing in ticket')
         return value
 
 
