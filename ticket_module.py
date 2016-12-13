@@ -44,8 +44,9 @@ class Ticket:
         self.guid = self._validate_('Fahrplan.GUID')
         self.fahrplan_id = self._validate_('Fahrplan.ID')
         self.title = self._validate_('Fahrplan.Title')
-        self.subtitle = self._validate_('Fahrplan.Subtitle')
-        self.abstract = self._validate_('Fahrplan.Abstract')
+        self.subtitle = self._validate_('Fahrplan.Subtitle', True)
+        self.abstract = self._validate_('Fahrplan.Abstract', True)
+        self.description = self._validate_('Fahrplan.Description', True)
         self.date = self._validate_('Fahrplan.Date')
         self.local_filename = self.fahrplan_id + "-" + self.slug + "." + self.profile_extension
         self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
