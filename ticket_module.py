@@ -93,6 +93,7 @@ class Ticket:
             self.media_user = self._validate_('Publishing.Media.User')
             self.media_path = self._validate_('Publishing.Media.Path')
             self.media_slug = self._validate_('Publishing.Media.Slug')
+            self.media_url = self._validate_('Publishing.Media.Url', True)
             self.tags = [self.acronym, self.ticket_id]
             if 'Media.Tags' in ticket:
                 self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')

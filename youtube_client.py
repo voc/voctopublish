@@ -41,74 +41,80 @@ class YoutubeAPI:
         self.accessToken = self.get_fresh_token(ticket.youtube_token, config['client_id'], config['secret'])
         self.channelId = self.get_channel_id(self.accessToken)
 
-    def publish(self, ticket):
+    def publish(self):
         """
         publish a file on youtube
+        :return:
+        """
+        logging.info("publishing Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
+        infile = os.path.join(self.ticket.publishing_path,
+                              str(self.ticket.fahrplan_id) + "-" + self.ticket.profile_slug + "." + self.ticket.profile_extension)
+
+        # replace this with dynamic code that can handle multilang
+        # # if a second language is configured, remux the video to only have the one audio track and upload it twice
+        # multi_lang = re.match('(..)-(..)', ticket['Record.Language'])
+        # if multi_lang:
+        #     logging.debug('remuxing dual-language video into two parts')
+        #
+        #     outfile1 = os.path.join(ticket['Publishing.Path'],
+        #                             + str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug'] + "-audio1." +
+        #                             ticket['EncodingProfile.Extension'])
+        #     outfile2 = os.path.join(ticket['Publishing.Path'] + str(ticket['Fahrplan.ID']) + "-" + ticket[
+        #         'EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension'])
+        #     youtubeUrls = []
+        #
+        #     logging.debug('remuxing with original audio to ' + outfile1)
+        #     ticket['Publishing.Infile'] = outfile1
+        #
+        #     if subprocess.call(
+        #             ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:1', '-c',
+        #              'copy', outfile1]) != 0:
+        #         raise YouTubeException('error remuxing ' + infile + ' to ' + outfile1)
+        #
+        #     videoId = uploadVideo(ticket)
+        #     youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
+        #
+        #     logging.debug('remuxing with translated audio to ' + outfile2)
+        #     ticket['Publishing.Infile'] = outfile2
+        #     ticket['Publishing.InfileIsTranslated'] = multi_lang.group(2)
+        #     if subprocess.call(
+        #             ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:2', '-c',
+        #              'copy', outfile2]) != 0:
+        #         raise YouTubeException('error remuxing ' + infile + ' to ' + outfile2)
+        #
+        #     videoId = uploadVideo(ticket)
+        #     youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
+        #
+        #     logging.info("deleting remuxed versions: %s and %s" % (outfile1, outfile2))
+        #     os.remove(outfile1)
+        #     os.remove(outfile2)
+        #
+        #     return youtubeUrls
+        #
+        # else:
+        #     ticket['Publishing.Infile'] = infile
+        #     videoId = self.upload(ticket)
+        #
+        #     videoUrl = 'https://www.youtube.com/watch?v=' + videoId
+        #     logging.info("successfully published Ticket to %s" % videoUrl)
+        #     return [videoUrl, ]
+
+    def upload(self):
+        """
+        Call the youtube API and push the file to youtube
         :param ticket:
         :return:
         """
-        logging.info("publishing Ticket %s (%s) to youtube" % (ticket.fahrplan_id, ticket.title))
-        infile = os.path.join(ticket.publishing_path,
-                              str(ticket.fahrplan_id) + "-" + ticket.profile_slug + "." + ticket.profile_extension)
-
-        # if a second language is configured, remux the video to only have the one audio track and upload it twice
-        multi_lang = re.match('(..)-(..)', ticket['Record.Language'])
-        if multi_lang:
-            logging.debug('remuxing dual-language video into two parts')
-
-            outfile1 = os.path.join(ticket['Publishing.Path'],
-                                    + str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug'] + "-audio1." +
-                                    ticket['EncodingProfile.Extension'])
-            outfile2 = os.path.join(ticket['Publishing.Path'] + str(ticket['Fahrplan.ID']) + "-" + ticket[
-                'EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension'])
-            youtubeUrls = []
-
-            logging.debug('remuxing with original audio to ' + outfile1)
-            ticket['Publishing.Infile'] = outfile1
-
-            if subprocess.call(
-                    ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:1', '-c',
-                     'copy', outfile1]) != 0:
-                raise YouTubeException('error remuxing ' + infile + ' to ' + outfile1)
-
-            videoId = uploadVideo(ticket)
-            youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
-
-            logging.debug('remuxing with translated audio to ' + outfile2)
-            ticket['Publishing.Infile'] = outfile2
-            ticket['Publishing.InfileIsTranslated'] = multi_lang.group(2)
-            if subprocess.call(
-                    ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:2', '-c',
-                     'copy', outfile2]) != 0:
-                raise YouTubeException('error remuxing ' + infile + ' to ' + outfile2)
-
-            videoId = uploadVideo(ticket)
-            youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
-
-            logging.info("deleting remuxed versions: %s and %s" % (outfile1, outfile2))
-            os.remove(outfile1)
-            os.remove(outfile2)
-
-            return youtubeUrls
-
-        else:
-            ticket['Publishing.Infile'] = infile
-            videoId = self.upload(ticket)
-
-            videoUrl = 'https://www.youtube.com/watch?v=' + videoId
-            logging.info("successfully published Ticket to %s" % videoUrl)
-            return [videoUrl, ]
-
-    def upload(self, ticket):
-        title = str(ticket['Fahrplan.Title'])
-        subtitle = str(ticket['Fahrplan.Subtitle'])
-        abstract = strip_tags(ticket.get('Fahrplan.Abstract', ''))
-        description = strip_tags(ticket.get('Fahrplan.Description', ''))
-        person_list = ticket.get('Fahrplan.Person_list', '')
+        title = self.ticket.title
+        subtitle = self.ticket.subtitle
+        abstract = strip_tags(self.ticket.abstract)
+        description = strip_tags(self.ticket.description)
+        person_list = self.ticket.persons
 
         description = '\n\n'.join([abstract, description, person_list])
-        if 'Publishing.Media.Url' in ticket and 'Fahrplan.Slug' in ticket:
-            description = os.path.join(ticket['Publishing.Media.Url'], ticket['Fahrplan.Slug']) + '\n\n' + description
+        if self.ticket.media_enable and self.ticket.profile_media_enable:
+            if self.ticket.media_url:
+                description = os.path.join(self.ticket.media_url, self.ticket.slug) + '\n\n' + description
 
         # if persons-list is set
         if 'Fahrplan.Person_list' in ticket:
@@ -348,41 +354,38 @@ class YoutubeAPI:
         """
         tags = []
 
-        if 'Fahrplan.Track' in ticket:
-            tags.append(ticket['Fahrplan.Track'])
+        if ticket.track:
+            tags.append(ticket.track)
 
-        if 'Fahrplan.Day' in ticket:
-            tags.append('Day %s' % ticket['Fahrplan.Day'])
+        if ticket.day:
+            tags.append('Day %s' % ticket.day)
 
-        if 'Fahrplan.Room' in ticket:
-            tags.append(ticket['Fahrplan.Room'])
+        if ticket.room:
+            tags.append(ticket.room)
 
-        # append language-specific tag
-        language = ticket.get('Record.Language')
-        if language == 'de':
-            tags.append('German')
-        elif language == 'en':
-            tags.append('English')
+        # replace this with dynamic code
+        # # append language-specific tag
+        # language = ticket.get('Record.Language')
+        # if language == 'de':
+        #     tags.append('German')
+        # elif language == 'en':
+        #     tags.append('English')
+        #
+        # elif language == 'de-en':
+        #     if 'Publishing.InfileIsTranslated' in ticket:
+        #         tags.append('German (english translation)')
+        #     else:
+        #         tags.append('German')
+        #
+        # elif language == 'en-de':
+        #     if 'Publishing.InfileIsTranslated' in ticket:
+        #         ## TODO
+        #         tags.append('English (deutsche Übersetzung)')
+        #     else:
+        #         tags.append('English')
 
-        elif language == 'de-en':
-            if 'Publishing.InfileIsTranslated' in ticket:
-                tags.append('German (english translation)')
-            else:
-                tags.append('German')
-
-        elif language == 'en-de':
-            if 'Publishing.InfileIsTranslated' in ticket:
-                ## TODO
-                tags.append('English (deutsche Übersetzung)')
-            else:
-                tags.append('English')
-
-        # if persons-list is set
-        if 'Fahrplan.Person_list' in ticket:
-            persons = ticket['Fahrplan.Person_list'].split(',')
-
-            # append person-names to tags
-            tags.extend(persons)
+        # append person-names to tags
+        tags.extend(ticket.persons)
 
         return tags
 

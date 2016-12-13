@@ -78,13 +78,13 @@ class Publisher:
         try:
             self.c3tt = C3TTClient(self.config['C3Tracker']['url'], self.config['C3Tracker']['group'],
                                    self.host, self.config['C3Tracker']['secret'])
-        except Exception as e:
-            raise PublisherException('Config parameter missing or empty, please check config') from e
+        except Exception as e_:
+            raise PublisherException('Config parameter missing or empty, please check config') from e_
 
         try:
             self.ticket = self._get_ticket_from_tracker()
-        except Exception as e:
-            raise PublisherException("Could not get ticket from tracker") from e
+        except Exception as e_:
+            raise PublisherException("Could not get ticket from tracker") from e_
 
         if self.ticket:
             # voctoweb
@@ -138,13 +138,13 @@ class Publisher:
 
             t = Ticket(tracker_ticket, ticket_id)
 
-            if not os.path.isfile(t.video_base + t.local_filename):
-                raise IOError('Source file does not exist (%s)' % (t.video_base + t.local_filename))
-            if not os.path.exists(t.video_base):
-                raise IOError("Output path does not exist (%s)" % t.video_base)
+            if not os.path.isfile(t.publishing_path + t.local_filename):
+                raise IOError('Source file does not exist (%s)' % (t.publishing_path + t.local_filename))
+            if not os.path.exists(t.publishing_path):
+                raise IOError("Output path does not exist (%s)" % t.publishing_path)
             else:
-                if not os.access(t.video_base, os.W_OK):
-                    raise IOError("Output path is not writable (%s)" % t.video_base)
+                if not os.access(t.publishing_path, os.W_OK):
+                    raise IOError("Output path is not writable (%s)" % t.publishing_path)
         else:
             logging.info("No ticket to publish, exiting")
             return None
@@ -167,7 +167,7 @@ class Publisher:
             if r.status_code in [200, 201]:
                 logging.info("new event created")
                 # generate the thumbnails (will not overwrite existing thumbs)
-                if not os.path.isfile(self.ticket.video_base + self.ticket.local_filename_base + ".jpg"):
+                if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
                     self.vw.generate_thumbs()
                     self.vw.upload_thumbs()
                 else:
@@ -208,14 +208,14 @@ class Publisher:
         """
         for i, lang in self.ticket.languages:
             out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + i + "." + self.ticket.profile_extension
-            out_path = os.path.join(self.ticket.video_base, out_filename)
+            out_path = os.path.join(self.ticket.publishing_path, out_filename)
             filename = self.ticket.language_template % lang + '.' + self.ticket.profile_extension
 
             logging.info('remuxing ' + self.ticket.local_filename + ' to ' + out_path)
 
             try:
                 subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i',
-                                 os.path.join(self.ticket.video_base, self.ticket.local_filename), '-map', '0:0',
+                                 os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map', '0:0',
                                  '-map',
                                  '0:1', '-c', 'copy', '-movflags', 'faststart', out_path])
             except Exception as e:
@@ -227,7 +227,7 @@ class Publisher:
                 raise PublisherException('error uploading ' + out_path) from e
 
             try:
-                self.vw.create_recording(out_filename, filename, self.ticket.video_base, str(lang), True, True)
+                self.vw.create_recording(out_filename, filename, self.ticket.publishing_path, str(lang), True, True)
             except Exception as e:
                 raise PublisherException('creating recording ' + out_path) from e
 
