@@ -29,11 +29,11 @@ fi
 
 for POS in 20 30 40 $(seq 15 $INTERVAL $[ $LENGTH - 60 ])
 do
-	ffmpeg -loglevel error -ss $POS -i "$file"  -an -r 1 -filter:v 'scale=sar*iw:ih' -vframes 1 -f image2 -vcodec png -y "$TMPDIR/$POS.png"
+	ffmpeg -loglevel error -ss $POS -i "$file"  -an -r 1 -filter:v 'scale=sar*iw:ih' -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y "$TMPDIR/$POS.png"
 done
 
 WINNER=$(python2 $BASEDIR/select.py $TMPDIR/*.png)
-ffmpeg -loglevel error -i $WINNER -filter_complex:v 'scale=400:-1' -f image2 -vcodec mjpeg -q:v 0 $outjpg
-ffmpeg -loglevel error -i $WINNER                                  -f image2 -vcodec mjpeg -q:v 0 $outjpg_preview
+ffmpeg -loglevel error -i $WINNER -filter_complex:v 'scale=400:-1:lanczos' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y $outjpg
+ffmpeg -loglevel error -i $WINNER                                          -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y $outjpg_preview
 
 rm -rf $TMPDIR
