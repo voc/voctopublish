@@ -25,7 +25,7 @@ import time
 import paramiko
 import requests
 
-from ticket_module import Ticket
+from model.ticket_module import Ticket
 
 
 class VoctowebClient:

@@ -26,7 +26,7 @@ import mimetypes
 import os
 import re
 
-from ticket_module import Ticket
+from model.ticket_module import Ticket
 
 logging = logging.getLogger()
 

@@ -22,11 +22,11 @@ import logging
 import os
 import subprocess
 
-from c3tt_rpc_client import C3TTClient
-from voctoweb_client import VoctowebClient
-import twitter_client as twitter
-import youtube_client as youtube
-from ticket_module import Ticket
+from api_client.c3tt_rpc_client import C3TTClient
+from api_client.voctoweb_client import VoctowebClient
+import api_client.twitter_client as twitter
+import api_client.youtube_client as youtube
+from model.ticket_module import Ticket
 
 
 class Publisher:
