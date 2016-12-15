@@ -23,6 +23,8 @@ class Ticket:
     and adds some additional information.
     """
     def __init__(self, ticket, ticket_id):
+        if not ticket:
+            raise TicketException('Ticket was None type')
         self.__tracker_ticket = ticket
         self.ticket_id = ticket_id
 
