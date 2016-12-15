@@ -7,6 +7,7 @@ import unittest
 
 from api_client.c3tt_rpc_client import C3TTClient
 
+
 class TestC3TTClient(unittest.TestCase):
 
     
