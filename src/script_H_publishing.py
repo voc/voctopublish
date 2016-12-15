@@ -108,14 +108,14 @@ class Publisher:
             "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
 
         if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes' and not self.ticket.has_youtube_url:
-            logging.debug("publishing on youtube")
+            logging.debug("publishing_test on youtube")
             self._publish_to_youtube()
 
         logging.debug(
             'encoding profile media flag: ' + self.ticket.profile_media_enable + " project media flag: " + self.ticket.media_enable)
 
         if self.ticket.profile_media_enable == "yes" and self.ticket.media_enable == "yes":
-            logging.debug("publishing on media")
+            logging.debug("publishing_test on media")
             self._publish_to_voctoweb()
 
         self.c3tt.set_ticket_done()
@@ -174,7 +174,7 @@ class Publisher:
                     logging.info("thumbs exist. skipping")
 
             elif r.status_code == 422:
-                logging.info("event already exists => publishing")
+                logging.info("event already exists => publishing_test")
             else:
                 raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
 

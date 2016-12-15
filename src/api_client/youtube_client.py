@@ -46,7 +46,7 @@ class YoutubeAPI:
         publish a file on youtube
         :return:
         """
-        logging.info("publishing Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
+        logging.info("publishing_test Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
         infile = os.path.join(self.ticket.publishing_path,
                               str(self.ticket.fahrplan_id) + "-" + self.ticket.profile_slug + "." + self.ticket.profile_extension)
 

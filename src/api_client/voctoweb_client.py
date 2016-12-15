@@ -189,7 +189,7 @@ class VoctowebClient:
         :param html5:
         :return:
         """
-        logging.info(("publishing " + filename + " to " + self.api_url))
+        logging.info(("publishing_test " + filename + " to " + self.api_url))
 
         # make sure we have the file size and length
         ret = []
@@ -228,7 +228,7 @@ class VoctowebClient:
         if r.status_code != 200 and r.status_code != 201:
             raise VoctowebException(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
 
-        logging.info(("publishing " + filename + " done"))
+        logging.info(("publishing_test " + filename + " done"))
         return r.json()['id']
 
     def generate_thumbs(self):

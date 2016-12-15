@@ -64,7 +64,7 @@ class Ticket:
                           if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
-        # general publishing properties
+        # general publishing_test properties
         self.publishing_path = self._validate_('Publishing.Path')
 
         # youtube properties
