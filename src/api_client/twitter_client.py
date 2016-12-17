@@ -1,5 +1,5 @@
 #!/bin/python3
-#    Copyright (C) 2014  derpeter
+#    Copyright (C) 2016  derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -15,25 +15,26 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from twitter import *
+from twitter import Twitter, OAuth
 import logging
-logger = logging.getLogger()
+logging = logging.getLogger()
 
 
 def send_tweet(ticket, token, token_secret, consumer_key, consumer_secret):
-    logger.info("tweeting the release")
-    #FIXME we need a nicer solution for this but it is christmas
+    logging.info("tweeting the release")
+    # todo add more logic here. Also we should only tweet the master releases
     
-    if ticket['EncodingProfile.Slug'] == "hd":
+    if ticket.profile_slug == "hd":
         target = "media.ccc.de and youtube"
     else:
         target = "media.ccc.de"
         
-    msg = " has been released as " + str(ticket['EncodingProfile.Slug']) + " on " + target
-    title = str(ticket['Fahrplan.Title'])
+    msg = " has been released as " + ticket.profile_slug + " on " + target
+    title = ticket.title
     if len(title) >= (160 - len(msg)):
         title = title[0:len(msg)]
-    message =  title + msg
+    message = title + msg
+    # todo switch to oauth2
     t = Twitter(auth=OAuth(token, token_secret, consumer_key, consumer_secret))
     ret = t.statuses.update(status=message)
-    logger.debug(ret)
+    logging.debug(ret)
