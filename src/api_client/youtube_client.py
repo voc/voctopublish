@@ -32,6 +32,10 @@ logging = logging.getLogger()
 
 
 class YoutubeAPI:
+    """
+    This class implements the YouTube API v3
+    https://developers.google.com/youtube/v3/docs
+    """
     def __init__(self, ticket: Ticket, config):
         self.channelId = None
         if 'Publishing.YouTube.Token' not in ticket:
@@ -102,7 +106,6 @@ class YoutubeAPI:
     def upload(self):
         """
         Call the youtube API and push the file to youtube
-        :param ticket:
         :return:
         """
         title = self.ticket.title
@@ -117,21 +120,24 @@ class YoutubeAPI:
                 description = os.path.join(self.ticket.media_url, self.ticket.slug) + '\n\n' + description
 
         # if persons-list is set
-        if 'Fahrplan.Person_list' in ticket:
-            persons = ticket['Fahrplan.Person_list'].split(',')
+        if self.ticket.people:
+            # prepend user names if only 1 or 2 speaker
+            if len(self.ticket.people) < 3:
+                title = str(self.ticket.people) + ': ' + title
 
-            # prepend usernames if only 1 or 2 speaker
-            if len(persons) < 3:
-                title = str(ticket['Fahrplan.Person_list']) + ': ' + title
-
-        if 'Publishing.YouTube.TitlePrefix' in ticket:
-            title = str(ticket['Publishing.YouTube.TitlePrefix']) + ' ' + title
-            logging.debug('adding ' + str(ticket['Publishing.YouTube.TitlePrefix']) + ' as title prefix')
+        if self.ticket.youtube_title_prefix:
+            title = self.ticket.youtube_title_prefix + ' ' + title
+            logging.debug('adding ' + str(self.ticket.youtube_title_prefix) + ' as title prefix')
         else:
-            logging.warn("No youtube title prefix found")
+            logging.warning("No youtube title prefix found")
 
-        if 'Publishing.YouTube.TitleSuffix' in ticket:
-            title = title + ' ' + str(ticket['Publishing.YouTube.TitleSuffix'])
+        if self.ticket.youtube_title_suffix:
+            title = title + ' ' + self.ticket.youtube_title_suffix
+
+        if self.ticket.youtube_privacy:
+            privacy = self.ticket.youtube_privacy
+        else:
+            privacy = 'privat'
 
         metadata = {
             'snippet':
@@ -139,11 +145,11 @@ class YoutubeAPI:
                     'title': title,
                     'description': description,
                     'channelId': self.channelId,
-                    'tags': self.select_tags(ticket)
+                    'tags': self.select_tags()
                 },
             'status':
                 {
-                    'privacyStatus': ticket.get('Publishing.YouTube.Privacy', 'private'),
+                    'privacyStatus': privacy,
                     'embeddable': True,
                     'publicStatsViewable': True,
                     'license': 'creativeCommon',  # TODO
@@ -151,19 +157,20 @@ class YoutubeAPI:
         }
 
         # if tags are set - copy them into the metadata dict
-        if 'Publishing.YouTube.Tags' in ticket:
-            metadata['snippet']['tags'] = list(map(str.strip, ticket['Publishing.YouTube.Tags'].split(',')))
+        if self.ticket.youtube_tags:
+            metadata['snippet']['tags'] = list(map(str.strip, self.ticket.youtube_tags.split(',')))
 
-        translation = ticket.get('Publishing.InfileIsTranslated')
-        if translation == 'de':
-            metadata['snippet']['title'] += ' (deutsche Übersetzung)'
-
-        elif translation == 'en':
-            metadata['snippet']['title'] += ' (english translation)'
-
-        # recure limit title length to 100 (youtube api conformity)
-        metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
-        metadata['snippet']['title'] = metadata['snippet']['title'][:100]
+        # todo make this nice and work
+        # translation = self.ticket.get('Publishing.InfileIsTranslated')
+        # if translation == 'de':
+        #     metadata['snippet']['title'] += ' (deutsche Übersetzung)'
+        #
+        # elif translation == 'en':
+        #     metadata['snippet']['title'] += ' (english translation)'
+        #
+        # # recure limit title length to 100 (youtube api conformity)
+        # metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
+        # metadata['snippet']['title'] = metadata['snippet']['title'][:100]
 
         # 1 => Film & Animation
         # 2 => Autos & Vehicles
@@ -196,15 +203,18 @@ class YoutubeAPI:
         # 42 => Shorts
         # 43 => Shows
         # 44 => Trailers
-        if 'Publishing.YouTube.Category' in ticket:
-            metadata['snippet']['categoryId'] = int(ticket['Publishing.YouTube.Category'])
 
-        (mimetype, encoding) = mimetypes.guess_type(ticket['Publishing.Infile'])
-        size = os.stat(ticket['Publishing.Infile']).st_size
+        if self.ticket.youtube_category:
+            metadata['snippet']['categoryId'] = int(self.ticket['Publishing.YouTube.Category'])
 
-        logging.debug('guessed mimetype for file %s as %s and its size as %u bytes' % (
-            ticket['Publishing.Infile'], mimetype, size))
+        (mimetype, encoding) = mimetypes.guess_type(self.ticket['Publishing.Infile'])
+        size = os.stat(self.ticket['Publishing.Infile']).st_size
 
+        # todo figure out what infile may be
+        #logging.debug('guessed mimetype for file %s as %s and its size as %u bytes' % (
+        #    self.ticket['Publishing.Infile'], mimetype, size))
+
+        # todo add exception handling here
         r = requests.post(
             'https://www.googleapis.com/upload/youtube/v3/videos',
             params={
@@ -228,7 +238,8 @@ class YoutubeAPI:
 
         logging.info('successfully created video and received upload-url from %s' % (r.headers['server'] if 'server' in r.headers else '-'))
         logging.debug('uploading video-data to %s' % r.headers['location'])
-        with open(ticket['Publishing.Infile'], 'rb') as fp:
+        # todo again this infile .. this probaly should be a class variable
+        with open(self.ticket['Publishing.Infile'], 'rb') as fp:
             r = requests.put(
                 r.headers['location'],
                 headers={
@@ -255,7 +266,6 @@ class YoutubeAPI:
         :param playlist_id:
         :return:
         """
-
         r = requests.post(
             'https://www.googleapis.com/youtube/v3/playlistItems',
             params={
@@ -276,7 +286,7 @@ class YoutubeAPI:
         if 200 != r.status_code:
             raise YouTubeException('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
-        print(' added')
+        logging.info('video added to playlist')
 
     def get_playlist(self, playlist_id):
         """
@@ -299,9 +309,16 @@ class YoutubeAPI:
         if 200 != r.status_code:
             raise YouTubeException('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
-        print(json.dumps(r.json(), indent=4))
+        logging.debug(json.dumps(r.json(), indent=4))
 
     def get_fresh_token(self, refresh_token, client_id, client_secret):
+        """
+        request a 'fresh' youtube token
+        :param refresh_token:
+        :param client_id:
+        :param client_secret:
+        :return:
+        """
         logging.debug('fetching fresh Access-Token on behalf of the refreshToken %s' % refresh_token)
         r = requests.post(
             'https://accounts.google.com/o/oauth2/token',
@@ -324,6 +341,11 @@ class YoutubeAPI:
         return data['access_token']
 
     def get_channel_id(self, access_token):
+        """
+        request the channel id associated to the access token
+        :param access_token:
+        :return:
+        """
         logging.debug('fetching Channel-Info on behalf of the accessToken %s' % access_token)
         r = requests.get(
             'https://www.googleapis.com/youtube/v3/channels',
@@ -342,50 +364,48 @@ class YoutubeAPI:
         data = r.json()
         channel = data['items'][0]
 
-        # logging.info("successfully fetched Channel-ID %s with name %s" % (channel['id'], channel['brandingSettings']['channel']['title']))
         logging.info("successfully fetched Channel-ID %s " % (channel['id']))
         return channel['id']
 
-    def select_tags(self, ticket):
+    def select_tags(self):
         """
         Build the tag list
-        :param ticket:
         :return:
         """
         tags = []
 
-        if ticket.track:
-            tags.append(ticket.track)
+        if self.ticket.track:
+            tags.append(self.ticket.track)
 
-        if ticket.day:
-            tags.append('Day %s' % ticket.day)
+        if self.ticket.day:
+            tags.append('Day %s' % self.ticket.day)
 
-        if ticket.room:
-            tags.append(ticket.room)
+        if self.ticket.room:
+            tags.append(self.ticket.room)
 
         # replace this with dynamic code
         # # append language-specific tag
-        # language = ticket.get('Record.Language')
+        # language = self.ticket.get('Record.Language')
         # if language == 'de':
         #     tags.append('German')
         # elif language == 'en':
         #     tags.append('English')
         #
         # elif language == 'de-en':
-        #     if 'Publishing.InfileIsTranslated' in ticket:
+        #     if 'Publishing.InfileIsTranslated' in self.ticket:
         #         tags.append('German (english translation)')
         #     else:
         #         tags.append('German')
         #
         # elif language == 'en-de':
-        #     if 'Publishing.InfileIsTranslated' in ticket:
+        #     if 'Publishing.InfileIsTranslated' in self.ticket:
         #         ## TODO
         #         tags.append('English (deutsche Übersetzung)')
         #     else:
         #         tags.append('English')
 
         # append person-names to tags
-        tags.extend(ticket.persons)
+        tags.extend(self.ticket.persons)
 
         return tags
 
