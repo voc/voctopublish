@@ -75,7 +75,7 @@ class VoctowebClient:
             try:
                 logging.debug(
                     'Uploading ' + self.t.path + self.t.filename_base + ext + " to " + self.t.media_thump_path + self.t.local_filename_base + ext)
-                self.sftp.put(self.t.video_base + self.t.local_filename_base + ext,
+                self.sftp.put(self.t.publishing_path + self.t.local_filename_base + ext,
                               self.t.media_thump_path + self.t.local_filename_base + ext)
             except paramiko.SSHException as e:
                 raise VoctowebException('could not upload thumb because of SSH problem ' + str(e)) from e
@@ -92,7 +92,7 @@ class VoctowebClient:
         :param filename:
         :param folder:
         """
-        logging.info("uploading " + self.t.video_base + local_filename)
+        logging.info("uploading " + self.t.publishing_path + local_filename)
 
         # Check if ssh connection is open.
         if self.sftp is None:
@@ -126,7 +126,7 @@ class VoctowebClient:
 
         # Upload the file
         try:
-            self.sftp.put(os.path.join(self.t.video_base, local_filename), upload_target)
+            self.sftp.put(os.path.join(self.t.publishing_path, local_filename), upload_target)
         except paramiko.SSHException as e:
             raise VoctowebException('Could not upload recording because of SSH problem ' + str(e)) from e
         except IOError as e:
@@ -237,13 +237,13 @@ class VoctowebClient:
         :return:
         """
         logging.info(
-            ("generating thumbs for " + self.t.video_base + self.t.local_filename))
+            ("generating thumbs for " + self.t.publishing_path + self.t.local_filename))
 
         try:
             # todo this doesn't have to be a subprocess, build thumbs in python
             subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh",
-                                   os.path.join(self.t.video_base, self.t.local_filename),
-                                   self.t.video_base])
+                                   os.path.join(self.t.publishing_path, self.t.local_filename),
+                                   self.t.publishing_path])
         except subprocess.CalledProcessError as e:
             raise VoctowebException(
                 'Error generating thumbs ' + 'Command: ' + str(e.cmd) + ' fault string ' + str(e)) from e
@@ -260,12 +260,12 @@ class VoctowebClient:
         if local_filename is None:
             raise VoctowebException('Error: No filename supplied.')
 
-        file_size = os.stat(self.t.video_base + local_filename).st_size
+        file_size = os.stat(self.t.publishing_path + local_filename).st_size
         file_size = int(file_size / 1024 / 1024)
 
         try:
             r = subprocess.check_output(
-                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.t.video_base + local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
+                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.t.publishing_path + local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
                 shell=True)
         except:
             raise VoctowebException("ERROR: could not get duration")
@@ -275,7 +275,7 @@ class VoctowebClient:
         if self.t.mime_type.startswith('video'):
             try:
                 r = subprocess.check_output(
-                    'ffmpeg -i ' + self.t.video_base + local_filename + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
+                    'ffmpeg -i ' + self.t.publishing_path + local_filename + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
                     shell=True)
             except:
                 raise VoctowebException("ERROR: could not get duration ")
