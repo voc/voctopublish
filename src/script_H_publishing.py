@@ -138,6 +138,7 @@ class Publisher:
 
             t = Ticket(tracker_ticket, ticket_id)
 
+            # todo this should happen later so we can report these error to the tracker
             if not os.path.isfile(t.publishing_path + t.local_filename):
                 raise IOError('Source file does not exist (%s)' % (t.publishing_path + t.local_filename))
             if not os.path.exists(t.publishing_path):
