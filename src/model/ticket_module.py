@@ -74,10 +74,12 @@ class Ticket:
         self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
         # we will fill the following variables only if youtube is enabled
         if self.profile_youtube_enable == 'yes' and self.youtube_enable == 'yes':
-            self.youtube_category = self._validate_('Publishing.YouTube.Category')
-            self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy')
-            self.youtube_tags = self._validate_('Publishing.YouTube.Tags')
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
+            self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
+            self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
+            self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
+            self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
+            self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
             # check if this event has already been published to youtube
             if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
                 self.has_youtube_url = True
