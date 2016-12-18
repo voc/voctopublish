@@ -91,13 +91,13 @@ class Publisher:
             raise PublisherException("Could not get ticket from tracker") from e_
 
         # voctoweb
-        if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable:
+        if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
             api_url = self.config['voctoweb']['api_url']
             api_key = self.config['voctoweb']['api_key']
             self.vw = VoctowebClient(self.ticket, api_key, api_url)
 
         # YouTube
-        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable:
+        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes':
             self.yt = YoutubeAPI(self.ticket, self.config)
 
         # twitter
