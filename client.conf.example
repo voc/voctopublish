@@ -1,6 +1,4 @@
 [general]
-# data source for publishing: c3tt, CMD, file (file meta data)
-source = "c3tt"
 # valid values are: warning, error, info, debug
 debug = INFO
 # validation should only be turned off for debugging
@@ -8,26 +6,25 @@ validate_tls = True
 validate_host_key = True
 
 [C3Tracker]
-group = <key>
-secret =  <key>
+group = <group>
+secret =  <secret>
 #only set host if you don't wont to use local machine name
 host = None
-url = <server>
+url = <tracker url>
 from_state = encoding
 to_state = releasing
 
-[media.ccc.de]
-enable = True
-api_url =  <api-url>
-api_key =  <key>
+[voctoweb]
+# e.g. https://exmaple.com/api/
+api_url = <voctoweb api url>
+api_key = <voctoweb key>
 
 [youtube]
-enable = True
+enable = False
 secret = <youtube-api-secret>
 client_id = <youtube-client-id>
 
 [twitter]
-enable = True
 token = <user token>
 token_secret = <user secret>
 consumer_key = <consumer key>

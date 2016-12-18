@@ -92,8 +92,8 @@ class Publisher:
 
         # voctoweb
         if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable:
-            api_url = self.config['media.ccc.de']['api_url']
-            api_key = self.config['media.ccc.de']['api_key']
+            api_url = self.config['voctoweb']['api_url']
+            api_key = self.config['voctoweb']['api_key']
             self.vw = VoctowebClient(self.ticket, api_key, api_url)
 
         # YouTube
