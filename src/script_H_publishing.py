@@ -24,8 +24,8 @@ import subprocess
 
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
+from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
-import api_client.youtube_client as youtube
 from model.ticket_module import Ticket
 
 
@@ -70,7 +70,7 @@ class Publisher:
         elif level == 'debug':
             self.logger.setLevel(logging.DEBUG)
 
-        # get a ticket from the tracker and initilize the ticket object
+        # get a ticket from the tracker and initialize the ticket object
         if self.config['C3Tracker']['host'] == "None":
             self.host = socket.getfqdn()
         else:
@@ -95,6 +95,10 @@ class Publisher:
             api_url = self.config['media.ccc.de']['api_url']
             api_key = self.config['media.ccc.de']['api_key']
             self.vw = VoctowebClient(self.ticket, api_key, api_url)
+
+        # YouTube
+        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable:
+            self.yt = YoutubeAPI(self.ticket, self.config)
 
         # twitter
         if self.ticket.twitter_enable == 'yes':
@@ -124,7 +128,7 @@ class Publisher:
         self.c3tt.set_ticket_done()
 
         if self.ticket.twitter_enable == 'yes':
-            self.twitter.send_tweet()
+            twitter.send_tweet(self.ticket, self.token, self.token_secret, self.consumer_key, self.consumer_secret)
 
     def _get_ticket_from_tracker(self):
         """
@@ -222,38 +226,29 @@ class Publisher:
                                  os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map', '0:0',
                                  '-map',
                                  '0:1', '-c', 'copy', '-movflags', 'faststart', out_path])
-            except Exception as e:
-                raise PublisherException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e
+            except Exception as e_:
+                raise PublisherException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
 
             try:
                 self.vw.upload_file(out_path, filename, self.ticket.folder)
-            except Exception as e:
-                raise PublisherException('error uploading ' + out_path) from e
+            except Exception as e_:
+                raise PublisherException('error uploading ' + out_path) from e_
 
             try:
                 self.vw.create_recording(out_filename, filename, self.ticket.publishing_path, str(lang), True, True)
-            except Exception as e:
-                raise PublisherException('creating recording ' + out_path) from e
+            except Exception as e_:
+                raise PublisherException('creating recording ' + out_path) from e_
 
     def _publish_to_youtube(self):
         """
         Publish the file to YouTube.
         """
-        # try:
-        youtube_urls = youtube.publish_youtube(self.ticket, self.config['youtube']['client_id'],
-                                               self.config['youtube']['secret'])
+        youtube_urls = self.yt.publish()
         props = {}
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
 
         self.c3tt.set_ticket_properties(props)
-
-        # except RuntimeError as err:
-        #    c3t.setTicketFailed(self.ticket_id, 'Publishing failed: \n' + str(err), self.tracker_url, self.group,
-        #                        self.host, self.secret)
-
-        # logging.error('Publishing failed: \n' + str(err))
-        # sys.exit(-1)
 
 
 class PublisherException(Exception):
