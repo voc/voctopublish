@@ -102,6 +102,7 @@ class Ticket:
             if 'Media.Tags' in ticket:
                 self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
 
+        self.twitter_enable = self._validate_('Publishing.Twitter.Enable')
     def _validate_(self, key, optional=False):
         value = None
         if key in self.__tracker_ticket:

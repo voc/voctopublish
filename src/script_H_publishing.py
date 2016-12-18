@@ -30,7 +30,19 @@ from model.ticket_module import Ticket
 
 
 class Publisher:
+    """
+    This is the main class for the publishing application
+    It is meant to be used with the c3tt ticket tracker
+    """
     def __init__(self):
+        # load config
+        if not os.path.exists('client.conf'):
+            raise IOError("Error: config file not found")
+
+        self.config = configparser.ConfigParser()
+        self.config.read('client.conf')
+
+        # set up logging
         logging.addLevelName(logging.WARNING, "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
         logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
         logging.addLevelName(logging.INFO, "\033[1;32m%s\033[1;0m" % logging.getLevelName(logging.INFO))
@@ -39,23 +51,14 @@ class Publisher:
         self.logger = logging.getLogger()
 
         ch = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(filename)s - %(lineno)s - %(name)s - %(levelname)s - %(message)s')
-        # uncomment the next line to add filename and line number to logging output
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
+        if self.config['general']['debug']:
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
+        else:
+            formatter = logging.Formatter('%(asctime)s - %(message)s')
 
         ch.setFormatter(formatter)
-
         self.logger.addHandler(ch)
         self.logger.setLevel(logging.DEBUG)
-        logging.info("reading config")
-
-        # handle config
-        if not os.path.exists('client.conf'):
-            raise IOError("Error: config file not found")
-
-        self.config = configparser.ConfigParser()
-        self.config.read('client.conf')
 
         level = self.config['general']['debug']
         if level == 'info':
@@ -67,6 +70,7 @@ class Publisher:
         elif level == 'debug':
             self.logger.setLevel(logging.DEBUG)
 
+        # get a ticket from the tracker and initilize the ticket object
         if self.config['C3Tracker']['host'] == "None":
             self.host = socket.getfqdn()
         else:
@@ -86,19 +90,18 @@ class Publisher:
         except Exception as e_:
             raise PublisherException("Could not get ticket from tracker") from e_
 
-        if self.ticket:
-            # voctoweb
-            if self.config['media.ccc.de']['enable']:
-                api_url = self.config['media.ccc.de']['api_url']
-                api_key = self.config['media.ccc.de']['api_key']
-                self.vw = VoctowebClient(self.ticket, api_key, api_url)
+        # voctoweb
+        if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable:
+            api_url = self.config['media.ccc.de']['api_url']
+            api_key = self.config['media.ccc.de']['api_key']
+            self.vw = VoctowebClient(self.ticket, api_key, api_url)
 
-            # twitter
-            if self.config['twitter']['enable'] == 'True':
-                self.token = self.config['twitter']['token']
-                self.token_secret = self.config['twitter']['token_secret']
-                self.consumer_key = self.config['twitter']['consumer_key']
-                self.consumer_secret = self.config['twitter']['consumer_secret']
+        # twitter
+        if self.ticket.twitter_enable == 'yes':
+            self.token = self.config['twitter']['token']
+            self.token_secret = self.config['twitter']['token_secret']
+            self.consumer_key = self.config['twitter']['consumer_key']
+            self.consumer_secret = self.config['twitter']['consumer_secret']
 
     def publish(self):
         """
@@ -120,7 +123,7 @@ class Publisher:
 
         self.c3tt.set_ticket_done()
 
-        if self.config['twitter']['enable'] == 'True':  # todo move to ticket / tracker property
+        if self.ticket.twitter_enable == 'yes':
             self.twitter.send_tweet()
 
     def _get_ticket_from_tracker(self):
