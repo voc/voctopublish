@@ -10,7 +10,6 @@ from api_client.c3tt_rpc_client import C3TTClient
 
 class TestC3TTClient(unittest.TestCase):
 
-    
     def setUp(self):
         self._client = C3TTClient("<server>", "group", "host", "secret")
 
