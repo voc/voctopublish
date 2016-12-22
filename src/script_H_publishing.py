@@ -90,6 +90,9 @@ class Publisher:
         except Exception as e_:
             raise PublisherException('Could not get ticket from tracker') from e_
 
+        if not self.ticket:
+            return
+
         # voctoweb
         if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
             api_url = self.config['voctoweb']['api_url']
@@ -227,6 +230,7 @@ class Publisher:
         This is only implemented for the h264 hd files as we only do it for them
         :return:
         """
+        logging.debug('Languages: ' + str(self.ticket.languages))
         for i, lang in self.ticket.languages:
             out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + i + "." + self.ticket.profile_extension
             out_path = os.path.join(self.ticket.publishing_path, out_filename)
@@ -283,3 +287,5 @@ if __name__ == '__main__':
             publisher.c3tt.set_ticket_failed(str(e))
             logging.exception(e)
             sys.exit(-1)
+    else:
+        sys.exit(0)
