@@ -88,7 +88,7 @@ class Publisher:
         try:
             self.ticket = self._get_ticket_from_tracker()
         except Exception as e_:
-            raise PublisherException("Could not get ticket from tracker") from e_
+            raise PublisherException('Could not get ticket from tracker') from e_
 
         # voctoweb
         if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
@@ -111,6 +111,16 @@ class Publisher:
         """
         Decide based on the information provided by the tracker where to publish.
         """
+        # check source file and filesystem permissions
+        if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename):
+            raise IOError('Source file does not exist (%s)' % (self.ticket.publishing_path + self.ticket.local_filename))
+        if not os.path.exists(self.ticket.publishing_path):
+            raise IOError("Output path does not exist (%s)" % self.ticket.publishing_path)
+        else:
+            if not os.access(self.ticket.publishing_path, os.W_OK):
+                raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
+
+        # YouTube
         logging.debug(
             "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
 
@@ -118,6 +128,7 @@ class Publisher:
             logging.debug("publishing_test on youtube")
             self._publish_to_youtube()
 
+        # Voctoweb
         logging.debug(
             'encoding profile media flag: ' + self.ticket.profile_media_enable + " project media flag: " + self.ticket.media_enable)
 
@@ -127,16 +138,16 @@ class Publisher:
 
         self.c3tt.set_ticket_done()
 
+        # Twitter
         if self.ticket.twitter_enable == 'yes':
             twitter.send_tweet(self.ticket, self.token, self.token_secret, self.consumer_key, self.consumer_secret)
 
     def _get_ticket_from_tracker(self):
         """
-        Get a ticket from the tracker an populate local variables
+        Request the next unassigned ticket for the configured states
         """
         logging.info('requesting ticket from tracker')
 
-        # check if we got a new ticket
         ticket_id = self.c3tt.assign_next_unassigned_for_state(self.from_state, self.to_state)
         if ticket_id:
             logging.info("Ticket ID:" + str(ticket_id))
@@ -144,15 +155,6 @@ class Publisher:
             logging.debug("Ticket: " + str(tracker_ticket))
 
             t = Ticket(tracker_ticket, ticket_id)
-
-            # todo this should happen later so we can report these error to the tracker
-            if not os.path.isfile(t.publishing_path + t.local_filename):
-                raise IOError('Source file does not exist (%s)' % (t.publishing_path + t.local_filename))
-            if not os.path.exists(t.publishing_path):
-                raise IOError("Output path does not exist (%s)" % t.publishing_path)
-            else:
-                if not os.access(t.publishing_path, os.W_OK):
-                    raise IOError("Output path is not writable (%s)" % t.publishing_path)
         else:
             logging.info("No ticket to publish, exiting")
             return None
@@ -164,30 +166,41 @@ class Publisher:
         Create a event on an voctomix instance. This includes creating a event and a recording for each media file.
         This methods also start the scp uploads and handles multi language audio
         """
-        logging.info("creating event on voctoweb")
+        logging.info("publishing to voctoweb")
 
-        # audio files don't need the following steps
-        if self.ticket.mime_type.startswith('video'):
-
-            # create the event on voctoweb
-            # TODO at the moment we just try this and look on the error. We should store event id and ask the api
-            r = self.vw.create_event()
-            if r.status_code in [200, 201]:
-                logging.info("new event created")
-                # generate the thumbnails (will not overwrite existing thumbs)
-                if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
-                    self.vw.generate_thumbs()
-                    self.vw.upload_thumbs()
-                else:
-                    logging.info("thumbs exist. skipping")
-
-            elif r.status_code == 422:
-                logging.info("event already exists => publishing_test")
+        if self.ticket.master:
+            # if this is master ticket we need to check if we need to create an event on voctoweb
+            logging.debug('this is a master ticket')
+            if self.ticket.recording_id:
+                logging.debug('ticket has a recording id')
+                pass
+                # ticket has an recording id. We assume the event exists on media
+                # todo ask media api if event exists
             else:
-                raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
+                # ticket has no recording id therefore we create the event on voctoweb
+                r = self.vw.create_event()
+                if r.status_code in [200, 201]:
+                    logging.info("new event created")
+                    # generate the thumbnails (will not overwrite existing thumbs)
+                    # todo move the external bash script to python code here
+                    # if this is an audio only release we don' create thumbs
+                    if self.ticket.mime_type.startswith('video'):
+                        if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
+                            self.vw.generate_thumbs()
+                            self.vw.upload_thumbs()
+                        else:
+                            logging.info("thumbs exist. skipping")
 
-        if self.ticket.master and len(self.ticket.languages) > 1:
-            logging.info('remuxing multi-language video into single audio files')
+                elif r.status_code == 422:
+                    # If this happens tracker and voctoweb are out of sync regarding the recording id
+                    logging.warning("event already exists => publishing_test")
+                else:
+                    raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
+
+                # in case of a multi language release we create here the single language files
+                if len(self.ticket.languages) > 1:
+                    logging.info('remuxing multi-language video into single audio files')
+                    self._mux_to_single_language()
 
         # set hq filed based on ticket encoding profile slug
         if 'hd' in self.ticket.profile_slug:
@@ -268,6 +281,5 @@ if __name__ == '__main__':
             publisher.publish()
         except Exception as e:
             publisher.c3tt.set_ticket_failed(str(e))
-            logging.error(e)
             logging.exception(e)
             sys.exit(-1)
