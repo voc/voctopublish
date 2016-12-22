@@ -60,6 +60,25 @@ class VoctowebClient:
         self.sftp = self.ssh.open_sftp()
         logging.info('SSH connection established to ' + str(self.t.media_host))
 
+    def generate_thumbs(self):
+        """
+        This function calls the thumbnail generator script
+        :return:
+        """
+        logging.info(
+            ("generating thumbs for " + self.t.publishing_path + self.t.local_filename))
+
+        try:
+            # todo this doesn't have to be a subprocess, build thumbs in python
+            subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh",
+                                   os.path.join(self.t.publishing_path, self.t.local_filename),
+                                   self.t.publishing_path])
+        except subprocess.CalledProcessError as e:
+            raise VoctowebException(
+                'Error generating thumbs ' + 'Command: ' + str(e.cmd) + ' fault string ' + str(e)) from e
+
+        logging.info("thumbnails generated")
+
     def upload_thumbs(self):
         """
         Upload thumbnails to the media.ccc.de CDN master.
@@ -74,13 +93,13 @@ class VoctowebClient:
         for ext in thumbs_ext:
             try:
                 logging.debug(
-                    'Uploading ' + self.t.path + self.t.filename_base + ext + " to " + self.t.media_thump_path + self.t.local_filename_base + ext)
+                    'Uploading ' + self.t.publishing_path + self.t.local_filename_base + ext + " to " + self.t.media_thump_path + self.t.local_filename_base + ext)
                 self.sftp.put(self.t.publishing_path + self.t.local_filename_base + ext,
                               self.t.media_thump_path + self.t.local_filename_base + ext)
             except paramiko.SSHException as e:
                 raise VoctowebException('could not upload thumb because of SSH problem ' + str(e)) from e
             except IOError as e:
-                raise VoctowebException('could not create file in upload directory ' + str(e)) from e
+                raise VoctowebException('could not upload thumb because of ' + str(e)) from e
 
         logging.info('uploading thumbs done')
 
@@ -231,24 +250,6 @@ class VoctowebClient:
         logging.info(("publishing_test " + filename + " done"))
         return r.json()['id']
 
-    def generate_thumbs(self):
-        """
-        This function calls the thumbnail generator script
-        :return:
-        """
-        logging.info(
-            ("generating thumbs for " + self.t.publishing_path + self.t.local_filename))
-
-        try:
-            # todo this doesn't have to be a subprocess, build thumbs in python
-            subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh",
-                                   os.path.join(self.t.publishing_path, self.t.local_filename),
-                                   self.t.publishing_path])
-        except subprocess.CalledProcessError as e:
-            raise VoctowebException(
-                'Error generating thumbs ' + 'Command: ' + str(e.cmd) + ' fault string ' + str(e)) from e
-
-        logging.info("thumbnails generated")
 
     def _get_file_details(self, local_filename, ret):
         """
