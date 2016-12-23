@@ -102,13 +102,13 @@ class VoctowebClient:
 
         logging.info('uploading thumbs done')
 
-    def upload_file(self, local_filename, filename, folder):
+    def upload_file(self, local_filename, remote_filename, remote_folder):
         """
         Uploads a file from path relative to the output dir to the same path relative to the upload_dir
         We can't use the file and folder names from the ticket here as we need to change these for multi language audio
         :param local_filename:
-        :param filename:
-        :param folder:
+        :param remote_filename:
+        :param remote_folder:
         """
         logging.info("uploading " + self.t.publishing_path + local_filename)
 
@@ -116,7 +116,7 @@ class VoctowebClient:
         if self.sftp is None:
             self._connect_ssh()
 
-        format_folder = os.path.join(self.t.media_path, folder)
+        format_folder = os.path.join(self.t.media_path, remote_folder)
 
         # Check if the directory exists and if not create it.
         # This only works for the format sub directories not for the event itself
@@ -129,7 +129,7 @@ class VoctowebClient:
                 except IOError as e:
                     raise VoctowebException('Could not create format subdir ' + str(e)) from e
 
-        upload_target = os.path.join(format_folder, filename)
+        upload_target = os.path.join(format_folder, remote_filename)
 
         # Check if the file already exists and remove it
         try:
@@ -150,7 +150,7 @@ class VoctowebClient:
         except IOError as e:
             raise VoctowebException('Could not create file in upload directory ' + str(e)) from e
 
-        logging.info("uploading " + filename + " done")
+        logging.info("uploading " + remote_filename + " done")
 
     def create_event(self):
         """

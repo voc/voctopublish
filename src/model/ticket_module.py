@@ -50,7 +50,7 @@ class Ticket:
         self.abstract = self._validate_('Fahrplan.Abstract', True)
         self.description = self._validate_('Fahrplan.Description', True)
         self.date = self._validate_('Fahrplan.Date')
-        self.local_filename = self.fahrplan_id + "-" + self.slug + "." + self.profile_extension
+        self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
         self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
         self.room = self._validate_('Fahrplan.Room')
         self.people = []
