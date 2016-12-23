@@ -13,7 +13,6 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# generate thumbs
 
 import errno
 import json
@@ -72,7 +71,7 @@ class VoctowebClient:
             # todo this doesn't have to be a subprocess, build thumbs in python
             subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh",
                                    os.path.join(self.t.publishing_path, self.t.local_filename),
-                                   self.t.publishing_path])
+                                   self.t.publishing_path, self.t.local_filename_base + '.jpg', self.t.local_filename_base + '_preview.jpg'])
         except subprocess.CalledProcessError as e:
             raise VoctowebException(
                 'Error generating thumbs ' + 'Command: ' + str(e.cmd) + ' fault string ' + str(e)) from e
@@ -120,7 +119,7 @@ class VoctowebClient:
         format_folder = os.path.join(self.t.media_path, folder)
 
         # Check if the directory exists and if not create it.
-        # This only works for the format subdiers not for the event itself
+        # This only works for the format sub directories not for the event itself
         try:
             self.sftp.stat(format_folder)
         except IOError as e:
