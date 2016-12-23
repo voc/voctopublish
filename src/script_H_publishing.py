@@ -128,7 +128,6 @@ class Publisher:
             "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
 
         if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes' and not self.ticket.has_youtube_url:
-            logging.debug("publishing_test on youtube")
             self._publish_to_youtube()
 
         # Voctoweb
@@ -136,7 +135,6 @@ class Publisher:
             'encoding profile media flag: ' + self.ticket.profile_media_enable + " project media flag: " + self.ticket.media_enable)
 
         if self.ticket.profile_media_enable == "yes" and self.ticket.media_enable == "yes":
-            logging.debug("publishing_test on media")
             self._publish_to_voctoweb()
 
         self.c3tt.set_ticket_done()
@@ -196,7 +194,7 @@ class Publisher:
 
                 elif r.status_code == 422:
                     # If this happens tracker and voctoweb are out of sync regarding the recording id
-                    logging.warning("event already exists => publishing_test")
+                    logging.warning("event already exists => publishing")
                 else:
                     raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
 
@@ -220,7 +218,7 @@ class Publisher:
         self.vw.upload_file(self.ticket.local_filename, self.ticket.filename, self.ticket.folder)
 
         recording_id = self.vw.create_recording(self.ticket.local_filename, self.ticket.filename,
-                                                self.ticket.folder, self.ticket.languages[0], hq, html5)
+                                                self.ticket.folder, self.ticket.language, hq, html5)
 
         self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 
@@ -231,10 +229,10 @@ class Publisher:
         :return:
         """
         logging.debug('Languages: ' + str(self.ticket.languages))
-        for i, lang in self.ticket.languages:
-            out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + i + "." + self.ticket.profile_extension
+        for key in self.ticket.languages:
+            out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(key) + "." + self.ticket.profile_extension
             out_path = os.path.join(self.ticket.publishing_path, out_filename)
-            filename = self.ticket.language_template % lang + '.' + self.ticket.profile_extension
+            filename = self.ticket.language_template % self.ticket.languages[key] + '.' + self.ticket.profile_extension
 
             logging.info('remuxing ' + self.ticket.local_filename + ' to ' + out_path)
 
@@ -242,7 +240,7 @@ class Publisher:
                 subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i',
                                  os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map', '0:0',
                                  '-map',
-                                 '0:1', '-c', 'copy', '-movflags', 'faststart', out_path])
+                                 '0:a:' + str(key), '-c', 'copy', '-movflags', 'faststart', out_path])
             except Exception as e_:
                 raise PublisherException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
 
@@ -252,7 +250,7 @@ class Publisher:
                 raise PublisherException('error uploading ' + out_path) from e_
 
             try:
-                self.vw.create_recording(out_filename, filename, self.ticket.publishing_path, str(lang), True, True)
+                self.vw.create_recording(out_filename, filename, self.ticket.publishing_path, str(self.ticket.languages[key]), True, True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
@@ -260,6 +258,7 @@ class Publisher:
         """
         Publish the file to YouTube.
         """
+        logging.debug("publishing to youtube")
         youtube_urls = self.yt.publish()
         props = {}
         for i, youtubeUrl in enumerate(youtube_urls):
