@@ -43,8 +43,8 @@ class YoutubeAPI:
         self.ticket = ticket
         self.config = config
         self.youtube_urls = []
-        self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch'}
-        self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation', 'spa': 'La traducción española', 'gsw': 'Schwizerdeutsche übersetzerli'}
+        self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch', 'fra': 'French'}
+        self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation', 'spa': 'La traducción española', 'gsw': 'Schwizerdütschi Übersetzig', 'fra': 'traduction française'}
 
 
     def publish(self):
