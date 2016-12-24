@@ -38,83 +38,69 @@ class YoutubeAPI:
     """
     def __init__(self, ticket: Ticket, config):
         self.channelId = None
-        if 'Publishing.YouTube.Token' not in ticket:
-            raise YouTubeException(
-                'Property "Publishing.YouTube.Token" missing in ticket - did you set the YouTube-Properties on the Project?')
-
-        self.accessToken = self.get_fresh_token(ticket.youtube_token, config['client_id'], config['secret'])
+        self.accessToken = self.get_fresh_token(ticket.youtube_token, config['youtube']['client_id'], config['youtube']['secret'])
         self.channelId = self.get_channel_id(self.accessToken)
+        self.ticket = ticket
+        self.config = config
+        self.youtube_urls = []
 
     def publish(self):
         """
         publish a file on youtube
         :return:
         """
-        logging.info("publishing_test Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
-        infile = os.path.join(self.ticket.publishing_path,
-                              str(self.ticket.fahrplan_id) + "-" + self.ticket.profile_slug + "." + self.ticket.profile_extension)
+        logging.info("publishing Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
 
-        # replace this with dynamic code that can handle multilang
-        # # if a second language is configured, remux the video to only have the one audio track and upload it twice
-        # multi_lang = re.match('(..)-(..)', ticket['Record.Language'])
-        # if multi_lang:
-        #     logging.debug('remuxing dual-language video into two parts')
-        #
-        #     outfile1 = os.path.join(ticket['Publishing.Path'],
-        #                             + str(ticket['Fahrplan.ID']) + "-" + ticket['EncodingProfile.Slug'] + "-audio1." +
-        #                             ticket['EncodingProfile.Extension'])
-        #     outfile2 = os.path.join(ticket['Publishing.Path'] + str(ticket['Fahrplan.ID']) + "-" + ticket[
-        #         'EncodingProfile.Slug'] + "-audio2." + ticket['EncodingProfile.Extension'])
-        #     youtubeUrls = []
-        #
-        #     logging.debug('remuxing with original audio to ' + outfile1)
-        #     ticket['Publishing.Infile'] = outfile1
-        #
-        #     if subprocess.call(
-        #             ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:1', '-c',
-        #              'copy', outfile1]) != 0:
-        #         raise YouTubeException('error remuxing ' + infile + ' to ' + outfile1)
-        #
-        #     videoId = uploadVideo(ticket)
-        #     youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
-        #
-        #     logging.debug('remuxing with translated audio to ' + outfile2)
-        #     ticket['Publishing.Infile'] = outfile2
-        #     ticket['Publishing.InfileIsTranslated'] = multi_lang.group(2)
-        #     if subprocess.call(
-        #             ['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i', infile, '-map', '0:0', '-map', '0:2', '-c',
-        #              'copy', outfile2]) != 0:
-        #         raise YouTubeException('error remuxing ' + infile + ' to ' + outfile2)
-        #
-        #     videoId = uploadVideo(ticket)
-        #     youtubeUrls.append('https://www.youtube.com/watch?v=' + videoId)
-        #
-        #     logging.info("deleting remuxed versions: %s and %s" % (outfile1, outfile2))
-        #     os.remove(outfile1)
-        #     os.remove(outfile2)
-        #
-        #     return youtubeUrls
-        #
-        # else:
-        #     ticket['Publishing.Infile'] = infile
-        #     videoId = self.upload(ticket)
-        #
-        #     videoUrl = 'https://www.youtube.com/watch?v=' + videoId
-        #     logging.info("successfully published Ticket to %s" % videoUrl)
-        #     return [videoUrl, ]
+        # handle multi language events
+        # todo merge publishing for voctoweb and youtube
+        if len(self.ticket.languages) > 1:
+            logging.debug('Languages: ' + str(self.ticket.languages))
+            for key in self.ticket.languages:
+                out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(key) + "." + self.ticket.profile_extension
+                out_path = os.path.join(self.ticket.publishing_path, out_filename)
 
-    def upload(self):
+                logging.info('remuxing ' + self.ticket.local_filename + ' to ' + out_path)
+
+                # todo check if the file is already there from the voctoweb release
+                try:
+                    subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i',
+                                     os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map', '0:0',
+                                     '-map',
+                                     '0:a:' + str(key), '-c', 'copy', '-movflags', 'faststart', out_path])
+                except Exception as e_:
+                    raise YouTubeException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
+
+                video_id = self.upload(out_path)
+                self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
+
+        else:
+            video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename))
+
+            video_url = 'https://www.youtube.com/watch?v=' + video_id
+            logging.info("published Ticket to %s" % video_url)
+            self.youtube_urls.append(video_url)
+
+        return self.youtube_urls
+
+    def upload(self, file):
         """
         Call the youtube API and push the file to youtube
         :return:
         """
+        # todo split up event creation and upload
+        # todo change function name
+        # todo figure out what todo with the subtitle
+        # todo add the license properly
         title = self.ticket.title
         subtitle = self.ticket.subtitle
         abstract = strip_tags(self.ticket.abstract)
-        description = strip_tags(self.ticket.description)
-        person_list = self.ticket.persons
+        if self.ticket.description:
+            description = strip_tags(self.ticket.description)
+        else:
+            description = ''
+        person_list = self.ticket.people
 
-        description = '\n\n'.join([abstract, description, person_list])
+        description = '\n\n'.join([abstract, description, str(person_list)]) # todo WTF make this usefull
         if self.ticket.media_enable and self.ticket.profile_media_enable:
             if self.ticket.media_url:
                 description = os.path.join(self.ticket.media_url, self.ticket.slug) + '\n\n' + description
@@ -152,7 +138,7 @@ class YoutubeAPI:
                     'privacyStatus': privacy,
                     'embeddable': True,
                     'publicStatsViewable': True,
-                    'license': 'creativeCommon',  # TODO
+                    'license': 'creativeCommon',
                 },
         }
 
@@ -205,14 +191,13 @@ class YoutubeAPI:
         # 44 => Trailers
 
         if self.ticket.youtube_category:
-            metadata['snippet']['categoryId'] = int(self.ticket['Publishing.YouTube.Category'])
+            metadata['snippet']['categoryId'] = int(self.ticket.youtube_category)
 
-        (mimetype, encoding) = mimetypes.guess_type(self.ticket['Publishing.Infile'])
-        size = os.stat(self.ticket['Publishing.Infile']).st_size
+        (mimetype, encoding) = mimetypes.guess_type(file)
+        size = os.stat(file).st_size
 
-        # todo figure out what infile may be
-        #logging.debug('guessed mimetype for file %s as %s and its size as %u bytes' % (
-        #    self.ticket['Publishing.Infile'], mimetype, size))
+        logging.debug('guessed mimetype for file %s as %s and its size as %u bytes' % (
+            file, mimetype, size))
 
         # todo add exception handling here
         r = requests.post(
@@ -238,8 +223,7 @@ class YoutubeAPI:
 
         logging.info('successfully created video and received upload-url from %s' % (r.headers['server'] if 'server' in r.headers else '-'))
         logging.debug('uploading video-data to %s' % r.headers['location'])
-        # todo again this infile .. this probaly should be a class variable
-        with open(self.ticket['Publishing.Infile'], 'rb') as fp:
+        with open(file, 'rb') as fp:
             r = requests.put(
                 r.headers['location'],
                 headers={
@@ -405,7 +389,7 @@ class YoutubeAPI:
         #         tags.append('English')
 
         # append person-names to tags
-        tags.extend(self.ticket.persons)
+        tags.extend(self.ticket.people)
 
         return tags
 

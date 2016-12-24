@@ -93,6 +93,7 @@ class Publisher:
         if not self.ticket:
             return
 
+        # todo this should in the publish function for better error handling
         # voctoweb
         if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
             api_url = self.config['voctoweb']['api_url']
@@ -123,19 +124,19 @@ class Publisher:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
-        # YouTube
-        logging.debug(
-            "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
-
-        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes' and not self.ticket.has_youtube_url:
-            self._publish_to_youtube()
-
         # Voctoweb
         logging.debug(
             'encoding profile media flag: ' + self.ticket.profile_media_enable + " project media flag: " + self.ticket.media_enable)
 
         if self.ticket.profile_media_enable == "yes" and self.ticket.media_enable == "yes":
             self._publish_to_voctoweb()
+
+        # YouTube
+        logging.debug(
+            "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
+
+        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes' and not self.ticket.has_youtube_url:
+            self._publish_to_youtube()
 
         self.c3tt.set_ticket_done()
 
@@ -174,7 +175,6 @@ class Publisher:
             logging.debug('this is a master ticket')
             if self.ticket.recording_id:
                 logging.debug('ticket has a recording id')
-                pass
                 # ticket has an recording id. We assume the event exists on media
                 # todo ask media api if event exists
             else:
