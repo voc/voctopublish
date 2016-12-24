@@ -43,6 +43,9 @@ class YoutubeAPI:
         self.ticket = ticket
         self.config = config
         self.youtube_urls = []
+        self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch'}
+        self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation', 'spa': 'La traducción española', 'gsw': 'Schwizerdeutsche übersetzerli'}
+
 
     def publish(self):
         """
@@ -70,11 +73,11 @@ class YoutubeAPI:
                 except Exception as e_:
                     raise YouTubeException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
 
-                video_id = self.upload(out_path)
+                video_id = self.upload(out_path, self.ticket.languages[key])
                 self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
 
         else:
-            video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename))
+            video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename), self.ticket.language)
 
             video_url = 'https://www.youtube.com/watch?v=' + video_id
             logging.info("published Ticket to %s" % video_url)
@@ -82,7 +85,7 @@ class YoutubeAPI:
 
         return self.youtube_urls
 
-    def upload(self, file):
+    def upload(self, file, lang):
         """
         Call the youtube API and push the file to youtube
         :return:
@@ -101,11 +104,11 @@ class YoutubeAPI:
         person_list = self.ticket.people
 
         description = '\n\n'.join([abstract, description, str(person_list)]) # todo WTF make this usefull
+
         if self.ticket.media_enable and self.ticket.profile_media_enable:
             if self.ticket.media_url:
                 description = os.path.join(self.ticket.media_url, self.ticket.slug) + '\n\n' + description
 
-        # if persons-list is set
         if self.ticket.people:
             # prepend user names if only 1 or 2 speaker
             if len(self.ticket.people) < 3:
@@ -119,11 +122,12 @@ class YoutubeAPI:
 
         if self.ticket.youtube_title_suffix:
             title = title + ' ' + self.ticket.youtube_title_suffix
+            logging.debug('adding ' + str(self.ticket.youtube_title_suffix) + ' as title suffix')
 
         if self.ticket.youtube_privacy:
             privacy = self.ticket.youtube_privacy
         else:
-            privacy = 'privat'
+            privacy = 'private'
 
         metadata = {
             'snippet':
@@ -131,7 +135,7 @@ class YoutubeAPI:
                     'title': title,
                     'description': description,
                     'channelId': self.channelId,
-                    'tags': self.select_tags()
+                    'tags': self.select_tags(lang)
                 },
             'status':
                 {
@@ -146,49 +150,17 @@ class YoutubeAPI:
         if self.ticket.youtube_tags:
             metadata['snippet']['tags'] = list(map(str.strip, self.ticket.youtube_tags.split(',')))
 
-        # todo make this nice and work
-        # translation = self.ticket.get('Publishing.InfileIsTranslated')
-        # if translation == 'de':
-        #     metadata['snippet']['title'] += ' (deutsche Übersetzung)'
-        #
-        # elif translation == 'en':
-        #     metadata['snippet']['title'] += ' (english translation)'
-        #
-        # # recure limit title length to 100 (youtube api conformity)
-        # metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
-        # metadata['snippet']['title'] = metadata['snippet']['title'][:100]
+        # todo make this work with orig lang
+        if lang:
+            if lang in self.translation_strings:
+                metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
+            else:
+                logging.error('language not defined in translation strings')
+                # todo think about if we should fail here
 
-        # 1 => Film & Animation
-        # 2 => Autos & Vehicles
-        # 10 => Music
-        # 15 => Pets & Animals
-        # 17 => Sports
-        # 18 => Short Movies
-        # 19 => Travel & Events
-        # 20 => Gaming
-        # 21 => Videoblogging
-        # 22 => People & Blogs
-        # 23 => Comedy
-        # 24 => Entertainment
-        # 25 => News & Politics
-        # 26 => Howto & Style
-        # 27 => Education
-        # 28 => Science & Technology
-        # 30 => Movies
-        # 31 => Anime/Animation
-        # 32 => Action/Adventure
-        # 33 => Classics
-        # 34 => Comedy
-        # 35 => Documentary
-        # 36 => Drama
-        # 37 => Family
-        # 38 => Foreign
-        # 39 => Horror
-        # 40 => Sci-Fi/Fantasy
-        # 41 => Thriller
-        # 42 => Shorts
-        # 43 => Shows
-        # 44 => Trailers
+        # limit title length to 100 (youtube api conformity)
+        metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
+        metadata['snippet']['title'] = metadata['snippet']['title'][:100]
 
         if self.ticket.youtube_category:
             metadata['snippet']['categoryId'] = int(self.ticket.youtube_category)
@@ -351,7 +323,7 @@ class YoutubeAPI:
         logging.info("successfully fetched Channel-ID %s " % (channel['id']))
         return channel['id']
 
-    def select_tags(self):
+    def select_tags(self, lang):
         """
         Build the tag list
         :return:
@@ -367,28 +339,16 @@ class YoutubeAPI:
         if self.ticket.room:
             tags.append(self.ticket.room)
 
-        # replace this with dynamic code
-        # # append language-specific tag
-        # language = self.ticket.get('Record.Language')
-        # if language == 'de':
-        #     tags.append('German')
-        # elif language == 'en':
-        #     tags.append('English')
-        #
-        # elif language == 'de-en':
-        #     if 'Publishing.InfileIsTranslated' in self.ticket:
-        #         tags.append('German (english translation)')
-        #     else:
-        #         tags.append('German')
-        #
-        # elif language == 'en-de':
-        #     if 'Publishing.InfileIsTranslated' in self.ticket:
-        #         ## TODO
-        #         tags.append('English (deutsche Übersetzung)')
-        #     else:
-        #         tags.append('English')
+        if lang:
+            if lang in self.lang_map:
+                if len(self.ticket.languages) > 1:
+                    tags.append(self.lang_map[lang] + '(' + self.translation_strings[lang] + ')')
+                else:
+                    tags.append(self.lang_map[lang])
+            else:
+                logging.error('language not in lang map')
+                # todo should we fail here?
 
-        # append person-names to tags
         tags.extend(self.ticket.people)
 
         return tags
