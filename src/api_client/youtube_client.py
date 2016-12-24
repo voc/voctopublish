@@ -46,7 +46,6 @@ class YoutubeAPI:
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch', 'fra': 'French'}
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation', 'spa': 'La traducción española', 'gsw': 'Schwizerdütschi Übersetzig', 'fra': 'traduction française'}
 
-
     def publish(self):
         """
         publish a file on youtube
@@ -73,7 +72,12 @@ class YoutubeAPI:
                 except Exception as e_:
                     raise YouTubeException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
 
-                video_id = self.upload(out_path, self.ticket.languages[key])
+                if int(key) == 0:
+                    lang = None
+                else:
+                    lang = self.ticket.languages[key]
+
+                video_id = self.upload(out_path, lang)
                 self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
 
         else:
@@ -150,9 +154,8 @@ class YoutubeAPI:
         if self.ticket.youtube_tags:
             metadata['snippet']['tags'] = list(map(str.strip, self.ticket.youtube_tags.split(',')))
 
-        # todo make this work with orig lang
         if lang:
-            if lang in self.translation_strings:
+            if lang in self.translation_strings.keys():
                 metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
             else:
                 logging.error('language not defined in translation strings')
@@ -340,14 +343,14 @@ class YoutubeAPI:
             tags.append(self.ticket.room)
 
         if lang:
-            if lang in self.lang_map:
-                if len(self.ticket.languages) > 1:
-                    tags.append(self.lang_map[lang] + '(' + self.translation_strings[lang] + ')')
-                else:
+            if lang in self.lang_map.keys():
+                if self.ticket.languages[0] == lang:
                     tags.append(self.lang_map[lang])
+                else:
+                    tags.append(self.lang_map[lang] + ' (' + self.translation_strings[lang] + ')')
             else:
                 logging.error('language not in lang map')
-                # todo should we fail here?
+                # todo should we fail here
 
         tags.extend(self.ticket.people)
 
