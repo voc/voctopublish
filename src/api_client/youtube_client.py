@@ -38,13 +38,13 @@ class YoutubeAPI:
     """
     def __init__(self, ticket: Ticket, config):
         self.channelId = None
-        self.accessToken = self.get_fresh_token(ticket.youtube_token, config['youtube']['client_id'], config['youtube']['secret'])
-        self.channelId = self.get_channel_id(self.accessToken)
+        self.accessToken = self._get_fresh_token(ticket.youtube_token, config['youtube']['client_id'], config['youtube']['secret'])
+        self.channelId = self._get_channel_id(self.accessToken)
         self.ticket = ticket
         self.config = config
         self.youtube_urls = []
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch', 'fra': 'French'}
-        self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation', 'spa': 'La traducción española', 'gsw': 'Schwizerdütschi Übersetzig', 'fra': 'traduction française'}
+        self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation', 'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig', 'fra': 'traduction française'}
 
     def publish(self):
         """
@@ -92,22 +92,22 @@ class YoutubeAPI:
     def upload(self, file, lang):
         """
         Call the youtube API and push the file to youtube
+        :param file: file to upload
+        :param lang: language of the file
         :return:
         """
         # todo split up event creation and upload
         # todo change function name
-        # todo figure out what todo with the subtitle
         # todo add the license properly
         title = self.ticket.title
         subtitle = self.ticket.subtitle
-        abstract = strip_tags(self.ticket.abstract)
+        abstract = self.strip_tags(self.ticket.abstract)
         if self.ticket.description:
-            description = strip_tags(self.ticket.description)
+            description = self.strip_tags(self.ticket.description)
         else:
             description = ''
-        person_list = self.ticket.people
 
-        description = '\n\n'.join([abstract, description, str(person_list)]) # todo WTF make this usefull
+        description = '\n\n'.join([subtitle, abstract, description, str(self.ticket.people)])
 
         if self.ticket.media_enable and self.ticket.profile_media_enable:
             if self.ticket.media_url:
@@ -122,11 +122,13 @@ class YoutubeAPI:
             title = self.ticket.youtube_title_prefix + ' ' + title
             logging.debug('adding ' + str(self.ticket.youtube_title_prefix) + ' as title prefix')
         else:
-            logging.warning("No youtube title prefix found")
+            logging.warning('No youtube title prefix found')
 
         if self.ticket.youtube_title_suffix:
             title = title + ' ' + self.ticket.youtube_title_suffix
             logging.debug('adding ' + str(self.ticket.youtube_title_suffix) + ' as title suffix')
+        else:
+            logging.warning('No YouTube title suffix found')
 
         if self.ticket.youtube_privacy:
             privacy = self.ticket.youtube_privacy
@@ -139,7 +141,7 @@ class YoutubeAPI:
                     'title': title,
                     'description': description,
                     'channelId': self.channelId,
-                    'tags': self.select_tags(lang)
+                    'tags': self._select_tags(lang)
                 },
             'status':
                 {
@@ -158,8 +160,7 @@ class YoutubeAPI:
             if lang in self.translation_strings.keys():
                 metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
             else:
-                logging.error('language not defined in translation strings')
-                # todo think about if we should fail here
+                raise YouTubeException('language not defined in translation strings')
 
         # limit title length to 100 (youtube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
@@ -171,10 +172,8 @@ class YoutubeAPI:
         (mimetype, encoding) = mimetypes.guess_type(file)
         size = os.stat(file).st_size
 
-        logging.debug('guessed mimetype for file %s as %s and its size as %u bytes' % (
-            file, mimetype, size))
+        logging.debug('guessed mime type for file %s as %s and its size as %u bytes' % (file, mimetype, size))
 
-        # todo add exception handling here
         r = requests.post(
             'https://www.googleapis.com/upload/youtube/v3/videos',
             params={
@@ -198,6 +197,7 @@ class YoutubeAPI:
 
         logging.info('successfully created video and received upload-url from %s' % (r.headers['server'] if 'server' in r.headers else '-'))
         logging.debug('uploading video-data to %s' % r.headers['location'])
+
         with open(file, 'rb') as fp:
             r = requests.put(
                 r.headers['location'],
@@ -218,12 +218,11 @@ class YoutubeAPI:
 
         return video['id']
 
-    def add_to_playlist(self, video_id, playlist_id):
+    def _add_to_playlist(self, video_id, playlist_id):
         """
         documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
         :param video_id:
         :param playlist_id:
-        :return:
         """
         r = requests.post(
             'https://www.googleapis.com/youtube/v3/playlistItems',
@@ -243,10 +242,11 @@ class YoutubeAPI:
         )
 
         if 200 != r.status_code:
-            raise YouTubeException('Video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
+            raise YouTubeException('Adding video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
-        logging.info('video added to playlist')
+        logging.info('video added to playlist: ' + playlist_id)
 
+    # todo do something with this or remove it
     def get_playlist(self, playlist_id):
         """
         currently a method to help with debugging --Andi, August 2016
@@ -270,13 +270,13 @@ class YoutubeAPI:
 
         logging.debug(json.dumps(r.json(), indent=4))
 
-    def get_fresh_token(self, refresh_token, client_id, client_secret):
+    def _get_fresh_token(self, refresh_token, client_id, client_secret):
         """
         request a 'fresh' youtube token
         :param refresh_token:
         :param client_id:
         :param client_secret:
-        :return:
+        :return: YouTube access token
         """
         logging.debug('fetching fresh Access-Token on behalf of the refreshToken %s' % refresh_token)
         r = requests.post(
@@ -299,11 +299,11 @@ class YoutubeAPI:
         logging.info("successfully fetched Access-Token %s" % data['access_token'])
         return data['access_token']
 
-    def get_channel_id(self, access_token):
+    def _get_channel_id(self, access_token):
         """
-        request the channel id associated to the access token
-        :param access_token:
-        :return:
+        request the channel id associated with the access token
+        :param access_token: Youtube access token
+        :return: YouTube channel id
         """
         logging.debug('fetching Channel-Info on behalf of the accessToken %s' % access_token)
         r = requests.get(
@@ -326,10 +326,11 @@ class YoutubeAPI:
         logging.info("successfully fetched Channel-ID %s " % (channel['id']))
         return channel['id']
 
-    def select_tags(self, lang):
+    def _select_tags(self, lang=None):
         """
         Build the tag list
-        :return:
+        :param lang: if present the language will be added to the tags
+        :return: Returns an array of tag strings
         """
         tags = []
 
@@ -349,10 +350,10 @@ class YoutubeAPI:
                 else:
                     tags.append(self.lang_map[lang] + ' (' + self.translation_strings[lang] + ')')
             else:
-                logging.error('language not in lang map')
-                # todo should we fail here
+                raise YouTubeException('language not in lang map')
 
         tags.extend(self.ticket.people)
+        logging.debug('YouTube Tags: ' + str(tags))
 
         return tags
 
@@ -361,7 +362,6 @@ class YoutubeAPI:
         https://developers.google.com/youtube/v3/docs/thumbnails/set
         :param video_id:
         :param thumbnail:
-        :return:
         """
         fp = open(thumbnail, 'rb')
 
@@ -380,11 +380,22 @@ class YoutubeAPI:
         if 200 != r.status_code:
             raise YouTubeException('Video update failed with error-code %u: %s' % (r.status_code, r.text))
 
-        print(' updated')
-        return
+        logging.info('Thumbnails for ' + str(id) + ' updated')
+
+    def strip_tags(self, html):
+        """
+        wrapper around MLStripper to clean html input
+        :return: stripped input
+        """
+        s = MLStripper()
+        s.feed(html)
+        return s.get_data()
 
 
 class MLStripper(HTMLParser):
+    """
+
+    """
     def error(self, message):
         pass
 
@@ -398,12 +409,6 @@ class MLStripper(HTMLParser):
 
     def get_data(self):
         return ''.join(self.fed)
-
-
-def strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
 
 
 class YouTubeException(Exception):
