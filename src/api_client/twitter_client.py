@@ -23,13 +23,17 @@ logging = logging.getLogger()
 def send_tweet(ticket, token, token_secret, consumer_key, consumer_secret):
     logging.info("tweeting the release")
     # todo add more logic here. Also we should only tweet the master releases
-    
-    if ticket.profile_slug == "hd":
-        target = "media.ccc.de and youtube"
-    else:
-        target = "media.ccc.de"
-        
-    msg = " has been released as " + ticket.profile_slug + " on " + target
+    # only tweet master releases
+    target = ''
+    if ticket.master:
+        if ticket.media_enable and ticket.profile_media_enable:
+            target = 'media.ccc.de'  # todo this should be generic but voctoweb is also not usefull here
+        if ticket.youtube_enable and ticket.profile_youtube_enable:
+            if len(target) > 1:
+                target += ' and '
+            target += 'YouTube'
+
+    msg = " has been released on " + target
     title = ticket.title
     if len(title) >= (160 - len(msg)):
         title = title[0:len(msg)]
