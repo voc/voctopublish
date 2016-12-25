@@ -16,7 +16,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from html.parser import HTMLParser
 import subprocess
 import logging
@@ -24,7 +23,6 @@ import requests
 import json
 import mimetypes
 import os
-import re
 
 from model.ticket_module import Ticket
 
@@ -36,20 +34,25 @@ class YoutubeAPI:
     This class implements the YouTube API v3
     https://developers.google.com/youtube/v3/docs
     """
+
     def __init__(self, ticket: Ticket, config):
         self.channelId = None
-        self.accessToken = self._get_fresh_token(ticket.youtube_token, config['youtube']['client_id'], config['youtube']['secret'])
+        self.accessToken = self._get_fresh_token(ticket.youtube_token, config['youtube']['client_id'],
+                                                 config['youtube']['secret'])
         self.channelId = self._get_channel_id(self.accessToken)
         self.ticket = ticket
         self.config = config
         self.youtube_urls = []
-        self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch', 'fra': 'French'}
-        self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation', 'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig', 'fra': 'traduction française'}
+        self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
+                         'fra': 'French'}
+        self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
+                                    'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig',
+                                    'fra': 'traduction française'}
 
     def publish(self):
         """
         publish a file on youtube
-        :return:
+        :return: returns a list containing a youtube url for each released file
         """
         logging.info("publishing Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
 
@@ -58,7 +61,8 @@ class YoutubeAPI:
         if len(self.ticket.languages) > 1:
             logging.debug('Languages: ' + str(self.ticket.languages))
             for key in self.ticket.languages:
-                out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(key) + "." + self.ticket.profile_extension
+                out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(
+                    key) + "." + self.ticket.profile_extension
                 out_path = os.path.join(self.ticket.publishing_path, out_filename)
 
                 logging.info('remuxing ' + self.ticket.local_filename + ' to ' + out_path)
@@ -66,7 +70,8 @@ class YoutubeAPI:
                 # todo check if the file is already there from the voctoweb release
                 try:
                     subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i',
-                                     os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map', '0:0',
+                                     os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map',
+                                     '0:0',
                                      '-map',
                                      '0:a:' + str(key), '-c', 'copy', '-movflags', 'faststart', out_path])
                 except Exception as e_:
@@ -81,7 +86,8 @@ class YoutubeAPI:
                 self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
 
         else:
-            video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename), self.ticket.language)
+            video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename),
+                                   self.ticket.language)
 
             video_url = 'https://www.youtube.com/watch?v=' + video_id
             logging.info("published Ticket to %s" % video_url)
@@ -242,7 +248,8 @@ class YoutubeAPI:
         )
 
         if 200 != r.status_code:
-            raise YouTubeException('Adding video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
+            raise YouTubeException(
+                'Adding video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
         logging.info('video added to playlist: ' + playlist_id)
 
@@ -270,7 +277,8 @@ class YoutubeAPI:
 
         logging.debug(json.dumps(r.json(), indent=4))
 
-    def _get_fresh_token(self, refresh_token, client_id, client_secret):
+    @staticmethod
+    def _get_fresh_token(refresh_token, client_id, client_secret):
         """
         request a 'fresh' youtube token
         :param refresh_token:
@@ -299,7 +307,8 @@ class YoutubeAPI:
         logging.info("successfully fetched Access-Token %s" % data['access_token'])
         return data['access_token']
 
-    def _get_channel_id(self, access_token):
+    @staticmethod
+    def _get_channel_id(access_token):
         """
         request the channel id associated with the access token
         :param access_token: Youtube access token
@@ -382,7 +391,8 @@ class YoutubeAPI:
 
         logging.info('Thumbnails for ' + str(id) + ' updated')
 
-    def strip_tags(self, html):
+    @staticmethod
+    def strip_tags(html):
         """
         wrapper around MLStripper to clean html input
         :return: stripped input
@@ -396,6 +406,7 @@ class MLStripper(HTMLParser):
     """
 
     """
+
     def error(self, message):
         pass
 
