@@ -37,7 +37,7 @@ class VoctowebClient:
 
     def _connect_ssh(self):
         """
-        Open an SSH connection to the media.ccc.de CDN master
+        Open an SSH connection to the voctoweb storage host
         """
         logging.info('Establishing SSH connection')
         self.ssh = paramiko.SSHClient()
@@ -80,7 +80,7 @@ class VoctowebClient:
 
     def upload_thumbs(self):
         """
-        Upload thumbnails to the media.ccc.de CDN master.
+        Upload thumbnails to the voctoweb storage.
         """
         logging.info("## uploading thumbs ##")
 
@@ -154,7 +154,7 @@ class VoctowebClient:
 
     def create_event(self):
         """
-        Create a new event on the media.ccc.de API host
+        Create a new event on the voctoweb API host
         :return:
         """
         logging.info(("creating new event on " + self.api_url))
@@ -162,7 +162,7 @@ class VoctowebClient:
         # prepare some variables for the api call
         url = self.api_url + 'events'
 
-        # API code https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/events_controller.rb
+        # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
                    'acronym': self.t.media_slug,
@@ -186,8 +186,7 @@ class VoctowebClient:
                    }
         logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
-        # call media API
-        r = ''
+        # call voctoweb api
         try:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
@@ -198,7 +197,7 @@ class VoctowebClient:
 
     def create_recording(self, local_filename, filename, folder, language, hq, html5):
         """
-        create_recording a file on media
+        create_recording a file on the voctoweb API host
         :param local_filename: this is not necessarily the value from the ticket
         :param filename: this is not necessarily the value from the ticket
         :param folder: this is not necessarily the value from the ticket
@@ -214,7 +213,7 @@ class VoctowebClient:
         if not self._get_file_details(local_filename, ret):
             raise VoctowebException('could not get file details')
 
-        # API code https://github.com/voc/media.ccc.de/blob/master/app/controllers/api/recordings_controller.rb
+        # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
         url = self.api_url + 'recordings'
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
@@ -248,7 +247,6 @@ class VoctowebClient:
 
         logging.info(("publishing_test " + filename + " done"))
         return r.json()['id']
-
 
     def _get_file_details(self, local_filename, ret):
         """
