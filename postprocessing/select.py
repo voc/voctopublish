@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #    Copyright (C) 2016  derpeter, Florian Larysch
 #    Florian Larysch <fl@n621.de>
-#    derpeter@berlin.ccc.de
+#    derpeter derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
