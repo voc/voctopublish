@@ -107,7 +107,10 @@ class YoutubeAPI:
         # todo add the license properly
         title = self.ticket.title
         subtitle = self.ticket.subtitle
-        abstract = self.strip_tags(self.ticket.abstract)
+        if self.ticket.abstract:
+            abstract = self.strip_tags(self.ticket.abstract)
+        else:
+            abstract = ''
         if self.ticket.description:
             description = self.strip_tags(self.ticket.description)
         else:
