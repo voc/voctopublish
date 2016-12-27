@@ -44,10 +44,10 @@ class YoutubeAPI:
         self.config = config
         self.youtube_urls = []
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
-                         'fra': 'French'}
+                         'fra': 'French', 'rus': 'Russian'}
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
                                     'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig',
-                                    'fra': 'traduction française'}
+                                    'fra': 'traduction française', 'rus': 'russkiy perevod'}
 
     def publish(self):
         """
