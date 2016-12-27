@@ -125,10 +125,10 @@ class YoutubeAPI:
             if self.ticket.media_url:
                 description = os.path.join(self.ticket.media_url, self.ticket.slug) + '\n\n' + description
 
-        if self.ticket.people:
-            # prepend user names if only 1 or 2 speaker
-            if len(self.ticket.people) < 3:
-                title = str(self.ticket.people) + ': ' + title
+        # if self.ticket.people:
+        #     # prepend user names if only 1 or 2 speaker
+        #     if len(self.ticket.people) < 3:
+        #         title = str(self.ticket.people) + ': ' + title
 
         if self.ticket.youtube_title_prefix:
             title = self.ticket.youtube_title_prefix + ' ' + title
