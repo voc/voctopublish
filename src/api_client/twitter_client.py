@@ -33,12 +33,14 @@ def send_tweet(ticket, token, token_secret, consumer_key, consumer_secret):
                 target += ' and '
             target += 'YouTube'
 
-    msg = " has been released on " + target
-    title = ticket.title
-    if len(title) >= (160 - len(msg)):
-        title = title[0:len(msg)]
-    message = title + msg
-    # todo switch to oauth2
-    t = Twitter(auth=OAuth(token, token_secret, consumer_key, consumer_secret))
-    ret = t.statuses.update(status=message)
-    logging.debug(ret)
+        msg = " has been released on " + target
+        title = ticket.title
+        if len(title) >= (160 - len(msg)):
+            title = title[0:len(msg)]
+        message = title + msg
+        # todo switch to oauth2
+        t = Twitter(auth=OAuth(token, token_secret, consumer_key, consumer_secret))
+        ret = t.statuses.update(status=message)
+        logging.debug(ret)
+    else:
+        logging.info('this is not a master => no twitter')
