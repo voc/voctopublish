@@ -250,7 +250,7 @@ class Publisher:
                 raise PublisherException('error uploading ' + out_path) from e_
 
             try:
-                self.vw.create_recording(out_filename, filename, self.ticket.publishing_path, str(self.ticket.languages[key]), True, True)
+                self.vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
