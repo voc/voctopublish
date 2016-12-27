@@ -98,7 +98,7 @@ class Ticket:
             self.media_path = self._validate_('Publishing.Media.Path')
             self.media_slug = self._validate_('Publishing.Media.Slug')
             self.media_url = self._validate_('Publishing.Media.Url', True)
-            self.tags = [self.acronym, self.ticket_id]
+            self.tags = [self.acronym, self.fahrplan_id]
             if 'Media.Tags' in ticket:
                 self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
