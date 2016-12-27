@@ -110,7 +110,7 @@ class VoctowebClient:
         :param remote_filename:
         :param remote_folder:
         """
-        logging.info("uploading " + self.t.publishing_path + local_filename)
+        logging.info("uploading " + os.path.join(self.t.publishing_path + local_filename))
 
         # Check if ssh connection is open.
         if self.sftp is None:

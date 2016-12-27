@@ -1,6 +1,6 @@
 [general]
 # valid values are: warning, error, info, debug
-debug = INFO
+debug = info
 # validation should only be turned off for debugging
 validate_tls = True
 validate_host_key = True
