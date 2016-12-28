@@ -217,7 +217,7 @@ class Publisher:
 
         if self.ticket.mime_type.startswith('audio'):
             # if we have the language index we use it else we assume its 0
-            if len(self.ticket.language_index) > 0:
+            if self.ticket.language_index and len(self.ticket.language_index) > 0:
                 index = int(self.ticket.language_index)
             else:
                 index = 0

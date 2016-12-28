@@ -42,7 +42,7 @@ class Ticket:
         self.folder = self._validate_('EncodingProfile.MirrorFolder')
 
         # encoding properties
-        self.language_index = self._validate_('LanguageIndex', True)
+        self.language_index = self._validate_('Encoding.LanguageIndex', True)
 
         # fahrplan properties
         self.slug = self._validate_('Fahrplan.Slug')
