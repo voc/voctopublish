@@ -215,10 +215,22 @@ class Publisher:
         else:
             html5 = True
 
-        self.vw.upload_file(self.ticket.local_filename, self.ticket.filename, self.ticket.folder)
+        if self.ticket.mime_type.startswith('audio'):
+            # if we have the language index we use it else we assume its 0
+            if len(self.ticket.language_index) > 0:
+                index = int(self.ticket.language_index)
+            else:
+                index = 0
+            filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
+            language = self.ticket.languages[index]
+        else:
+            filename = self.ticket.filename
+            language = self.ticket.language
 
-        recording_id = self.vw.create_recording(self.ticket.local_filename, self.ticket.filename,
-                                                self.ticket.folder, self.ticket.language, hq, html5)
+        self.vw.upload_file(self.ticket.local_filename, filename, self.ticket.folder)
+
+        recording_id = self.vw.create_recording(self.ticket.local_filename, filename,
+                                                self.ticket.folder, language, hq, html5)
 
         self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 

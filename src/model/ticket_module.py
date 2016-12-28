@@ -41,6 +41,9 @@ class Ticket:
         self.filename = self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
         self.folder = self._validate_('EncodingProfile.MirrorFolder')
 
+        # encoding properties
+        self.language_index = self._validate_('LanguageIndex', True)
+
         # fahrplan properties
         self.slug = self._validate_('Fahrplan.Slug')
         self.guid = self._validate_('Fahrplan.GUID')
