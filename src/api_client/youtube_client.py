@@ -168,12 +168,15 @@ class YoutubeAPI:
         if self.ticket.youtube_tags:
             metadata['snippet']['tags'] = list(map(str.strip, self.ticket.youtube_tags.split(',')))
 
+        # todo refactor this to make lang more flexible
         if lang:
-            if lang in self.translation_strings.keys():
-                metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
+            if self.ticket.languages > 1:
+                if lang in self.translation_strings.keys():
+                    metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
+                else:
+                    raise YouTubeException('language not defined in translation strings')
             else:
-                raise YouTubeException('language not defined in translation strings')
-
+                metadata['snippet']['title'] += ' - ' + lang
         # limit title length to 100 (youtube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
