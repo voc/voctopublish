@@ -119,7 +119,7 @@ class YoutubeAPI:
         else:
             description = ''
 
-        description = '\n\n'.join([subtitle, abstract, description, str(self.ticket.people)])
+        description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.ticket.people)])
 
         if self.ticket.media_enable == 'yes' and self.ticket.profile_media_enable == 'yes':
             if self.ticket.media_url:
