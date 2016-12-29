@@ -47,7 +47,7 @@ class YoutubeAPI:
                          'fra': 'French', 'rus': 'Russian'}
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
                                     'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig',
-                                    'fra': 'traduction française', 'rus': 'russkiy perevod'}
+                                    'fra': 'traduction française', 'rus': 'Russian (русский) translation'}
 
     def publish(self):
         """
