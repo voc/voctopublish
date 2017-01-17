@@ -76,7 +76,7 @@ class Publisher:
         else:
             self.host = self.config['C3Tracker']['host']
 
-        self.from_state = self.config['C3Tracker']['from_state']
+        self.from_state = self.config['C3Tracker']['ticket_type']
         self.to_state = self.config['C3Tracker']['to_state']
 
         try:
@@ -93,23 +93,26 @@ class Publisher:
         if not self.ticket:
             return
 
-        # todo this should in the publish function for better error handling
-        # voctoweb
-        if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
-            api_url = self.config['voctoweb']['api_url']
-            api_key = self.config['voctoweb']['api_key']
-            self.vw = VoctowebClient(self.ticket, api_key, api_url)
+        if self.from_state == 'encoding' and self.to_state == 'releasing':
+            # todo this should in the publish function for better error handling
+            # voctoweb
+            if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
+                api_url = self.config['voctoweb']['api_url']
+                api_key = self.config['voctoweb']['api_key']
+                self.vw = VoctowebClient(self.ticket, api_key, api_url)
 
-        # YouTube
-        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes':
-            self.yt = YoutubeAPI(self.ticket, self.config)
+            # YouTube
+            if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes':
+                self.yt = YoutubeAPI(self.ticket, self.config)
 
-        # twitter
-        if self.ticket.twitter_enable == 'yes':
-            self.token = self.config['twitter']['token']
-            self.token_secret = self.config['twitter']['token_secret']
-            self.consumer_key = self.config['twitter']['consumer_key']
-            self.consumer_secret = self.config['twitter']['consumer_secret']
+            # twitter
+            if self.ticket.twitter_enable == 'yes':
+                self.token = self.config['twitter']['token']
+                self.token_secret = self.config['twitter']['token_secret']
+                self.consumer_key = self.config['twitter']['consumer_key']
+                self.consumer_secret = self.config['twitter']['consumer_secret']
+        elif self.from_state == 'encoding' and self.to_state == 'releasing':
+            self._download_file()
 
     def publish(self):
         """
@@ -277,6 +280,10 @@ class Publisher:
             props['YouTube.Url' + str(i)] = youtubeUrl
 
         self.c3tt.set_ticket_properties(props)
+
+    def _download_file(self):
+        print('download')
+        pass
 
 
 class PublisherException(Exception):

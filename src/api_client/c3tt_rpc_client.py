@@ -140,14 +140,14 @@ class C3TTClient:
         """
         return str(self._open_rpc("C3TT.getVersion"))
 
-    def assign_next_unassigned_for_state(self, from_state, to_state):
+    def assign_next_unassigned_for_state(self, ticket_type, to_state):
         """
         check for new ticket on tracker an get assignment
-        :param from_state:
+        :param ticket_type:
         :param to_state:
         :return:
         """
-        ret = self._open_rpc("C3TT.assignNextUnassignedForState", [from_state, to_state])
+        ret = self._open_rpc("C3TT.assignNextUnassignedForState", [ticket_type, to_state])
         # if we get no xml here there is no ticket for this job
         if not ret:
             return False
