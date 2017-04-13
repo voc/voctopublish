@@ -26,7 +26,8 @@ from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
-from model.ticket_module import Ticket
+from model.ticket_module import RecordingTicket
+from model.ticket_module import PublishingTicket
 
 
 class Publisher:
@@ -69,6 +70,8 @@ class Publisher:
             self.logger.setLevel(logging.ERROR)
         elif level == 'debug':
             self.logger.setLevel(logging.DEBUG)
+
+        self.worker_type = self.config['general']['worker_type']
 
         # get a ticket from the tracker and initialize the ticket object
         if self.config['C3Tracker']['host'] == "None":
@@ -159,7 +162,13 @@ class Publisher:
             tracker_ticket = self.c3tt.get_ticket_properties()
             logging.debug("Ticket: " + str(tracker_ticket))
 
-            t = Ticket(tracker_ticket, ticket_id)
+            if self.worker_type == 'recording':
+                t = RecordingTicket(tracker_ticket, ticket_id)
+            elif self.worker_type == 'publishing':
+                t = PublishingTicket(tracker_ticket, ticket_id)
+            else:
+                raise PublisherException('unknown ticket typ in configured')
+
         else:
             logging.info("No ticket to publish, exiting")
             return None

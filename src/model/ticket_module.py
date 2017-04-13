@@ -31,6 +31,50 @@ class Ticket:
         # project properties
         self.acronym = self._validate_('Project.Slug')
 
+        # general publishing properties
+        self.publishing_path = self._validate_('Publishing.Path')
+
+    def _validate_(self, key, optional=False):
+        value = None
+        if key in self.__tracker_ticket:
+            value = self.__tracker_ticket[key]
+            if not value:
+                logging.debug(key + ' is empty in ticket')
+                raise TicketException(key + ' is empty in ticket')
+            else:
+                value = str(value)
+        else:
+            if optional:
+                logging.warning("optional property was not in ticket: " + key)
+            else:
+                logging.debug(key + ' is missing in ticket')
+                raise TicketException(key + ' is missing in ticket')
+        return value
+
+
+class RecordingTicket(Ticket):
+    '''
+    This is ticket we use for the download worker
+    '''
+
+    def __init__(self):
+        Ticket.__init__(self)
+
+
+class PublishingTicket(Ticket):
+    '''
+    This is a ticket we use for publishing
+    '''
+
+    def __init__(self):
+        Ticket.__init__(self)
+
+        # recording ticket properties
+        self.language = self._validate_('Record.Language')
+        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
+                          if k.startswith('Record.Language.')}
+        self.language_template = self._validate_('Encoding.LanguageTemplate')
+
         # encoding profile properties
         if self._validate_('EncodingProfile.IsMaster') == 'yes':
             self.master = True
@@ -62,15 +106,6 @@ class Ticket:
         # the following are arguments that my not be present in every fahrplan
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
-
-        # recording ticket properties
-        self.language = self._validate_('Record.Language')
-        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
-                          if k.startswith('Record.Language.')}
-        self.language_template = self._validate_('Encoding.LanguageTemplate')
-
-        # general publishing properties
-        self.publishing_path = self._validate_('Publishing.Path')
 
         # youtube properties
         self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
@@ -108,23 +143,6 @@ class Ticket:
 
         # twitter properties
         self.twitter_enable = self._validate_('Publishing.Twitter.Enable')
-
-    def _validate_(self, key, optional=False):
-        value = None
-        if key in self.__tracker_ticket:
-            value = self.__tracker_ticket[key]
-            if not value:
-                logging.debug(key + ' is empty in ticket')
-                raise TicketException(key + ' is empty in ticket')
-            else:
-                value = str(value)
-        else:
-            if optional:
-                logging.warning("optional property was not in ticket: " + key)
-            else:
-                logging.debug(key + ' is missing in ticket')
-                raise TicketException(key + ' is missing in ticket')
-        return value
 
 
 class TicketException(Exception):
