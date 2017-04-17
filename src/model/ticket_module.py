@@ -54,11 +54,20 @@ class Ticket:
 
 class RecordingTicket(Ticket):
     '''
-    This is ticket we use for the download worker
+    This is ticket we use for the download worker. This ticket has less information than an encoding ticket.
     '''
 
-    def __init__(self):
-        Ticket.__init__(self)
+    def __init__(self, ticket, ticket_id):
+        Ticket.__init__(self, ticket, ticket_id)
+
+        # recording ticket properties
+        self.download_url = self._validate_('Record.DownloadURL')
+        self.fuse_path = self._validate_('Record.FusePath')
+
+        # fahrplan properties
+        self.room = self._validate_('Fahrplan.Room')
+        self.fahrplan_id = self._validate_('Fahrplan.ID')
+
 
 
 class PublishingTicket(Ticket):
@@ -66,8 +75,8 @@ class PublishingTicket(Ticket):
     This is a ticket we use for publishing
     '''
 
-    def __init__(self):
-        Ticket.__init__(self)
+    def __init__(self, ticket, ticket_id):
+        Ticket.__init__(self, ticket, ticket_id)
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')

@@ -21,6 +21,7 @@ import sys
 import logging
 import os
 import subprocess
+import urllib.request
 
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
@@ -114,8 +115,6 @@ class Publisher:
                 self.token_secret = self.config['twitter']['token_secret']
                 self.consumer_key = self.config['twitter']['consumer_key']
                 self.consumer_secret = self.config['twitter']['consumer_secret']
-        elif self.from_state == 'encoding' and self.to_state == 'releasing':
-            self._download_file()
 
     def publish(self):
         """
@@ -149,6 +148,9 @@ class Publisher:
         # Twitter
         if self.ticket.twitter_enable == 'yes':
             twitter.send_tweet(self.ticket, self.token, self.token_secret, self.consumer_key, self.consumer_secret)
+
+    def download(self):
+        self._download_file()
 
     def _get_ticket_from_tracker(self):
         """
@@ -291,8 +293,33 @@ class Publisher:
         self.c3tt.set_ticket_properties(props)
 
     def _download_file(self):
-        print('download')
-        pass
+        '''
+        download a file from an http / https / ftp URL an place it as a uncut.ts in the fuse folder.
+        this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
+        :return:
+        '''
+        logging.info('Downloading input file from: ' + self.ticket.download_url)
+        # we name our input video file uncut ts so tracker will find it. This is not the nicest way to go
+        # TODO find a better integration in to the pipeline
+        path = os.path.join(self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id)
+        file = os.path.join(path,'uncut.ts')
+
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except Exception as e:
+                logging.error(e)
+                logging.exception(e)
+                raise PublisherException(e)
+
+        if os.path.exists(file):
+            # todo think about rereleasing here
+            logging.warning('video file already exists, please remove file')
+            raise PublisherException('video file already exists, please remove file')
+
+        with open(file, 'wb') as fh:
+            with urllib.request.urlopen(self.ticket.download_url) as df:
+                fh.write(df.read())
 
 
 class PublisherException(Exception):
@@ -308,11 +335,23 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     if publisher.ticket:
-        try:
-            publisher.publish()
-        except Exception as e:
-            publisher.c3tt.set_ticket_failed(str(e))
-            logging.exception(e)
+        if publisher.worker_type == 'releasing':
+            try:
+                publisher.publish()
+            except Exception as e:
+                publisher.c3tt.set_ticket_failed(str(e))
+                logging.exception(e)
+                sys.exit(-1)
+        elif publisher.worker_type == 'recording':
+            try:
+                publisher.download()
+            except Exception as e:
+                publisher.c3tt.set_ticket_failed(str(e))
+                logging.exception(e)
+                publisher.c3tt.set_ticket_failed('unknown ticket type')
+                sys.exit(-1)
+        else:
+            logging.error('unknown ticket type')
             sys.exit(-1)
     else:
         sys.exit(0)
