@@ -113,7 +113,7 @@ class Ticket:
         value = None
         if key in self.__tracker_ticket:
             value = self.__tracker_ticket[key]
-            if not value:
+            if not value and not optional:
                 logging.debug(key + ' is empty in ticket')
                 raise TicketException(key + ' is empty in ticket')
             else:
