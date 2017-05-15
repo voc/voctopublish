@@ -11,7 +11,7 @@ secret =  <secret>
 #only set host if you don't wont to use local machine name
 host = None
 url = <tracker url>
-from_state = encoding
+ticket_type = encoding
 to_state = releasing
 
 [voctoweb]

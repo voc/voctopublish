@@ -76,7 +76,7 @@ class Publisher:
         else:
             self.host = self.config['C3Tracker']['host']
 
-        self.from_state = self.config['C3Tracker']['from_state']
+        self.ticket_type = self.config['C3Tracker']['ticket_type']
         self.to_state = self.config['C3Tracker']['to_state']
 
         try:
@@ -150,7 +150,7 @@ class Publisher:
         """
         logging.info('requesting ticket from tracker')
 
-        ticket_id = self.c3tt.assign_next_unassigned_for_state(self.from_state, self.to_state)
+        ticket_id = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state)
         if ticket_id:
             logging.info("Ticket ID:" + str(ticket_id))
             tracker_ticket = self.c3tt.get_ticket_properties()
