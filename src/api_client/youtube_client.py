@@ -87,7 +87,7 @@ class YoutubeAPI:
 
         else:
             video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename),
-                                   self.ticket.language)
+                                   None)
 
             video_url = 'https://www.youtube.com/watch?v=' + video_id
             logging.info("published Ticket to %s" % video_url)
@@ -170,13 +170,11 @@ class YoutubeAPI:
 
         # todo refactor this to make lang more flexible
         if lang:
-            if len(self.ticket.languages) > 1:
-                if lang in self.translation_strings.keys():
-                    metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
-                else:
-                    raise YouTubeException('language not defined in translation strings')
+            if lang in self.translation_strings.keys():
+                metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
             else:
-                metadata['snippet']['title'] += ' - ' + lang
+                raise YouTubeException('language not defined in translation strings')
+
         # limit title length to 100 (youtube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
