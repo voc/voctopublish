@@ -61,8 +61,8 @@ class RecordingTicket(Ticket):
         Ticket.__init__(self, ticket, ticket_id)
 
         # recording ticket properties
-        self.download_url = self._validate_('Fahrplan.DownloadURL')
-        self.fuse_path = self._validate_('Record.FusePath')
+        self.download_url = self._validate_('Fahrplan.VideoDownloadURL')
+        self.fuse_path = self._validate_('Processing.Path.Raw') + self._validate_('Project.Slug')
 
         # fahrplan properties
         self.room = self._validate_('Fahrplan.Room')
