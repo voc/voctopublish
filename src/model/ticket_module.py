@@ -67,6 +67,12 @@ class RecordingTicket(Ticket):
         # fahrplan properties
         self.room = self._validate_('Fahrplan.Room')
         self.fahrplan_id = self._validate_('Fahrplan.ID')
+        lang_in = self._validate_('Fahrplan.Language')
+        # todo make a lookup table which can be used app wide
+        if lang_in == 'de':
+            self.language = 'deu'
+        elif lang_in == 'en':
+            self.language = 'eng'
 
 
 

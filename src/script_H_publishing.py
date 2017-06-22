@@ -322,7 +322,7 @@ class Publisher:
                 fh.write(df.read())
 
         # set recording language todo needs patch on tracker side.
-        #self.c3tt.set_ticket_properties('Recording.Language': self.ticket.Fahrplan.lang)
+        self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
 
 class PublisherException(Exception):
     pass
