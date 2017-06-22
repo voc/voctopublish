@@ -321,6 +321,8 @@ class Publisher:
             with urllib.request.urlopen(self.ticket.download_url) as df:
                 fh.write(df.read())
 
+        # set recording language todo needs patch on tracker side.
+        #self.c3tt.set_ticket_properties('Recording.Language': self.ticket.Fahrplan.lang)
 
 class PublisherException(Exception):
     pass
@@ -348,10 +350,10 @@ if __name__ == '__main__':
             except Exception as e:
                 publisher.c3tt.set_ticket_failed(str(e))
                 logging.exception(e)
-                publisher.c3tt.set_ticket_failed('unknown ticket type')
                 sys.exit(-1)
         else:
             logging.error('unknown ticket type')
+            publisher.c3tt.set_ticket_failed('unknown ticket type')
             sys.exit(-1)
     else:
         sys.exit(0)
