@@ -321,7 +321,7 @@ class Publisher:
             with urllib.request.urlopen(self.ticket.download_url) as df:
                 fh.write(df.read())
 
-        # set recording language todo needs patch on tracker side.
+        # set recording language todo multilang 
         self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
 
 class PublisherException(Exception):
