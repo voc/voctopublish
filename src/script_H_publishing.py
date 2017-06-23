@@ -323,7 +323,10 @@ class Publisher:
 
         # set recording language todo multilang
         self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+
+        # tell the tracker that we finished the import
         self.c3tt.set_ticket_done()
+
 
 class PublisherException(Exception):
     pass
