@@ -302,7 +302,7 @@ class Publisher:
         # we name our input video file uncut ts so tracker will find it. This is not the nicest way to go
         # TODO find a better integration in to the pipeline
         path = os.path.join(self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id)
-        file = os.path.join(path,'uncut.ts')
+        file = os.path.join(path, 'uncut.ts')
 
         if not os.path.exists(path):
             try:
@@ -318,7 +318,7 @@ class Publisher:
             raise PublisherException('video file already exists, please remove file')
 
         with open(file, 'wb') as fh:
-            with urllib.request.urlopen(self.ticket.download_url.encode('utf-8')) as df:
+            with urllib.request.urlopen(urllib.parse.quote(self.ticket.download_url, safe=':/')) as df:
                 fh.write(df.read())
 
         # set recording language todo multilang
