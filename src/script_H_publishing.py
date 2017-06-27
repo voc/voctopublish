@@ -318,7 +318,7 @@ class Publisher:
             raise PublisherException('video file already exists, please remove file')
 
         with open(file, 'wb') as fh:
-            with urllib.request.urlopen(self.ticket.download_url) as df:
+            with urllib.request.urlopen(self.ticket.download_url.encode('utf-8')) as df:
                 fh.write(df.read())
 
         # set recording language todo multilang
