@@ -22,6 +22,7 @@ import logging
 import os
 import subprocess
 import urllib.request
+import shutil
 
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
@@ -150,7 +151,21 @@ class Publisher:
             twitter.send_tweet(self.ticket, self.token, self.token_secret, self.consumer_key, self.consumer_secret)
 
     def download(self):
-        self._download_file()
+        """
+        download or copy a file for processing
+        :return:
+        """
+        # if its an URL it probably will start with http ....
+        if self.ticket.download_url.startswith('http'):
+            self._download_file()
+        else:
+            self._copy_file()
+
+        # set recording language todo multilang
+        self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+
+        # tell the tracker that we finished the import
+        self.c3tt.set_ticket_done()
 
     def _get_ticket_from_tracker(self):
         """
@@ -292,6 +307,33 @@ class Publisher:
 
         self.c3tt.set_ticket_properties(props)
 
+    def _copy_file(self):
+        """
+        copy a file from a local folder to the fake fuse and name it uncut.ts
+        this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
+        :return:
+        """
+        logging.info('Copying input file from: ' + self.ticket.download_url)
+        path = os.path.join(self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id)
+        file = os.path.join(path, 'uncut.ts')
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except Exception as e:
+                logging.error(e)
+                logging.exception(e)
+                raise PublisherException(e)
+
+        if os.path.exists(file):
+            # todo think about rereleasing here
+            logging.warning('video file already exists, please remove file')
+            raise PublisherException('video file already exists, please remove file')
+
+        try:
+            shutil.copyfile(self.ticket.download_url, file)
+        except IOError as e_:
+            raise PublisherException(e_)
+
     def _download_file(self):
         '''
         download a file from an http / https / ftp URL an place it as a uncut.ts in the fuse folder.
@@ -320,12 +362,6 @@ class Publisher:
         with open(file, 'wb') as fh:
             with urllib.request.urlopen(urllib.parse.quote(self.ticket.download_url, safe=':/')) as df:
                 fh.write(df.read())
-
-        # set recording language todo multilang
-        self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
-
-        # tell the tracker that we finished the import
-        self.c3tt.set_ticket_done()
 
 
 class PublisherException(Exception):
