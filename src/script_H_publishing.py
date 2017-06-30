@@ -317,7 +317,10 @@ class Publisher:
             logging.warning('video file already exists, please remove file')
             raise PublisherException('video file already exists, please remove file')
 
+        logging.debug(urllib.parse.quote(self.ticket.download_url, safe=':/'))
+
         with open(file, 'wb') as fh:
+            #url = self.ticket.download_url.encode('utf-8')
             with urllib.request.urlopen(urllib.parse.quote(self.ticket.download_url, safe=':/')) as df:
                 fh.write(df.read())
 
