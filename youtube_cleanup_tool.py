@@ -22,10 +22,11 @@ def main():
     #conference_slug = 'emf16'  # see tracker project
     #targetPlaylist  = 'PL_IxoDz1Nq2auQyvwcmhMhCPrCKC_Jatj'
     
-    conference_slug = 'froscon16'  # see tracker project
-    targetPlaylist  = 'PL_IxoDz1Nq2aMepxIuDN7Ek8lcjc32B1D'
-
+    #conference_slug = 'froscon16'  # see tracker project
+    #targetPlaylist  = 'PL_IxoDz1Nq2aMepxIuDN7Ek8lcjc32B1D'
     
+    conference_slug = 'gpn11'  # see tracker project
+
     yt = YoutubeAPI(ticket, config['youtube']) 
 
     r = requests.get('https://tracker.c3voc.de/api/v1/' + conference_slug + '/tickets/released.json')
@@ -37,8 +38,8 @@ def main():
            i = i+1
            print(video_file['youtube_url'])
            videoId = video_file['youtube_url'].split('=', 2)[1]
-           #yt.fix_video_description(videoId)
-           yt.add_to_playlist(videoId, targetPlaylist)
+           yt.fix_video_description(videoId)
+           #yt.add_to_playlist(videoId, targetPlaylist)
            #break
 
     print( "%i of %i published files (including webm and audio releases) are on youtube" % (i, len(videos)) )
@@ -58,10 +59,10 @@ class YoutubeAPI (youtube_client.YoutubeAPI):
                 'Authorization': 'Bearer ' + self.accessToken,
             }
         )
-        
+        item = r.json()['items'][0]
         old_description = item['snippet']['description']
 
-        description = old_description.replace('https://media.ccc.de/c/emf16/emf2016', 'https://media.ccc.de/v/emf2016');
+        description = old_description.replace('https://media.ccc.de/c/gpn11/', 'https://media.ccc.de/v/');
 
         if description == old_description:
             print(' nothing todo')
