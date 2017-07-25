@@ -162,7 +162,11 @@ class Publisher:
             self._copy_file()
 
         # set recording language todo multilang
-        self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+        try:
+            self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+        except AttributeError as err_:
+            self.c3tt.set_ticket_failed('unknown language please set language in the recording ticket to proceed')
+            logging.error('unknown language please set language in the recording ticket to proceed')
 
         # tell the tracker that we finished the import
         self.c3tt.set_ticket_done()
