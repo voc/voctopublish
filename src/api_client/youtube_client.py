@@ -84,6 +84,8 @@ class YoutubeAPI:
 
                 video_id = self.upload(out_path, lang)
                 self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
+                if self.ticket.youtube_playlists:
+                  add_to_playlists(self, video_id, playlist_ids):
 
         else:
             video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename),
@@ -231,7 +233,11 @@ class YoutubeAPI:
 
         return video['id']
 
-    def _add_to_playlist(self, video_id, playlist_id):
+    def add_to_playlists(self, video_id, playlist_ids):
+        for p in playlist_ids:
+            add_to_playlist(self, video_id, p)
+
+    def add_to_playlist(self, video_id, playlist_id):
         """
         documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
         :param video_id:
