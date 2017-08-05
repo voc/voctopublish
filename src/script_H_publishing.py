@@ -102,7 +102,8 @@ class Publisher:
 
         # YouTube
         if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes':
-            self.yt = YoutubeAPI(self.ticket, self.config)
+            self.yt = YoutubeAPI(self.config)
+            self.yt.setup(self.ticket.youtube_token)
 
         # twitter
         if self.ticket.twitter_enable == 'yes':
@@ -277,7 +278,7 @@ class Publisher:
         Publish the file to YouTube.
         """
         logging.debug("publishing to youtube")
-        youtube_urls = self.yt.publish()
+        youtube_urls = self.yt.publish(self.ticket)
         props = {}
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
