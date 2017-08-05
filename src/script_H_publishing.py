@@ -173,8 +173,8 @@ class Publisher:
         if self.ticket.master:
             # if this is master ticket we need to check if we need to create an event on voctoweb
             logging.debug('this is a master ticket')
-            if self.ticket.recording_id:
-                logging.debug('ticket has a recording id')
+            if self.ticket.voctoweb_event_id:
+                logging.debug('ticket has a voctoweb_event_id')
                 # ticket has an recording id. We assume the event exists on media
                 # todo ask media api if event exists
             else:
@@ -191,6 +191,7 @@ class Publisher:
                             self.vw.upload_thumbs()
                         else:
                             logging.info("thumbs exist. skipping")
+                    self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
 
                 elif r.status_code == 422:
                     # If this happens tracker and voctoweb are out of sync regarding the recording id

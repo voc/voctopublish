@@ -106,6 +106,8 @@ class Ticket:
             if 'Media.Tags' in ticket:
                 self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
+            self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
+
 
         # twitter properties
         self.twitter_enable = self._validate_('Publishing.Twitter.Enable')
