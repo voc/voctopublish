@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #    Copyright (C) 2016  derpeter, andi
-#    <add andis mail here>
+#    andi@muc.ccc.de
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify

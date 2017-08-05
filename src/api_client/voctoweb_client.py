@@ -183,7 +183,7 @@ class VoctowebClient:
                        'promoted': False,
                        'release_date': str(time.strftime("%Y-%m-%d"))
                    }
-                   }
+        }
         logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
         # call voctoweb api
