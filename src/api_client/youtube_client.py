@@ -56,7 +56,7 @@ class YoutubeAPI:
         publish a file on youtube
         :return: returns a list containing a youtube url for each released file
         """
-        logging.info("publishing Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
+        logging.info("publishing Ticket %s (%s) to youtube" % (ticket.fahrplan_id, ticket.title))
 
         # handle multi language events
         # todo merge publishing for voctoweb and youtube
@@ -71,11 +71,10 @@ class YoutubeAPI:
 
                 # todo check if the file is already there from the voctoweb release
                 try:
-                    subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i',
-                                     os.path.join(ticket.publishing_path, ticket.local_filename), '-map',
-                                     '0:0',
-                                     '-map',
-                                     '0:a:' + str(key), '-c', 'copy', '-movflags', 'faststart', out_path])
+                    subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', 
+                                     '-i', os.path.join(ticket.publishing_path, ticket.local_filename), 
+                                     '-map', '0:0', '-map', '0:a:' + str(key), 
+                                     '-c', 'copy', '-movflags', 'faststart', out_path])
                 except Exception as e_:
                     raise YouTubeException('error remuxing ' + ticket.local_filename + ' to ' + out_path) from e_
 
@@ -84,14 +83,13 @@ class YoutubeAPI:
                 else:
                     lang = ticket.languages[key]
 
-                video_id = self.upload(out_path, lang)
+                video_id = self.upload(ticket, out_path, lang)
                 self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
                 if ticket.youtube_playlists:
                     add_to_playlists(self, video_id, playlist_ids)
 
         else:
-            video_id = self.upload(os.path.join(ticket.publishing_path, ticket.local_filename),
-                                   None)
+            video_id = self.upload(ticket, os.path.join(ticket.publishing_path, ticket.local_filename), None)
 
             video_url = 'https://www.youtube.com/watch?v=' + video_id
             logging.info("published Ticket to %s" % video_url)
@@ -99,7 +97,7 @@ class YoutubeAPI:
 
         return self.youtube_urls
 
-    def upload(self, file, lang):
+    def upload(self, ticket, file, lang):
         """
         Call the youtube API and push the file to youtube
         :param file: file to upload
@@ -157,7 +155,7 @@ class YoutubeAPI:
                     'title': title,
                     'description': description,
                     'channelId': self.channelId,
-                    'tags': self._select_tags(lang)
+                    'tags': self._select_tags(ticket, lang)
                 },
             'status':
                 {
@@ -351,7 +349,7 @@ class YoutubeAPI:
         logging.info("successfully fetched Channel-ID %s " % (channel['id']))
         return channel['id']
 
-    def _select_tags(self, lang=None):
+    def _select_tags(self, ticket, lang=None):
         """
         Build the tag list
         :param lang: if present the language will be added to the tags
