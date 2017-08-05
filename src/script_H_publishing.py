@@ -262,7 +262,8 @@ class Publisher:
                 raise PublisherException('error uploading ' + out_path) from e_
 
             try:
-                self.vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
+                recording_id = self.vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
+                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + key: recording_id})
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
