@@ -306,7 +306,8 @@ if __name__ == '__main__':
         try:
             publisher.publish()
         except Exception as e:
-            publisher.c3tt.set_ticket_failed(str(e))
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            publisher.c3tt.set_ticket_failed('%s: %s' % (exec_type, e))
             logging.exception(e)
             sys.exit(-1)
     else:
