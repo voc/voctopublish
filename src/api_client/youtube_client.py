@@ -234,12 +234,14 @@ class YoutubeAPI:
 
         youtube_url = 'https://www.youtube.com/watch?v=' + video['id']
         logging.info('successfully uploaded video as %s', youtube_url)
+        
+        self.add_to_playlists(video['id'], ticket.youtube_playlists)
 
         return video['id']
 
     def add_to_playlists(self, video_id, playlist_ids):
         for p in playlist_ids:
-            add_to_playlist(self, video_id, p)
+            self.add_to_playlist(video_id, p)
         pass
 
     def add_to_playlist(self, video_id, playlist_id):
