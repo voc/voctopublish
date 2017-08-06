@@ -17,7 +17,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from html.parser import HTMLParser
-import html
+import cgi
 import subprocess
 import logging
 import requests
@@ -152,8 +152,8 @@ class YoutubeAPI:
         metadata = {
             'snippet':
                 {
-                    'title': html.escape(title),
-                    'description': html.escape(description),
+                    'title': cgi.escape(title),
+                    'description': cgi.escape(description),
                     'channelId': self.channelId,
                     'tags': self._select_tags(ticket, lang)
                 },
