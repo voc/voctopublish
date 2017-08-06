@@ -132,17 +132,16 @@ class YoutubeAPI:
         #     if len(ticket.people) < 3:
         #         title = str(ticket.people) + ': ' + title
 
+        if not ticket.youtube_title_prefix and not ticket.youtube_title_suffix:
+            logging.warning('Neither YouTube title prefix nor suffix found')
+
         if ticket.youtube_title_prefix:
             title = ticket.youtube_title_prefix + ' ' + title
             logging.debug('adding ' + str(ticket.youtube_title_prefix) + ' as title prefix')
-        else:
-            logging.warning('No youtube title prefix found')
 
         if ticket.youtube_title_suffix:
             title = title + ' ' + ticket.youtube_title_suffix
             logging.debug('adding ' + str(ticket.youtube_title_suffix) + ' as title suffix')
-        else:
-            logging.warning('No YouTube title suffix found')
 
         if ticket.youtube_privacy:
             privacy = ticket.youtube_privacy
@@ -205,7 +204,10 @@ class YoutubeAPI:
         )
 
         if 200 != r.status_code:
-            raise YouTubeException('Video creation failed with error-code %u: %s' % (r.status_code, r.text))
+            if 400 == r.status_code:
+                raise YouTubeException(r.json()['error']['message'] + '\n' + r.text)
+            else:
+                raise YouTubeException('Video creation failed with error-code %u: %s' % (r.status_code, r.text))
 
         if 'location' not in r.headers:
             raise YouTubeException('Video creation did not return a location-header to upload to: %s' % (r.headers,))
