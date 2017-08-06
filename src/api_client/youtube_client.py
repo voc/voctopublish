@@ -17,6 +17,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from html.parser import HTMLParser
+import html
 import subprocess
 import logging
 import requests
@@ -152,8 +153,8 @@ class YoutubeAPI:
         metadata = {
             'snippet':
                 {
-                    'title': title,
-                    'description': description,
+                    'title': html.escape(title),
+                    'description': html.escape(description),
                     'channelId': self.channelId,
                     'tags': self._select_tags(ticket, lang)
                 },
@@ -178,7 +179,6 @@ class YoutubeAPI:
                 raise YouTubeException('language not defined in translation strings')
 
         # limit title length to 100 (youtube api conformity)
-        metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
 
         if ticket.youtube_category:
