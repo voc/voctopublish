@@ -20,7 +20,7 @@ import logging
 logging = logging.getLogger()
 
 
-def send_tweet(ticket, token, token_secret, consumer_key, consumer_secret):
+def send_tweet(ticket, config):
     logging.info("tweeting the release")
     # todo add more logic here. Also we should only tweet the master releases
     # only tweet master releases
@@ -39,7 +39,8 @@ def send_tweet(ticket, token, token_secret, consumer_key, consumer_secret):
             title = title[0:len(msg)]
         message = title + msg
         # todo switch to oauth2
-        t = Twitter(auth=OAuth(token, token_secret, consumer_key, consumer_secret))
+
+        t = Twitter(auth=OAuth(config['token'], config['token_secret'], config['consumer_key'], config['consumer_secret']))
         ret = t.statuses.update(status=message)
         logging.debug(ret)
     else:
