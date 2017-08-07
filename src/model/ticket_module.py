@@ -88,7 +88,10 @@ class Ticket:
                 self.has_youtube_url = True
             else:
                 self.has_youtube_url = False
-            self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
+            if self._validate_('Publishing.YouTube.Playlists', True) is not None:
+                self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
+            else:
+                self.youtube_playlists = []
 
         # voctoweb properties
         self.profile_media_enable = self._validate_('Publishing.Media.EnableProfile')
