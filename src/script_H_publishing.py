@@ -113,15 +113,6 @@ class Publisher:
                 logging.info('using same token for publishing and playlist management')
                 self.yt_mediacccde = self.yt
 
-
-
-        # twitter
-        if self.ticket.twitter_enable == 'yes':
-            self.token = self.config['twitter']['token']
-            self.token_secret = self.config['twitter']['token_secret']
-            self.consumer_key = self.config['twitter']['consumer_key']
-            self.consumer_secret = self.config['twitter']['consumer_secret']
-
     def publish(self):
         """
         Decide based on the information provided by the tracker where to publish.
@@ -152,8 +143,8 @@ class Publisher:
         self.c3tt.set_ticket_done()
 
         # Twitter
-        if self.ticket.twitter_enable == 'yes':
-            twitter.send_tweet(self.ticket, self.token, self.token_secret, self.consumer_key, self.consumer_secret)
+        if self.ticket.twitter_enable == 'yes' and self.ticket.master:
+            twitter.send_tweet(self.ticket, self.config['twitter'])
 
     def _get_ticket_from_tracker(self):
         """
