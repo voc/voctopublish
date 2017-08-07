@@ -105,6 +105,16 @@ class Publisher:
             self.yt = YoutubeAPI(self.config)
             self.yt.setup(self.ticket.youtube_token)
 
+            # second YoutubeAPI instance for playlist management at youtube.com/mediacccde
+            if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
+                self.yt_mediacccde = YoutubeAPI(self.config)
+                self.yt_mediacccde.setup(self.config['youtube']['playlist_token'])
+            else:
+                logging.info('using same token for publishing and playlist management')
+                self.yt_mediacccde = self.yt
+
+
+
         # twitter
         if self.ticket.twitter_enable == 'yes':
             self.token = self.config['twitter']['token']
@@ -289,6 +299,10 @@ class Publisher:
 
         self.c3tt.set_ticket_properties(props)
 
+        # now, after we reported everything back to the tracker, let's try to add the videos to our own playlists
+        for url in youtube_urls:
+            videoId = url.split('=', 2)[1]
+            self.yt_mediacccde.add_to_playlists(videoId, self.ticket.youtube_playlists)
 
 class PublisherException(Exception):
     pass

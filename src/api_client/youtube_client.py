@@ -86,9 +86,6 @@ class YoutubeAPI:
 
                 video_id = self.upload(ticket, out_path, lang)
                 self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
-                if ticket.youtube_playlists:
-                    add_to_playlists(self, video_id, playlist_ids)
-
         else:
             video_id = self.upload(ticket, os.path.join(ticket.publishing_path, ticket.local_filename), None)
 
@@ -269,7 +266,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'Adding video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
+                'Adding video to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
         logging.info('video added to playlist: ' + playlist_id)
 
