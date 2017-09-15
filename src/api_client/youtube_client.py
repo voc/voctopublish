@@ -155,6 +155,7 @@ class YoutubeAPI:
                     'title': title.replace('<', '(').replace('>', ')'),
                     # YouTube does not allow <> in description -> escape them
                     'description': cgi.escape(description),
+                    # todo switch to html instead of cgi as its deprecated
                     'channelId': self.channelId,
                     'tags': self._select_tags(ticket, lang)
                 },
@@ -359,7 +360,7 @@ class YoutubeAPI:
         :param lang: if present the language will be added to the tags
         :return: Returns an array of tag strings
         """
-        #todo figure out why ticket object is passed here
+        # todo figure out why ticket object is passed here
         tags = []
 
         if ticket.track:
