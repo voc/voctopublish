@@ -26,9 +26,9 @@ def send_tweet(ticket, config):
     # only tweet master releases
     target = ''
     if ticket.master:
-        if ticket.media_enable and ticket.profile_media_enable:
+        if ticket.media_enable == 'yes' and ticket.profile_media_enable == 'yes':
             target = 'media.ccc.de'  # todo this should be generic but voctoweb is also not usefull here
-        if ticket.youtube_enable and ticket.profile_youtube_enable:
+        if ticket.youtube_enable == 'yes' and ticket.profile_youtube_enable == 'yes':
             if len(target) > 1:
                 target += ' and '
             target += 'YouTube'
@@ -40,8 +40,12 @@ def send_tweet(ticket, config):
         message = title + msg
         # todo switch to oauth2
 
-        t = Twitter(auth=OAuth(config['token'], config['token_secret'], config['consumer_key'], config['consumer_secret']))
-        ret = t.statuses.update(status=message)
-        logging.debug(ret)
+        try:
+            t = Twitter(auth=OAuth(config['token'], config['token_secret'], config['consumer_key'], config['consumer_secret']))
+            ret = t.statuses.update(status=message)
+            logging.debug(ret)
+        except Exception as e_:
+            # we don't care if twitter fails here. We can handle this after rewriting this to oauth2
+            logging.error('Twittering failed: ' + e_)
     else:
         logging.info('this is not a master => no twitter')
