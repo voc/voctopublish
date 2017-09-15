@@ -175,8 +175,8 @@ class Publisher:
             # if this is master ticket we need to check if we need to create an event on voctoweb
             logging.debug('this is a master ticket')
             if self.ticket.voctoweb_event_id:
-                logging.debug('ticket has a voctoweb_event_id')
-                # ticket has an recording id. We assume the event exists on media
+                logging.debug('ticket has already a voctoweb_event_id')
+                # ticket has a voctoweb event id. We assume the event exists on media
                 # todo ask media api if event exists
             else:
                 # ticket has no recording id therefore we create the event on voctoweb
