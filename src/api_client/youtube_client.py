@@ -238,7 +238,7 @@ class YoutubeAPI:
 
     def add_to_playlists(self, video_id, playlist_ids):
         for p in playlist_ids:
-            add_to_playlist(self, video_id, p)
+            self.add_to_playlist(video_id, p)
         pass
 
     def add_to_playlist(self, video_id, playlist_id):
