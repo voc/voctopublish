@@ -261,11 +261,16 @@ class Publisher:
             except Exception as e_:
                 raise PublisherException('error uploading ' + out_path) from e_
 
+            self.recording_id = None
             try:
-                recording_id = self.vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
-                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + key: recording_id})
+                self.recording_id = self.vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
+
+            try:
+                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + key: self.recording_id})
+            except Exception as e_:
+                raise PublisherException('failed to set RecordingId to ticket') from e_
 
     def _publish_to_youtube(self):
         """
