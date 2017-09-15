@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-#    Copyright (C) 2016  derpeter
+#    Copyright (C) 2017  derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -93,7 +93,7 @@ class Publisher:
         if not self.ticket:
             return
 
-        # todo this should in the publish function for better error handling
+        # todo this should be in the publish function for better error handling
         # voctoweb
         if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
             api_url = self.config['voctoweb']['api_url']
@@ -106,6 +106,7 @@ class Publisher:
             self.yt.setup(self.ticket.youtube_token)
 
             # second YoutubeAPI instance for playlist management at youtube.com/mediacccde
+            # todo this code should not be specific for the media.ccc.de installation => make it general usable
             if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
                 self.yt_mediacccde = YoutubeAPI(self.config)
                 self.yt_mediacccde.setup(self.config['youtube']['playlist_token'])
