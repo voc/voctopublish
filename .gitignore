@@ -1,3 +1,7 @@
+# Byte-compiled files #
+#######################
+__pycache__/
+
 # Compiled source #
 ###################
 *.com
@@ -36,4 +40,7 @@
 ehthumbs.db
 Thumbs.db
 
+# Config and IDE files #
+########################
 client.conf
+.idea/
