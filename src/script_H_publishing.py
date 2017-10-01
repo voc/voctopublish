@@ -176,39 +176,35 @@ class Publisher:
         if self.ticket.master:
             # if this is master ticket we need to check if we need to create an event on voctoweb
             logging.debug('this is a master ticket')
-            if self.ticket.voctoweb_event_id or self.ticket.recording_id:
-                logging.debug('ticket has a voctoweb_event_id or recording_id')
-                # ticket has an recording id or voctoweb event id. We assume the event exists on media
-                # todo ask media api if event exists
+            r = self.vw.create_or_update_event()
+            if r.status_code in [200, 201]:
+                logging.info("new event created or existing updated")
+                # generate the thumbnails (will not overwrite existing thumbs)
+                # todo move the external bash script to python code here
+                # if this is an audio only release we don' create thumbs
+                if self.ticket.mime_type.startswith('video'):
+                    if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
+                        self.vw.generate_thumbs()
+                        self.vw.upload_thumbs()
+                    else:
+                        logging.info("thumbs exist. skipping")
+                try:
+                    # todo: only set recording id when new recording was created, and not when it was only updated
+                    self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
+                except Exception as e_:
+                    raise PublisherException('failed to Voctoweb EventID to ticket') from e_
+
+            elif r.status_code == 422:
+                # If this happens tracker and voctoweb are out of sync regarding the event id
+                # todo: write voctoweb event_id to ticket properties --Andi
+                logging.warning("event already exists => publishing")
             else:
-                # ticket has no recording id therefore we create the event on voctoweb
-                r = self.vw.create_event()
-                if r.status_code in [200, 201]:
-                    logging.info("new event created")
-                    # generate the thumbnails (will not overwrite existing thumbs)
-                    # todo move the external bash script to python code here
-                    # if this is an audio only release we don' create thumbs
-                    if self.ticket.mime_type.startswith('video'):
-                        if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
-                            self.vw.generate_thumbs()
-                            self.vw.upload_thumbs()
-                        else:
-                            logging.info("thumbs exist. skipping")
-                    try:
-                        self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
-                    except Exception as e_:
-                        raise PublisherException('failed to Voctoweb EventID to ticket') from e_
+                raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
 
-                elif r.status_code == 422:
-                    # If this happens tracker and voctoweb are out of sync regarding the recording id
-                    logging.warning("event already exists => publishing")
-                else:
-                    raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
-
-                # in case of a multi language release we create here the single language files
-                if len(self.ticket.languages) > 1:
-                    logging.info('remuxing multi-language video into single audio files')
-                    self._mux_to_single_language()
+            # in case of a multi language release we create here the single language files
+            if len(self.ticket.languages) > 1:
+                logging.info('remuxing multi-language video into single audio files')
+                self._mux_to_single_language()
 
         # set hq filed based on ticket encoding profile slug
         if 'hd' in self.ticket.profile_slug:
@@ -236,9 +232,10 @@ class Publisher:
 
         self.vw.upload_file(self.ticket.local_filename, filename, self.ticket.folder)
 
-        recording_id = self.vw.create_recording(self.ticket.local_filename, filename,
+        recording_id = self.vw.create_or_update_recording(self.ticket.local_filename, filename,
                                                 self.ticket.folder, language, hq, html5)
 
+        # todo: only set recording id when new recording was created, and not when it was only updated
         self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 
     def _mux_to_single_language(self):
