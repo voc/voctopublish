@@ -15,7 +15,7 @@ use the provided client.conf.example to tell the script to which hosts it should
 "Viel Spaß am Gerät"
 
 
-* [1] TBA (the tracker will be publicly available soon)
+* [1] https://github.com/crs-tools/tracker
 * [2] https://github.com/voc/voctoweb
 * [3] https://www.youtube.com/yt/dev/de/api-resources.html
 * [4] https://dev.twitter.com/rest/public
