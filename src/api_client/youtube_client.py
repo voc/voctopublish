@@ -41,6 +41,7 @@ class YoutubeAPI:
         self.accessToken = None
         self.config = config
         self.youtube_urls = []
+        # TODO: Add mapping from three char codes to two char codes
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
                          'fra': 'French', 'rus': 'Russian'}
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
@@ -157,7 +158,10 @@ class YoutubeAPI:
                     'description': cgi.escape(description),
                     # todo switch to html instead of cgi as its deprecated
                     'channelId': self.channelId,
-                    'tags': self._select_tags(ticket, lang)
+                    'tags': self._select_tags(ticket, lang),
+                    # TODO: youtube requires two char languages codes, e.g. de or en 
+                    #  but lang variable contains three char languages (ger, eng etc.) 
+                    'defaultLanguage': lang
                 },
             'status':
                 {
