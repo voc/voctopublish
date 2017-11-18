@@ -11,6 +11,7 @@ sudo pip3 install paramiko configparser twitter pillow
 
 ## Usage
 use the provided client.conf.example to tell the script to which hosts it should talk. Most of the configuration is done in the tracker
+Some examples for usefull properties can be found on [5]
 
 "Viel Spaß am Gerät"
 
@@ -19,3 +20,4 @@ use the provided client.conf.example to tell the script to which hosts it should
 * [2] https://github.com/voc/voctoweb
 * [3] https://www.youtube.com/yt/dev/de/api-resources.html
 * [4] https://dev.twitter.com/rest/public
+* [5] https://c3voc.de/wiki/c3tracker?s[]=tracker#tracker-project_and_worker
