@@ -19,7 +19,7 @@ import logging
 
 class Ticket:
     """
-    This class is inspired by the c3tt ticket system. If handles all information we got from the tracker
+    This class is inspired by the c3tt ticket system. It handles all information we got from the tracker
     and adds some additional information.
     """
     def __init__(self, ticket, ticket_id):
@@ -110,7 +110,6 @@ class Ticket:
                 self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
-
 
         # twitter properties
         self.twitter_enable = self._validate_('Publishing.Twitter.Enable')
