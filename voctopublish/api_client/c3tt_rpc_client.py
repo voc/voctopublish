@@ -1,4 +1,4 @@
-#    Copyright (C) 2016 derpeter
+#    Copyright (C) 2017 derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -42,10 +42,9 @@ class C3TTClient:
         """
         generate signature
         assemble static part of signature arguments
-        1. URL  2. method name  3. worker group token  4. hostname
         :param method:
         :param args:
-        :return:
+        :return: hmac signature
         """
         sig_args = urllib.parse.quote(self.url + "&" + method + "&" + self.group + "&" + self.host + "&", "~")
 
@@ -78,7 +77,7 @@ class C3TTClient:
         create xmlrpc client
         :param method:
         :param args:
-        :return:
+        :return: attributes of the answer
         """
         logging.debug('creating XML RPC proxy: ' + self.url + "?group=" + self.group + "&hostname=" + self.host)
         if self.ticket_id:
@@ -136,7 +135,7 @@ class C3TTClient:
     def get_version(self):
         """
         get Tracker Version
-        :return:
+        :return: tracker version string
         """
         return str(self._open_rpc("C3TT.getVersion"))
 
@@ -145,7 +144,7 @@ class C3TTClient:
         check for new ticket on tracker and get assignment
         :param ticket_type: type of ticket
         :param to_state: ticket state the returned ticket will be in after this call
-        :return:
+        :return: ticket id or False in case of a failure
         """
         ret = self._open_rpc("C3TT.assignNextUnassignedForState", [ticket_type, to_state])
         # if we get no xml here there is no ticket for this job
@@ -159,7 +158,7 @@ class C3TTClient:
         """
         set ticket properties
         :param properties:
-        :return:
+        :return: Boolean
         """
         ret = self._open_rpc("C3TT.setTicketProperties", [properties])
         if not ret:
@@ -192,7 +191,6 @@ class C3TTClient:
         """
         set ticket status on failed an supply a error text
         :param error:
-        :return:
         """
         self._open_rpc("C3TT.setTicketFailed", [error.encode('ascii', 'xmlcharrefreplace')])
 
