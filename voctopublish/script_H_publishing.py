@@ -27,6 +27,7 @@ from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
 from model.ticket_module import Ticket
+from model.ticket_module import TicketException
 
 
 class Publisher:
@@ -50,14 +51,14 @@ class Publisher:
 
         self.logger = logging.getLogger()
 
-        ch = logging.StreamHandler(sys.stdout)
+        sh = logging.StreamHandler(sys.stdout)
         if self.config['general']['debug']:
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
         else:
             formatter = logging.Formatter('%(asctime)s - %(message)s')
 
-        ch.setFormatter(formatter)
-        self.logger.addHandler(ch)
+        sh.setFormatter(formatter)
+        self.logger.addHandler(sh)
         self.logger.setLevel(logging.DEBUG)
 
         level = self.config['general']['debug']
@@ -70,7 +71,6 @@ class Publisher:
         elif level == 'debug':
             self.logger.setLevel(logging.DEBUG)
 
-        # get a ticket from the tracker and initialize the ticket object
         if self.config['C3Tracker']['host'] == "None":
             self.host = socket.getfqdn()
         else:
@@ -79,6 +79,7 @@ class Publisher:
         self.ticket_type = self.config['C3Tracker']['ticket_type']
         self.to_state = self.config['C3Tracker']['to_state']
 
+        # get a ticket from the tracker and initialize the ticket object
         try:
             self.c3tt = C3TTClient(self.config['C3Tracker']['url'], self.config['C3Tracker']['group'],
                                    self.host, self.config['C3Tracker']['secret'])
@@ -158,8 +159,8 @@ class Publisher:
             logging.info("Ticket ID:" + str(ticket_id))
             tracker_ticket = self.c3tt.get_ticket_properties()
             logging.debug("Ticket: " + str(tracker_ticket))
-
             t = Ticket(tracker_ticket, ticket_id)
+
         else:
             logging.info("No ticket to publish, exiting")
             return None
@@ -306,6 +307,8 @@ if __name__ == '__main__':
     except Exception as e:
         logging.error(e)
         logging.exception(e)
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
         sys.exit(-1)
 
     if publisher.ticket:
