@@ -27,7 +27,6 @@ from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
 from model.ticket_module import Ticket
-from model.ticket_module import TicketException
 
 
 class Publisher:
@@ -79,13 +78,22 @@ class Publisher:
         self.ticket_type = self.config['C3Tracker']['ticket_type']
         self.to_state = self.config['C3Tracker']['to_state']
 
-        # get a ticket from the tracker and initialize the ticket object
+        # instance variables we need later
+        self.ticket = None
+
+        logging.debug('creating C3TTClient')
         try:
-            self.c3tt = C3TTClient(self.config['C3Tracker']['url'], self.config['C3Tracker']['group'],
-                                   self.host, self.config['C3Tracker']['secret'])
+            self.c3tt = C3TTClient(self.config['C3Tracker']['url'],
+                                   self.config['C3Tracker']['group'],
+                                   self.host,
+                                   self.config['C3Tracker']['secret'])
         except Exception as e_:
             raise PublisherException('Config parameter missing or empty, please check config') from e_
 
+    def publish(self):
+        """
+        Decide based on the information provided by the tracker where to publish.
+        """
         try:
             self.ticket = self._get_ticket_from_tracker()
         except Exception as e_:
@@ -94,31 +102,6 @@ class Publisher:
         if not self.ticket:
             return
 
-        # todo this should be in the publish function for better error handling
-        # voctoweb
-        if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
-            api_url = self.config['voctoweb']['api_url']
-            api_key = self.config['voctoweb']['api_key']
-            self.vw = VoctowebClient(self.ticket, api_key, api_url)
-
-        # YouTube
-        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes':
-            self.yt = YoutubeAPI(self.config)
-            self.yt.setup(self.ticket.youtube_token)
-
-            # second YoutubeAPI instance for playlist management at youtube.com/mediacccde
-            # todo this code should not be specific for the media.ccc.de installation => make it general usable
-            if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
-                self.yt_mediacccde = YoutubeAPI(self.config)
-                self.yt_mediacccde.setup(self.config['youtube']['playlist_token'])
-            else:
-                logging.info('using same token for publishing and playlist management')
-                self.yt_mediacccde = self.yt
-
-    def publish(self):
-        """
-        Decide based on the information provided by the tracker where to publish.
-        """
         # check source file and filesystem permissions
         if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename):
             raise IOError('Source file does not exist (%s)' % (self.ticket.publishing_path + self.ticket.local_filename))
@@ -128,18 +111,16 @@ class Publisher:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
-        # Voctoweb
-        logging.debug(
-            'encoding profile media flag: ' + self.ticket.profile_media_enable + " project media flag: " + self.ticket.media_enable)
-
-        if self.ticket.profile_media_enable == "yes" and self.ticket.media_enable == "yes":
+        # voctoweb
+        if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
+            logging.debug(
+                'encoding profile media flag: ' + self.ticket.profile_media_enable + " project media flag: " + self.ticket.media_enable)
             self._publish_to_voctoweb()
 
         # YouTube
-        logging.debug(
-            "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
-
         if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes' and not self.ticket.has_youtube_url:
+            logging.debug(
+                "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
             self._publish_to_youtube()
 
         self.c3tt.set_ticket_done()
@@ -151,28 +132,36 @@ class Publisher:
     def _get_ticket_from_tracker(self):
         """
         Request the next unassigned ticket for the configured states
+        :return: a ticket object or None in case no ticket is available
         """
         logging.info('requesting ticket from tracker')
-
+        t = None
         ticket_id = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state)
         if ticket_id:
             logging.info("Ticket ID:" + str(ticket_id))
-            tracker_ticket = self.c3tt.get_ticket_properties()
-            logging.debug("Ticket: " + str(tracker_ticket))
+            try:
+                tracker_ticket = self.c3tt.get_ticket_properties()
+                logging.debug("Ticket: " + str(tracker_ticket))
+            except Exception as e_:
+                self.c3tt.set_ticket_failed(e_)
+                raise e_
             t = Ticket(tracker_ticket, ticket_id)
-
         else:
-            logging.info("No ticket to publish, exiting")
-            return None
+            logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
 
         return t
 
     def _publish_to_voctoweb(self):
         """
-        Create a event on an voctomix instance. This includes creating a event and a recording for each media file.
-        This methods also start the scp uploads and handles multi language audio
+        Create a event on an voctomix instance. This includes creating a recording for each media file.
         """
         logging.info("publishing to voctoweb")
+        try:
+            vw = VoctowebClient(self.ticket,
+                                self.config['voctoweb']['api_key'],
+                                self.config['voctoweb']['api_url'])
+        except Exception as e_:
+            raise PublisherException('Error initializing voctoweb client. Config parameter missing') from e_
 
         if self.ticket.master:
             # if this is master ticket we need to check if we need to create an event on voctoweb
@@ -183,7 +172,7 @@ class Publisher:
                 # todo ask media api if event exists
             else:
                 # ticket has no recording id therefore we create the event on voctoweb
-                r = self.vw.create_event()
+                r = vw.create_event()
                 if r.status_code in [200, 201]:
                     logging.info("new event created")
                     # generate the thumbnails (will not overwrite existing thumbs)
@@ -191,8 +180,8 @@ class Publisher:
                     # if this is an audio only release we don' create thumbs
                     if self.ticket.mime_type.startswith('video'):
                         if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
-                            self.vw.generate_thumbs()
-                            self.vw.upload_thumbs()
+                            vw.generate_thumbs()
+                            vw.upload_thumbs()
                         else:
                             logging.info("thumbs exist. skipping")
                     try:
@@ -209,7 +198,7 @@ class Publisher:
                 # in case of a multi language release we create here the single language files
                 if len(self.ticket.languages) > 1:
                     logging.info('remuxing multi-language video into single audio files')
-                    self._mux_to_single_language()
+                    self._mux_to_single_language(vw)
 
         # set hq filed based on ticket encoding profile slug
         if 'hd' in self.ticket.profile_slug:
@@ -235,14 +224,18 @@ class Publisher:
             filename = self.ticket.filename
             language = self.ticket.language
 
-        self.vw.upload_file(self.ticket.local_filename, filename, self.ticket.folder)
+        vw.upload_file(self.ticket.local_filename, filename, self.ticket.folder)
 
-        recording_id = self.vw.create_recording(self.ticket.local_filename, filename,
-                                                self.ticket.folder, language, hq, html5)
+        recording_id = vw.create_recording(self.ticket.local_filename,
+                                           filename,
+                                           self.ticket.folder,
+                                           language,
+                                           hq,
+                                           html5)
 
         self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 
-    def _mux_to_single_language(self):
+    def _mux_to_single_language(self, vw):
         """
         Mux a multi language video file into multiple single language video files.
         This is only implemented for the h264 hd files as we only do it for them
@@ -265,18 +258,17 @@ class Publisher:
                 raise PublisherException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
 
             try:
-                self.vw.upload_file(out_path, filename, self.ticket.folder)
+                vw.upload_file(out_path, filename, self.ticket.folder)
             except Exception as e_:
                 raise PublisherException('error uploading ' + out_path) from e_
 
-            self.recording_id = None
             try:
-                self.recording_id = self.vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
+                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
             try:
-                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + key: self.recording_id})
+                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + key: recording_id})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
 
@@ -285,17 +277,31 @@ class Publisher:
         Publish the file to YouTube.
         """
         logging.debug("publishing to youtube")
-        youtube_urls = self.yt.publish(self.ticket)
+
+        yt = YoutubeAPI(self.config)
+        yt.setup(self.ticket.youtube_token)
+
+        # second YoutubeAPI instance for playlist management at youtube.com/mediacccde
+        # todo this code should not be specific for the media.ccc.de installation => make it general usable
+        if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
+            yt_voctoweb = YoutubeAPI(self.config)
+            yt_voctoweb.setup(self.config['youtube']['playlist_token'])
+        else:
+            logging.info('using same token for publishing and playlist management')
+            yt_voctoweb = yt
+
+        youtube_urls = yt.publish(self.ticket)
         props = {}
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
 
         self.c3tt.set_ticket_properties(props)
 
-        # now, after we reported everything back to the tracker, let's try to add the videos to our own playlists
+        # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
         for url in youtube_urls:
-            videoId = url.split('=', 2)[1]
-            self.yt_mediacccde.add_to_playlists(videoId, self.ticket.youtube_playlists)
+            video_id = url.split('=', 2)[1]
+            yt_voctoweb.add_to_playlists(video_id, self.ticket.youtube_playlists)
+
 
 class PublisherException(Exception):
     pass
@@ -307,17 +313,12 @@ if __name__ == '__main__':
     except Exception as e:
         logging.error(e)
         logging.exception(e)
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
         sys.exit(-1)
 
-    if publisher.ticket:
-        try:
-            publisher.publish()
-        except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
-            logging.exception(e)
-            sys.exit(-1)
-    else:
-        sys.exit(0)
+    try:
+        publisher.publish()
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
+        logging.exception(e)
+        sys.exit(-1)

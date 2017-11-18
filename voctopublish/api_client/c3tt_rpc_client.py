@@ -142,14 +142,16 @@ class C3TTClient:
     def assign_next_unassigned_for_state(self, ticket_type, to_state):
         """
         check for new ticket on tracker and get assignment
+        this also sets the ticket id in the c3tt client instance and has therefore be called before any ticket related
+        function
         :param ticket_type: type of ticket
         :param to_state: ticket state the returned ticket will be in after this call
-        :return: ticket id or False in case of a failure
+        :return: ticket id or None in case no ticket is available for the type and state in the request
         """
         ret = self._open_rpc("C3TT.assignNextUnassignedForState", [ticket_type, to_state])
         # if we get no xml here there is no ticket for this job
         if not ret:
-            return False
+            return None
         else:
             self.ticket_id = ret['id']
             return ret['id']
@@ -193,6 +195,13 @@ class C3TTClient:
         :param error:
         """
         self._open_rpc("C3TT.setTicketFailed", [error.encode('ascii', 'xmlcharrefreplace')])
+
+    def get_ticket_id(self):
+        """
+        get the id of the ticket assigned to the client instance
+        :return: Ticket id or None if no ID is assigned yet
+        """
+        return self.ticket_id
 
 
 class C3TTException(Exception):
