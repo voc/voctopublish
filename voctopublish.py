@@ -267,6 +267,7 @@ class Publisher:
 
         self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 
+
     def _mux_to_single_language(self):
         """
         Mux a multi language video file into multiple single language video files.

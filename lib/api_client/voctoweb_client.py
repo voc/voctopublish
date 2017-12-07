@@ -20,11 +20,15 @@ import logging
 import os
 import subprocess
 import time
+import tempfile
+import operator
+
 
 import paramiko
 import requests
 
 from model.ticket_module import Ticket
+from util.select_thumbnail import calc_score
 
 
 class VoctowebClient:
@@ -61,22 +65,66 @@ class VoctowebClient:
 
     def generate_thumbs(self):
         """
-        This function calls the thumbnail generator script
+        This function generates thumbnails to be used on voctoweb
         :return:
         """
         logging.info(
             ("generating thumbs for " + self.t.publishing_path + self.t.local_filename))
 
         try:
-            # todo this doesn't have to be a subprocess, build thumbs in python
-            subprocess.check_call(["postprocessing/generate_thumb_autoselect_compatible.sh",
-                                   os.path.join(self.t.publishing_path, self.t.local_filename),
-                                   self.t.publishing_path, self.t.local_filename_base + '.jpg', self.t.local_filename_base + '_preview.jpg'])
-        except subprocess.CalledProcessError as e:
-            raise VoctowebException(
-                'Error generating thumbs ' + 'Command: ' + str(e.cmd) + ' fault string ' + str(e)) from e
+            r = subprocess.check_output(
+                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.t.publishing_path + self.t.local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
+                shell=True)
+        except:
+            raise VoctowebException("ERROR: could not get duration")
 
-        logging.info("thumbnails generated")
+        length = int(r.decode())
+        interval = 180
+
+        outjpg = self.t.publishing_path + self.t.local_filename_base + '.jpg'
+        outjpg_preview = self.t.publishing_path + self.t.local_filename_base + '_preview.jpg'
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # now extract candidates and convert to non-anamorphic images
+            # we use equidistant sampling, but skip parts of the file that might contain pre-/postroles
+            # also, use higher resolution sampling at the beginning, as there's usually some interesting stuff there
+
+            scores = []
+
+            try:
+                for idx, pos in [20, 30, 40, range(15, length - 60, interval)]:
+                    r = subprocess.check_output('ffmpeg -loglevel error -ss ' + str(pos) + ' -i ' +
+                                                self.t.publishing_path + self.t.local_filename +
+                                                ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y' +
+                                                tmpdir + str(pos) + '.png',
+                                                shell=True)
+
+                    scores[idx] = calc_score(tmpdir + str(pos) + '.png')
+
+            except Exception as e_:
+                raise VoctowebException("Could not extract candidates: " + str(r)) from e_
+
+            sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
+            winner = sorted_scores[0][0]
+
+            # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
+            # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
+            try:
+                r = subprocess.check_output(
+                    'ffmpeg - loglevel error - i ' + winner + ' - filter_complex: v "scale=400:-1:lanczos" - f image2 - '
+                                                              'vcodec mjpeg - pix_fmt yuv420p - q: v - y ' + outjpg,
+                    shell=True)
+            except:
+                raise VoctowebException("Could not scale outjpg: " + str(r))
+
+            try:
+                r = subprocess.check_output(
+                    'ffmpeg - loglevel error - i ' + winner + ' - f image2 - vcodec mjpeg - pix_fmt yuv420p - q: v 0 - y ' + outjpg_preview,
+                    shell=True)
+            except:
+                raise VoctowebException("Could not scale outjpg_preview: " + str(r))
+
+            logging.info("thumbnails generated")
 
     def upload_thumbs(self):
         """

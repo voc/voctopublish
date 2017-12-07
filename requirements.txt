@@ -1,0 +1,6 @@
+paramiko
+configparser
+twitter
+pillow
+requests
+ffmpeg-python

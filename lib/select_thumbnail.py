@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-#    Copyright (C) 2016  derpeter, Florian Larysch
+#    Copyright (C) 2017  Florian Larysch, derpeter
 #    Florian Larysch <fl@n621.de>
 #    derpeter derpeter@berlin.ccc.de
 #
@@ -78,6 +78,7 @@ def calc_score(path):
     s7 = luminance_variance(stat)
 
     return s3 + s4 + s7
+
 
 scores = {}
 
