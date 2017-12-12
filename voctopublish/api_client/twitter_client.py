@@ -35,7 +35,7 @@ def send_tweet(ticket, config):
 
         msg = " has been released on " + target
         title = ticket.title
-        if len(title) >= (160 - len(msg)):
+        if len(title) >= (280 - len(msg)):
             title = title[0:len(msg)]
         message = title + msg
         # todo switch to oauth2
