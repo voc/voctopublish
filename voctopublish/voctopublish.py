@@ -215,19 +215,17 @@ class Publisher:
                 r = self.vw.create_event()
                 if r.status_code in [200, 201]:
                     logging.info("new event created")
-                    # generate the thumbnails (will not overwrite existing thumbs)
-                    # todo move the external bash script to python code here
-                    # if this is an audio only release we don' create thumbs
+                    # generate the thumbnails for video releases (will not overwrite existing thumbs)
                     if self.ticket.mime_type.startswith('video'):
-                        if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
-                            self.vw.generate_thumbs()
-                            self.vw.upload_thumbs()
-                        else:
-                            logging.info("thumbs exist. skipping")
+                        # if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
+                        self.vw.generate_thumbs()
+                        self.vw.upload_thumbs()
+                        # else:
+                        #     logging.info("thumbs exist. skipping")
 
                 elif r.status_code == 422:
                     # If this happens tracker and voctoweb are out of sync regarding the recording id
-                    logging.warning("event already exists => Voctopublish")
+                    logging.warning("event already exists => publish")
                 else:
                     raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
 
@@ -249,13 +247,15 @@ class Publisher:
             html5 = True
 
         if self.ticket.mime_type.startswith('audio'):
+            # probably deprecated, just kept for reference
             # if we have the language index we use it else we assume its 0
-            if self.ticket.language_index and len(self.ticket.language_index) > 0:
-                index = int(self.ticket.language_index)
-            else:
-                index = 0
-            filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
-            language = self.ticket.languages[index]
+            #if self.ticket.language_index and len(self.ticket.language_index) > 0:
+            #    index = int(self.ticket.language_index)
+            #else:
+            #    index = 0
+            #filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
+            filename = self.ticket.language_template % self.ticket.languages[0] + '.' + self.ticket.profile_extension
+            language = self.ticket.languages[0]
         else:
             filename = self.ticket.filename
             language = self.ticket.language

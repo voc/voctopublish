@@ -23,12 +23,12 @@ import time
 import tempfile
 import operator
 
-
 import paramiko
 import requests
+import av
 
 from model.ticket_module import Ticket
-from util.select_thumbnail import calc_score
+from api_client.select_thumbnail import calc_score
 
 
 class VoctowebClient:
@@ -68,8 +68,7 @@ class VoctowebClient:
         This function generates thumbnails to be used on voctoweb
         :return:
         """
-        logging.info(
-            ("generating thumbs for " + self.t.publishing_path + self.t.local_filename))
+        logging.info("generating thumbs for " + os.path.join(self.t.publishing_path, self.t.local_filename))
 
         try:
             r = subprocess.check_output(
@@ -79,34 +78,36 @@ class VoctowebClient:
             raise VoctowebException("ERROR: could not get duration")
 
         length = int(r.decode())
+#        length = av.container.open(os.path.join(self.t.publishing_path, self.t.local_filename).duration)
         interval = 180
 
-        outjpg = self.t.publishing_path + self.t.local_filename_base + '.jpg'
-        outjpg_preview = self.t.publishing_path + self.t.local_filename_base + '_preview.jpg'
+        outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.jpg')
+        outjpg_preview = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_preview.jpg')
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # now extract candidates and convert to non-anamorphic images
             # we use equidistant sampling, but skip parts of the file that might contain pre-/postroles
             # also, use higher resolution sampling at the beginning, as there's usually some interesting stuff there
 
-            scores = []
+            if length > 20:
+                scores = []
+                try:
+                    for idx, pos in [20, 30, 40, range(15, length - 60, interval)]:
+                        r = subprocess.check_output('ffmpeg -loglevel error -ss ' + str(pos) + ' -i ' +
+                                                    self.t.publishing_path + self.t.local_filename +
+                                                    ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y' +
+                                                    tmpdir + str(pos) + '.png',
+                                                    shell=True)
 
-            try:
-                for idx, pos in [20, 30, 40, range(15, length - 60, interval)]:
-                    r = subprocess.check_output('ffmpeg -loglevel error -ss ' + str(pos) + ' -i ' +
-                                                self.t.publishing_path + self.t.local_filename +
-                                                ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y' +
-                                                tmpdir + str(pos) + '.png',
-                                                shell=True)
+                        scores[idx] = calc_score(tmpdir + str(pos) + '.png')
 
-                    scores[idx] = calc_score(tmpdir + str(pos) + '.png')
+                except Exception as e_:
+                    raise VoctowebException("Could not extract candidates: " + str(r)) from e_
 
-            except Exception as e_:
-                raise VoctowebException("Could not extract candidates: " + str(r)) from e_
-
-            sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
-            winner = sorted_scores[0][0]
-
+                sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
+                winner = sorted_scores[0][0]
+            else:
+                winner = self.t.publishing_path + self.t.local_filename
             # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
             # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
             try:
