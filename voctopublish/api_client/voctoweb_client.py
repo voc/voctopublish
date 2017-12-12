@@ -68,18 +68,18 @@ class VoctowebClient:
         This function generates thumbnails to be used on voctoweb
         :return:
         """
-        logging.info("generating thumbs for " + os.path.join(self.t.publishing_path, self.t.local_filename))
+        source = os.path.join(self.t.publishing_path, self.t.local_filename)
+        logging.info("generating thumbs for " + source)
 
         try:
             r = subprocess.check_output(
-                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.t.publishing_path + self.t.local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
+                'ffprobe -print_format flat -show_format -loglevel quiet ' + source + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
                 shell=True)
         except:
             raise VoctowebException("ERROR: could not get duration")
 
         length = int(r.decode())
 #        length = av.container.open(os.path.join(self.t.publishing_path, self.t.local_filename).duration)
-        interval = 180
 
         outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.jpg')
         outjpg_preview = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_preview.jpg')
@@ -91,10 +91,11 @@ class VoctowebClient:
 
             if length > 20:
                 scores = []
+                interval = 180
                 try:
                     for idx, pos in [20, 30, 40, range(15, length - 60, interval)]:
                         r = subprocess.check_output('ffmpeg -loglevel error -ss ' + str(pos) + ' -i ' +
-                                                    self.t.publishing_path + self.t.local_filename +
+                                                    source +
                                                     ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y' +
                                                     tmpdir + str(pos) + '.png',
                                                     shell=True)
@@ -107,7 +108,8 @@ class VoctowebClient:
                 sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
                 winner = sorted_scores[0][0]
             else:
-                winner = self.t.publishing_path + self.t.local_filename
+                winner = source
+
             # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
             # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
             try:
