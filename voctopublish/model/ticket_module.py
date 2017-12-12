@@ -131,6 +131,8 @@ class PublishingTicket(Ticket):
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
             self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
+            if self.track:
+                self.youtube_tags += self.track
             self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
             self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
             # check if this event has already been published to youtube
@@ -152,6 +154,8 @@ class PublishingTicket(Ticket):
             self.media_slug = self._validate_('Publishing.Media.Slug')
             self.media_url = self._validate_('Publishing.Media.Url', True)
             self.tags = [self.acronym, self.fahrplan_id]
+            if self.track:
+                self.tags.append(self.track)
             if 'Media.Tags' in ticket:
                 self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
