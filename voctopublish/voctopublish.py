@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-#    Copyright (C) 2016  derpeter
+#    Copyright (C) 2017  derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
