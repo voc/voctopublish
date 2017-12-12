@@ -10,7 +10,8 @@ sudo pip3 install paramiko configparser twitter pillow
 ```
 
 ## Usage
-use the provided client.conf.example to tell the script to which hosts it should talk. Most of the configuration is done in the tracker
+Use the provided client.conf.example in the docs directory to tell the script to which hosts it should talk. 
+Most of the configuration is done in the tracker via properties and passed to the script in the ticket.
 
 ## License
 This program is free software: you can redistribute it and/or modify
