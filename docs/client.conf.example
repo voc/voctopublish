@@ -1,0 +1,31 @@
+[general]
+# valid values are: warning, error, info, debug
+debug = info
+# validation should only be turned off for debugging
+validate_tls = True
+validate_host_key = True
+
+[C3Tracker]
+group = <group>
+secret =  <secret>
+#only set host if you don't wont to use local machine name
+host = None
+url = <tracker url>
+ticket_type = encoding
+to_state = releasing
+
+[voctoweb]
+# e.g. https://exmaple.com/api/
+api_url = <voctoweb api url>
+api_key = <voctoweb key>
+
+[youtube]
+enable = False
+secret = <youtube-api-secret>
+client_id = <youtube-client-id>
+
+[twitter]
+token = <user token>
+token_secret = <user secret>
+consumer_key = <consumer key>
+consumer_secret = <consumer secret>
