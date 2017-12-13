@@ -22,7 +22,7 @@ import subprocess
 import time
 import tempfile
 import operator
-
+import sys
 import paramiko
 import requests
 import av
@@ -75,8 +75,8 @@ class VoctowebClient:
             r = subprocess.check_output(
                 'ffprobe -print_format flat -show_format -loglevel quiet ' + source + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
                 shell=True)
-        except:
-            raise VoctowebException("ERROR: could not get duration")
+        except Exception as e_:
+            raise VoctowebException("ERROR: could not get duration " + r.decode('utf-8')) from e_
 
         length = int(r.decode())
 #        length = av.container.open(os.path.join(self.t.publishing_path, self.t.local_filename).duration)
@@ -117,15 +117,15 @@ class VoctowebClient:
                     'ffmpeg - loglevel error - i ' + winner + ' - filter_complex: v "scale=400:-1:lanczos" - f image2 - '
                                                               'vcodec mjpeg - pix_fmt yuv420p - q: v - y ' + outjpg,
                     shell=True)
-            except:
-                raise VoctowebException("Could not scale outjpg: " + str(r))
+            except Exception as e_:
+                raise VoctowebException("Could not scale outjpg: " + r.decode('utf-8')) from e_
 
             try:
                 r = subprocess.check_output(
                     'ffmpeg - loglevel error - i ' + winner + ' - f image2 - vcodec mjpeg - pix_fmt yuv420p - q: v 0 - y ' + outjpg_preview,
                     shell=True)
-            except:
-                raise VoctowebException("Could not scale outjpg_preview: " + str(r))
+            except Exception as e_:
+                raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
 
             logging.info("thumbnails generated")
 
@@ -186,7 +186,7 @@ class VoctowebClient:
         try:
             self.sftp.stat(upload_target)
         except IOError:
-            pass  # if the file not exists we can can go to the upload
+            pass  # if the file not exists we can go to the upload
         else:
             try:
                 self.sftp.remove(upload_target)
@@ -208,7 +208,7 @@ class VoctowebClient:
         Create a new event on the voctoweb API host
         :return:
         """
-        logging.info(("creating new event on " + self.api_url))
+        logging.info("creating new event on " + self.api_url)
 
         # prepare some variables for the api call
         url = self.api_url + 'events'
