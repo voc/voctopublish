@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-#    Copyright (C) 2016  derpeter, andi
-#    <add andis mail here>
+#    Copyright (C) 2017  andi, derpeter
+#    andi@muc.ccc.de
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from html.parser import HTMLParser
+import cgi
 import subprocess
 import logging
 import requests
@@ -35,59 +36,58 @@ class YoutubeAPI:
     https://developers.google.com/youtube/v3/docs
     """
 
-    def __init__(self, ticket: Ticket, config):
+    def __init__(self, config):
         self.channelId = None
-        self.accessToken = self._get_fresh_token(ticket.youtube_token, config['youtube']['client_id'],
-                                                 config['youtube']['secret'])
-        self.channelId = self._get_channel_id(self.accessToken)
-        self.ticket = ticket
+        self.accessToken = None
         self.config = config
         self.youtube_urls = []
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
-                         'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi'}
+                         'fra': 'French', 'rus': 'Russian'}
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
                                     'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig',
-                                    'fra': 'traduction française', 'rus': 'Russian (русский) translation', 'fas': 'Tarjomeje Farsi'}
+                                    'fra': 'traduction française', 'rus': 'Russian (русский) translation'}
 
-    def publish(self):
+    def setup(self, token):
+        self.accessToken = self._get_fresh_token(token, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        self.channelId = self._get_channel_id(self.accessToken)
+        return
+
+    def publish(self, ticket: Ticket):
         """
         publish a file on youtube
         :return: returns a list containing a youtube url for each released file
         """
-        logging.info("Voctopublish Ticket %s (%s) to youtube" % (self.ticket.fahrplan_id, self.ticket.title))
+        logging.info("publishing Ticket %s (%s) to youtube" % (ticket.fahrplan_id, ticket.title))
 
         # handle multi language events
         # todo merge publishing for voctoweb and youtube
-        if len(self.ticket.languages) > 1:
-            logging.debug('Languages: ' + str(self.ticket.languages))
-            for key in self.ticket.languages:
-                out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(
-                    key) + "." + self.ticket.profile_extension
-                out_path = os.path.join(self.ticket.publishing_path, out_filename)
+        if len(ticket.languages) > 1:
+            logging.debug('Languages: ' + str(ticket.languages))
+            for key in ticket.languages:
+                out_filename = ticket.fahrplan_id + "-" + ticket.profile_slug + "-audio" + str(
+                    key) + "." + ticket.profile_extension
+                out_path = os.path.join(ticket.publishing_path, out_filename)
 
-                logging.info('remuxing ' + self.ticket.local_filename + ' to ' + out_path)
+                logging.info('remuxing ' + ticket.local_filename + ' to ' + out_path)
 
                 # todo check if the file is already there from the voctoweb release
                 try:
-                    subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i',
-                                     os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map',
-                                     '0:0',
-                                     '-map',
-                                     '0:a:' + str(key), '-c', 'copy', '-movflags', 'faststart', out_path])
+                    subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', 
+                                     '-i', os.path.join(ticket.publishing_path, ticket.local_filename), 
+                                     '-map', '0:0', '-map', '0:a:' + str(key), 
+                                     '-c', 'copy', '-movflags', 'faststart', out_path])
                 except Exception as e_:
-                    raise YouTubeException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
+                    raise YouTubeException('error remuxing ' + ticket.local_filename + ' to ' + out_path) from e_
 
                 if int(key) == 0:
                     lang = None
                 else:
-                    lang = self.ticket.languages[key]
+                    lang = ticket.languages[key]
 
-                video_id = self.upload(out_path, lang)
+                video_id = self.upload(ticket, out_path, lang)
                 self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
-
         else:
-            video_id = self.upload(os.path.join(self.ticket.publishing_path, self.ticket.local_filename),
-                                   self.ticket.language)
+            video_id = self.upload(ticket, os.path.join(ticket.publishing_path, ticket.local_filename), None)
 
             video_url = 'https://www.youtube.com/watch?v=' + video_id
             logging.info("published Ticket to %s" % video_url)
@@ -95,65 +95,69 @@ class YoutubeAPI:
 
         return self.youtube_urls
 
-    def upload(self, file, lang):
+    def upload(self, ticket, file, lang):
         """
         Call the youtube API and push the file to youtube
+        :param ticket: ticket
         :param file: file to upload
         :param lang: language of the file
         :return:
         """
+        # todo figure out why ticket is passed here this isn't static
         # todo split up event creation and upload
         # todo change function name
         # todo add the license properly
-        title = self.ticket.title
-        if self.ticket.subtitle:
-            subtitle = self.ticket.subtitle
+        title = ticket.title
+        if ticket.subtitle:
+            subtitle = ticket.subtitle
         else:
             subtitle = ''
-        if self.ticket.abstract:
-            abstract = self.strip_tags(self.ticket.abstract)
+        if ticket.abstract:
+            abstract = self.strip_tags(ticket.abstract)
         else:
             abstract = ''
-        if self.ticket.description:
-            description = self.strip_tags(self.ticket.description)
+        if ticket.description:
+            description = self.strip_tags(ticket.description)
         else:
             description = ''
 
-        description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.ticket.people)])
+        description = '\n\n'.join([subtitle, abstract, description, ' '.join(ticket.people)])
 
-        if self.ticket.media_enable == 'yes' and self.ticket.profile_media_enable == 'yes':
-            if self.ticket.media_url:
-                description = os.path.join(self.ticket.media_url, self.ticket.slug) + '\n\n' + description
+        if ticket.media_enable == 'yes' and ticket.profile_media_enable == 'yes':
+            if ticket.media_url:
+                description = os.path.join(ticket.media_url, ticket.slug) + '\n\n' + description
 
-        # if self.ticket.people:
+        # if ticket.people:
         #     # prepend user names if only 1 or 2 speaker
-        #     if len(self.ticket.people) < 3:
-        #         title = str(self.ticket.people) + ': ' + title
+        #     if len(ticket.people) < 3:
+        #         title = str(ticket.people) + ': ' + title
 
-        if self.ticket.youtube_title_prefix:
-            title = self.ticket.youtube_title_prefix + ' ' + title
-            logging.debug('adding ' + str(self.ticket.youtube_title_prefix) + ' as title prefix')
-        else:
-            logging.warning('No youtube title prefix found')
+        if not ticket.youtube_title_prefix and not ticket.youtube_title_suffix:
+            logging.warning('Neither YouTube title prefix nor suffix found')
 
-        if self.ticket.youtube_title_suffix:
-            title = title + ' ' + self.ticket.youtube_title_suffix
-            logging.debug('adding ' + str(self.ticket.youtube_title_suffix) + ' as title suffix')
-        else:
-            logging.warning('No YouTube title suffix found')
+        if ticket.youtube_title_prefix:
+            title = ticket.youtube_title_prefix + ' ' + title
+            logging.debug('adding ' + str(ticket.youtube_title_prefix) + ' as title prefix')
 
-        if self.ticket.youtube_privacy:
-            privacy = self.ticket.youtube_privacy
+        if ticket.youtube_title_suffix:
+            title = title + ' ' + ticket.youtube_title_suffix
+            logging.debug('adding ' + str(ticket.youtube_title_suffix) + ' as title suffix')
+
+        if ticket.youtube_privacy:
+            privacy = ticket.youtube_privacy
         else:
             privacy = 'private'
 
         metadata = {
             'snippet':
                 {
-                    'title': title,
-                    'description': description,
+                    # YouTube does not allow <> in titles – even not as &gt;&lt;
+                    'title': title.replace('<', '(').replace('>', ')'),
+                    # YouTube does not allow <> in description -> escape them
+                    'description': cgi.escape(description),
+                    # todo switch to html instead of cgi as its deprecated
                     'channelId': self.channelId,
-                    'tags': self._select_tags(lang)
+                    'tags': self._select_tags(ticket, lang)
                 },
             'status':
                 {
@@ -165,24 +169,21 @@ class YoutubeAPI:
         }
 
         # if tags are set - copy them into the metadata dict
-        if self.ticket.youtube_tags:
-            metadata['snippet']['tags'] = list(map(str.strip, self.ticket.youtube_tags.split(',')))
+        if ticket.youtube_tags:
+            metadata['snippet']['tags'] = list(map(str.strip, ticket.youtube_tags.split(',')))
 
         # todo refactor this to make lang more flexible
         if lang:
-            if len(self.ticket.languages) > 1:
-                if lang in self.translation_strings.keys():
-                    metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
-                else:
-                    raise YouTubeException('language not defined in translation strings')
+            if lang in self.translation_strings.keys():
+                metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
             else:
-                metadata['snippet']['title'] += ' - ' + lang
-        # limit title length to 100 (youtube api conformity)
-        metadata['snippet']['title'] = metadata['snippet']['title'].replace('<', '(').replace('>', ')')
+                raise YouTubeException('language not defined in translation strings')
+
+        # limit title length to 100 (YouTube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
 
-        if self.ticket.youtube_category:
-            metadata['snippet']['categoryId'] = int(self.ticket.youtube_category)
+        if ticket.youtube_category:
+            metadata['snippet']['categoryId'] = int(ticket.youtube_category)
 
         (mimetype, encoding) = mimetypes.guess_type(file)
         size = os.stat(file).st_size
@@ -205,7 +206,10 @@ class YoutubeAPI:
         )
 
         if 200 != r.status_code:
-            raise YouTubeException('Video creation failed with error-code %u: %s' % (r.status_code, r.text))
+            if 400 == r.status_code:
+                raise YouTubeException(r.json()['error']['message'] + '\n' + r.text)
+            else:
+                raise YouTubeException('Video creation failed with error-code %u: %s' % (r.status_code, r.text))
 
         if 'location' not in r.headers:
             raise YouTubeException('Video creation did not return a location-header to upload to: %s' % (r.headers,))
@@ -233,7 +237,12 @@ class YoutubeAPI:
 
         return video['id']
 
-    def _add_to_playlist(self, video_id, playlist_id):
+    def add_to_playlists(self, video_id, playlist_ids):
+        for p in playlist_ids:
+            self.add_to_playlist(video_id, p)
+        pass
+
+    def add_to_playlist(self, video_id, playlist_id):
         """
         documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
         :param video_id:
@@ -258,7 +267,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'Adding video add to playlist failed with error-code %u: %s' % (r.status_code, r.text))
+                'Adding video to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
         logging.info('video added to playlist: ' + playlist_id)
 
@@ -344,33 +353,35 @@ class YoutubeAPI:
         logging.info("successfully fetched Channel-ID %s " % (channel['id']))
         return channel['id']
 
-    def _select_tags(self, lang=None):
+    def _select_tags(self, ticket, lang=None):
         """
         Build the tag list
+        :param ticket: ticket object
         :param lang: if present the language will be added to the tags
         :return: Returns an array of tag strings
         """
+        # todo figure out why ticket object is passed here
         tags = []
 
-        if self.ticket.track:
-            tags.append(self.ticket.track)
+        if ticket.track:
+            tags.append(ticket.track)
 
-        if self.ticket.day:
-            tags.append('Day %s' % self.ticket.day)
+        if ticket.day:
+            tags.append('Day %s' % ticket.day)
 
-        if self.ticket.room:
-            tags.append(self.ticket.room)
+        if ticket.room:
+            tags.append(ticket.room)
 
         if lang:
             if lang in self.lang_map.keys():
-                if self.ticket.languages[0] == lang:
+                if ticket.languages[0] == lang:
                     tags.append(self.lang_map[lang])
                 else:
                     tags.append(self.lang_map[lang] + ' (' + self.translation_strings[lang] + ')')
             else:
                 raise YouTubeException('language not in lang map')
 
-        tags.extend(self.ticket.people)
+        tags.extend(ticket.people)
         logging.debug('YouTube Tags: ' + str(tags))
 
         return tags

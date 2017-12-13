@@ -21,8 +21,6 @@ import sys
 import logging
 import os
 import subprocess
-import urllib.request
-import shutil
 
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
@@ -179,10 +177,10 @@ class Publisher:
                     logging.info("new event created")
                     # generate the thumbnails for video releases (will not overwrite existing thumbs)
                     if self.ticket.mime_type.startswith('video'):
-                        #if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
+                        # if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
                         vw.generate_thumbs()
                         vw.upload_thumbs()
-                        #else:
+                        # else:
                         #    logging.info("thumbs exist. skipping")
                     try:
                         self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
@@ -215,11 +213,11 @@ class Publisher:
         if self.ticket.mime_type.startswith('audio'):
             # probably deprecated, just kept for reference
             # if we have the language index we use it else we assume its 0
-            #if self.ticket.language_index and len(self.ticket.language_index) > 0:
-            #    index = int(self.ticket.language_index)
-            #else:
-            #    index = 0
-            #filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
+            # if self.ticket.language_index and len(self.ticket.language_index) > 0:
+            #     index = int(self.ticket.language_index)
+            # else:
+            #     index = 0
+            # filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
             filename = self.ticket.language_template % self.ticket.languages[0] + '.' + self.ticket.profile_extension
             language = self.ticket.languages[0]
         else:
