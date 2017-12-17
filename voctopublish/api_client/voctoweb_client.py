@@ -288,6 +288,7 @@ class VoctowebClient:
                                  'length': str(ret[1])
                                  }
                    }
+
         logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
         try:
@@ -296,13 +297,12 @@ class VoctowebClient:
             r = requests.post(url, headers=headers, data=json.dumps(payload))
         except requests.exceptions.SSLError as e:
             raise VoctowebException("ssl cert error " + str(e)) from e
-        except requests.packages.urllib3.exceptions.MaxRetryError as e:
-            raise VoctowebException("Error during creating of event: " + str(e)) from e
-
+        # except requests.packages.urllib3.exceptions.MaxRetryError as e:
+        #    raise VoctowebException("Error during creating of event: " + str(e)) from e
         if r.status_code != 200 and r.status_code != 201:
             raise VoctowebException(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
 
-        logging.info(("publishing_test " + filename + " done"))
+        logging.info(("publishing " + filename + " done"))
         return r.json()['id']
 
     def _get_file_details(self, local_filename, ret):

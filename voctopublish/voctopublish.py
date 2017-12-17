@@ -103,9 +103,11 @@ class Publisher:
 
         # check source file and filesystem permissions
         if not os.path.isfile(os.path.join(self.ticket.publishing_path, self.ticket.local_filename)):
-            raise IOError('Source file does not exist (%s)' % (os.path.join(self.ticket.publishing_path, self.ticket.local_filename)))
+            raise IOError('Source file does not exist ' + os.path.join(self.ticket.publishing_path, self.ticket.local_filename))
         if not os.path.exists(os.path.join(self.ticket.publishing_path)):
-            raise IOError("Output path does not exist (%s)" % os.path.join(self.ticket.publishing_path))
+            raise IOError('Output path does not exist ' + os.path.join(self.ticket.publishing_path))
+        if os.path.getsize() == 0:
+            raise PublisherException("Input file size is 0 " + os.path.join(self.ticket.publishing_path))
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
@@ -203,8 +205,8 @@ class Publisher:
         else:
             hq = False
 
-        # if multi language release we don't want to set the html5 flag for the master
-        if len(self.ticket.languages) > 1:
+        # For multi language or slide recording we don't set the html5 flag
+        if len(self.ticket.languages) > 1 or 'slides' in self.ticket.profile_slug :
             html5 = False
         else:
             html5 = True
