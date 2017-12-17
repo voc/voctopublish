@@ -26,6 +26,7 @@ import sys
 import paramiko
 import requests
 import av
+import urllib.parse
 
 from model.ticket_module import Ticket
 from api_client.select_thumbnail import calc_score
@@ -209,7 +210,7 @@ class VoctowebClient:
         Create a new event on the voctoweb API host
         :return:
         """
-        logging.info("creating new event on " + self.api_url)
+        logging.info('creating event on ' + self.api_url + ' in conference ' + self.t.media_slug)
 
         # prepare some variables for the api call
         url = self.api_url + 'events'
@@ -258,7 +259,7 @@ class VoctowebClient:
         :param html5:
         :return:
         """
-        logging.info(("publishing_test " + filename + " to " + self.api_url))
+        logging.info(("publishing " + filename + " to " + self.api_url))
 
         # make sure we have the file size and length
         ret = []
