@@ -106,7 +106,7 @@ class Publisher:
             raise IOError('Source file does not exist ' + os.path.join(self.ticket.publishing_path, self.ticket.local_filename))
         if not os.path.exists(os.path.join(self.ticket.publishing_path)):
             raise IOError('Output path does not exist ' + os.path.join(self.ticket.publishing_path))
-        if os.path.getsize() == 0:
+        if os.path.getsize(os.path.join(self.ticket.publishing_path, self.ticket.local_filename)) == 0:
             raise PublisherException("Input file size is 0 " + os.path.join(self.ticket.publishing_path))
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
