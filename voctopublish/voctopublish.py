@@ -94,10 +94,9 @@ class Publisher:
         """
         Decide based on the information provided by the tracker where to publish.
         """
-        try:
-            self.ticket = self._get_ticket_from_tracker()
-        except Exception as e_:
-            raise PublisherException('Could not get ticket from tracker') from e_
+
+        self.ticket = self._get_ticket_from_tracker()
+
 
         if not self.ticket:
             return
