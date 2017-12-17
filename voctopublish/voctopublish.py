@@ -94,9 +94,7 @@ class Publisher:
         """
         Decide based on the information provided by the tracker where to publish.
         """
-
         self.ticket = self._get_ticket_from_tracker()
-
 
         if not self.ticket:
             return
@@ -243,10 +241,10 @@ class Publisher:
         :return:
         """
         logging.debug('Languages: ' + str(self.ticket.languages))
-        for key in self.ticket.languages:
-            out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(key) + "." + self.ticket.profile_extension
+        for language in self.ticket.languages:
+            out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(language) + "." + self.ticket.profile_extension
             out_path = os.path.join(self.ticket.publishing_path, out_filename)
-            filename = self.ticket.language_template % self.ticket.languages[key] + '.' + self.ticket.profile_extension
+            filename = self.ticket.language_template % self.ticket.languages[language] + '.' + self.ticket.profile_extension
 
             logging.info('remuxing ' + self.ticket.local_filename + ' to ' + out_path)
 
@@ -254,7 +252,7 @@ class Publisher:
                 subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', '-i',
                                  os.path.join(self.ticket.publishing_path, self.ticket.local_filename), '-map', '0:0',
                                  '-map',
-                                 '0:a:' + str(key), '-c', 'copy', '-movflags', 'faststart', out_path])
+                                 '0:a:' + str(language), '-c', 'copy', '-movflags', 'faststart', out_path])
             except Exception as e_:
                 raise PublisherException('error remuxing ' + self.ticket.local_filename + ' to ' + out_path) from e_
 
@@ -264,12 +262,12 @@ class Publisher:
                 raise PublisherException('error uploading ' + out_path) from e_
 
             try:
-                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[key]), True, True)
+                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[language]), True, True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
             try:
-                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + key: recording_id})
+                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
 
