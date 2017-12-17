@@ -102,10 +102,10 @@ class Publisher:
             return
 
         # check source file and filesystem permissions
-        if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename):
-            raise IOError('Source file does not exist (%s)' % (self.ticket.publishing_path + self.ticket.local_filename))
-        if not os.path.exists(self.ticket.publishing_path):
-            raise IOError("Output path does not exist (%s)" % self.ticket.publishing_path)
+        if not os.path.isfile(os.path.join(self.ticket.publishing_path, self.ticket.local_filename)):
+            raise IOError('Source file does not exist (%s)' % (os.path.join(self.ticket.publishing_path, self.ticket.local_filename)))
+        if not os.path.exists(os.path.join(self.ticket.publishing_path)):
+            raise IOError("Output path does not exist (%s)" % os.path.join(self.ticket.publishing_path))
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
