@@ -45,6 +45,7 @@ class VoctowebClient:
         """
         logging.info('Establishing SSH connection')
         self.ssh = paramiko.SSHClient()
+        logging.getLogger("paramiko").setLevel(logging.INFO)
         # TODO set hostkey handling via config
         # client.get_host_keys().add(upload_host,'ssh-rsa', key)
         self.ssh.load_system_host_keys()
@@ -309,25 +310,27 @@ class VoctowebClient:
         if local_filename is None:
             raise VoctowebException('Error: No filename supplied.')
 
-        file_size = os.stat(self.t.publishing_path + local_filename).st_size
+        file = os.path.join(self.t.publishing_path, local_filename)
+
+        file_size = os.stat(file).st_size
         file_size = int(file_size / 1024 / 1024)
 
         try:
             r = subprocess.check_output(
-                'ffprobe -print_format flat -show_format -loglevel quiet ' + self.t.publishing_path + local_filename + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
+                'ffprobe -print_format flat -show_format -loglevel quiet ' + file + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
                 shell=True)
-        except:
-            raise VoctowebException("ERROR: could not get duration")
+        except Exception as e_:
+            raise VoctowebException("ERROR: could not get duration " + str(e_))
 
         length = int(r.decode())
 
         if self.t.mime_type.startswith('video'):
             try:
                 r = subprocess.check_output(
-                    'ffmpeg -i ' + self.t.publishing_path + local_filename + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
+                    'ffmpeg -i ' + file + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
                     shell=True)
-            except:
-                raise VoctowebException("ERROR: could not get duration ")
+            except Exception as e_:
+                raise VoctowebException("ERROR: could not get resolution " + str(e_))
 
             resolution = r.decode()
             resolution = resolution.partition('x')
