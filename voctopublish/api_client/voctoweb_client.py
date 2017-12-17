@@ -92,23 +92,27 @@ class VoctowebClient:
             # also, use higher resolution sampling at the beginning, as there's usually some interesting stuff there
 
             if length > 20:
-                scores = []
+                scores = {}
                 interval = 180
+                candidates = [20, 30, 40]  # some fixed candidates we always want to hit
+                candidates.extend(list(range(15, length - 60, interval)))  # pick some more candidates based on the file length
                 try:
-                    for idx, pos in [20, 30, 40, range(15, length - 60, interval)]:
+                    for pos in candidates:
+                        candidat = os.path.join(tmpdir, str(pos) + '.png')
                         r = subprocess.check_output('ffmpeg -loglevel error -ss ' + str(pos) + ' -i ' +
                                                     source +
-                                                    ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y' +
-                                                    tmpdir + str(pos) + '.png',
+                                                    ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y ' +
+                                                    candidat,
                                                     shell=True)
 
-                        scores[idx] = calc_score(tmpdir + str(pos) + '.png')
+                        scores[candidat] = calc_score(candidat)
 
                 except Exception as e_:
                     raise VoctowebException("Could not extract candidates: " + str(r)) from e_
 
                 sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
                 winner = sorted_scores[0][0]
+                print(winner)
             else:
                 winner = source
 
@@ -116,15 +120,14 @@ class VoctowebClient:
             # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
             try:
                 r = subprocess.check_output(
-                    'ffmpeg - loglevel error - i ' + winner + ' - filter_complex: v "scale=400:-1:lanczos" - f image2 - '
-                                                              'vcodec mjpeg - pix_fmt yuv420p - q: v - y ' + outjpg,
+                    'ffmpeg -loglevel error -i ' + winner + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
                     shell=True)
-            except Exception as e_:
-                raise VoctowebException("Could not scale outjpg: " + r.decode('utf-8')) from e_
+            except subprocess.CalledProcessError as e_:
+                raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
 
             try:
                 r = subprocess.check_output(
-                    'ffmpeg - loglevel error - i ' + winner + ' - f image2 - vcodec mjpeg - pix_fmt yuv420p - q: v 0 - y ' + outjpg_preview,
+                    'ffmpeg -loglevel error -i ' + winner + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg_preview,
                     shell=True)
             except Exception as e_:
                 raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
@@ -143,11 +146,12 @@ class VoctowebClient:
 
         thumbs_ext = {".jpg", "_preview.jpg"}
         for ext in thumbs_ext:
+            file = os.path.join(self.t.publishing_path, self.t.local_filename_base + ext)
+            target = os.path.join(self.t.media_thump_path, self.t.local_filename_base + ext)
             try:
                 logging.debug(
-                    'Uploading ' + self.t.publishing_path + self.t.local_filename_base + ext + " to " + self.t.media_thump_path + self.t.local_filename_base + ext)
-                self.sftp.put(self.t.publishing_path + self.t.local_filename_base + ext,
-                              self.t.media_thump_path + self.t.local_filename_base + ext)
+                    'Uploading ' + file + " to " + target)
+                self.sftp.put(file, target)
             except paramiko.SSHException as e:
                 raise VoctowebException('could not upload thumb because of SSH problem ' + str(e)) from e
             except IOError as e:
