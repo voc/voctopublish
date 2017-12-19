@@ -123,7 +123,10 @@ class YoutubeAPI:
             description = ''
 
         if ticket.url:
-            url = ticket.url
+            if ticket.url.startswith('//'):
+                url = 'https:' + ticket.url
+            else:
+                url = ticket.url
         else:
             url = ''
 

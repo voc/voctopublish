@@ -181,10 +181,12 @@ class Publisher:
                         vw.upload_thumbs()
                         # else:
                         #    logging.info("thumbs exist. skipping")
+
+                    logging.debug('response: ' + str(r.json()))
                     try:
                         self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
                     except Exception as e_:
-                        raise PublisherException('failed to Voctoweb EventID to ticket') from e_
+                        raise PublisherException('failed to set EventID on ticket') from e_
 
                 elif r.status_code == 422:
                     # If this happens tracker and voctoweb are out of sync regarding the recording id

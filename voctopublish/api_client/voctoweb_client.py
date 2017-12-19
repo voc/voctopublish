@@ -112,7 +112,7 @@ class VoctowebClient:
 
                 sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
                 winner = sorted_scores[0][0]
-                print(winner)
+                logging.debug('Winner: ' + winner)
             else:
                 winner = source
 
@@ -138,7 +138,7 @@ class VoctowebClient:
         """
         Upload thumbnails to the voctoweb storage.
         """
-        logging.info("## uploading thumbs ##")
+        logging.info("uploading thumbnails")
 
         # check if ssh connection is open
         if self.ssh is None:
@@ -220,7 +220,10 @@ class VoctowebClient:
         url = self.api_url + 'events'
 
         if self.t.url:
-            event_url = self.t.url
+            if self.t.url.startswith('//'):
+                event_url = 'https:' + self.t.url
+            else:
+                event_url = self.t.url
         else:
             event_url = "https://c3voc.de"
 
