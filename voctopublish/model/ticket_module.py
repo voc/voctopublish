@@ -62,6 +62,7 @@ class Ticket:
         # the following are arguments that my not be present in every fahrplan
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
+        self.url = self._validate_('Fahrplan.URL', True)
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')

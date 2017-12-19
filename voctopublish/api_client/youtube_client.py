@@ -17,7 +17,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from html.parser import HTMLParser
-import cgi
+from html import escape
 import subprocess
 import logging
 import requests
@@ -116,12 +116,18 @@ class YoutubeAPI:
             abstract = self.strip_tags(ticket.abstract)
         else:
             abstract = ''
+
         if ticket.description:
             description = self.strip_tags(ticket.description)
         else:
             description = ''
 
-        description = '\n\n'.join([subtitle, abstract, description, ' '.join(ticket.people)])
+        if ticket.url:
+            url = ticket.url
+        else:
+            url = ''
+
+        description = '\n\n'.join([subtitle, abstract, description, ' '.join(ticket.people), url])
 
         if ticket.media_enable == 'yes' and ticket.profile_media_enable == 'yes':
             if ticket.media_url:
@@ -154,8 +160,7 @@ class YoutubeAPI:
                     # YouTube does not allow <> in titles – even not as &gt;&lt;
                     'title': title.replace('<', '(').replace('>', ')'),
                     # YouTube does not allow <> in description -> escape them
-                    'description': cgi.escape(description),
-                    # todo switch to html instead of cgi as its deprecated
+                    'description': escape(description),
                     'channelId': self.channelId,
                     'tags': self._select_tags(ticket, lang)
                 },

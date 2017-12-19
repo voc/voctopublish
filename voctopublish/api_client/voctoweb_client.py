@@ -219,6 +219,11 @@ class VoctowebClient:
         # prepare some variables for the api call
         url = self.api_url + 'events'
 
+        if self.t.url:
+            event_url = self.t.url
+        else:
+            event_url = "https://c3voc.de"
+
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
@@ -228,7 +233,7 @@ class VoctowebClient:
                        'slug': self.t.slug,
                        'title': self.t.title,
                        'subtitle': self.t.subtitle,
-                       'link': "https://c3voc.de",  # todo do something more use full here
+                       'link': event_url,
                        'original_language': self.t.languages[0],
                        'thumb_filename': self.t.local_filename_base + ".jpg",
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
