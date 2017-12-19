@@ -42,7 +42,7 @@ class YoutubeAPI:
         self.config = config
         self.youtube_urls = []
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
-                         'fra': 'French', 'rus': 'Russian'}
+                         'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi'}
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
                                     'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig',
                                     'fra': 'traduction française', 'rus': 'Russian (русский) translation'}
@@ -200,7 +200,7 @@ class YoutubeAPI:
                 'Authorization': 'Bearer ' + self.accessToken,
                 'Content-Type': 'application/json; charset=UTF-8',
                 'X-Upload-Content-Type': mimetype,
-                'X-Upload-Content-Length': size,
+                'X-Upload-Content-Length': str(size),
             },
             data=json.dumps(metadata)
         )
