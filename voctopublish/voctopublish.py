@@ -117,10 +117,13 @@ class Publisher:
             self._publish_to_voctoweb()
 
         # YouTube
-        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes' and not self.ticket.has_youtube_url:
-            logging.debug(
-                "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
-            self._publish_to_youtube()
+        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes':
+            if self.ticket.has_youtube_url:
+                raise PublisherException('YoutTube URLs already exist in ticket, wont publish to youtube')
+            else:
+                logging.debug(
+                    "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
+                self._publish_to_youtube()
 
         self.c3tt.set_ticket_done()
 
