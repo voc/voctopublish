@@ -152,7 +152,7 @@ class VoctowebClient:
 
         logging.info("uploading " + remote_filename + " done")
 
-    def create_event(self):
+    def create_or_update_event(self):
         """
         Create a new event on the voctoweb API host
         :return:
@@ -161,6 +161,8 @@ class VoctowebClient:
 
         # prepare some variables for the api call
         url = self.api_url + 'events'
+        if self.t.voctoweb_event_id:
+           url += '/' + self.t.voctoweb_event_id
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
@@ -190,12 +192,16 @@ class VoctowebClient:
         try:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            r = requests.post(url, headers=headers, data=json.dumps(payload))
+            if self.t.voctoweb_event_id:
+                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+            else:
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
         return r
 
-    def create_recording(self, local_filename, filename, folder, language, hq, html5):
+    def create_or_update_recording(self, local_filename, filename, folder, language, hq, html5):
         """
         create_recording a file on the voctoweb API host
         :param local_filename: this is not necessarily the value from the ticket
@@ -215,6 +221,9 @@ class VoctowebClient:
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
         url = self.api_url + 'recordings'
+        if self.t.recording_id:
+             url += '/' + self.t.recording_id
+
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
                    'guid': self.t.guid,
@@ -236,7 +245,11 @@ class VoctowebClient:
         try:
             # todo ssl verify by config
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            r = requests.post(url, headers=headers, data=json.dumps(payload))
+            if self.t.recording_id:
+                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+            else:
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+
         except requests.exceptions.SSLError as e:
             raise VoctowebException("ssl cert error " + str(e)) from e
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
