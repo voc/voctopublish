@@ -227,6 +227,11 @@ class VoctowebClient:
         else:
             event_url = "https://c3voc.de"
 
+        if self.t.description:
+            description = '\n\n'.join([self.t.abstract, self.t.description])
+        else:
+            description = self.t.abstract
+
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
@@ -241,7 +246,7 @@ class VoctowebClient:
                        'thumb_filename': self.t.local_filename_base + ".jpg",
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
                        'conference_id': self.t.media_slug,
-                       'description': self.t.abstract,
+                       'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
                        'tags': self.t.tags,
