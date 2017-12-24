@@ -52,7 +52,7 @@ class VoctowebClient:
         self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.ssh.connect(self.t.media_host, username=self.t.media_user)
+            self.ssh.connect(self.t.voctoweb_host, username=self.t.voctoweb_user)
         except paramiko.AuthenticationException as e:
             raise VoctowebException('Authentication failed. Please check credentials ' + str(e)) from e
         except paramiko.BadHostKeyException:
@@ -63,7 +63,7 @@ class VoctowebClient:
             raise VoctowebException('SSH negotiation failed ' + str(e)) from e
 
         self.sftp = self.ssh.open_sftp()
-        logging.info('SSH connection established to ' + str(self.t.media_host))
+        logging.info('SSH connection established to ' + str(self.t.voctoweb_host))
 
     def generate_thumbs(self):
         """
@@ -147,7 +147,7 @@ class VoctowebClient:
         thumbs_ext = {".jpg", "_preview.jpg"}
         for ext in thumbs_ext:
             file = os.path.join(self.t.publishing_path, self.t.local_filename_base + ext)
-            target = os.path.join(self.t.media_thump_path, self.t.local_filename_base + ext)
+            target = os.path.join(self.t.voctoweb_thump_path, self.t.local_filename_base + ext)
             try:
                 logging.debug(
                     'Uploading ' + file + " to " + target)
@@ -173,7 +173,7 @@ class VoctowebClient:
         if self.sftp is None:
             self._connect_ssh()
 
-        format_folder = os.path.join(self.t.media_path, remote_folder)
+        format_folder = os.path.join(self.t.voctoweb_path, remote_folder)
 
         # Check if the directory exists and if not create it.
         # This only works for the format sub directories not for the event itself
@@ -214,7 +214,7 @@ class VoctowebClient:
         Create a new event on the voctoweb API host
         :return:
         """
-        logging.info('creating event on ' + self.api_url + ' in conference ' + self.t.media_slug)
+        logging.info('creating event on ' + self.api_url + ' in conference ' + self.t.voctoweb_slug)
 
         # prepare some variables for the api call
         url = self.api_url + 'events'
@@ -235,7 +235,7 @@ class VoctowebClient:
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
-                   'acronym': self.t.media_slug,
+                   'acronym': self.t.voctoweb_slug,
                    'event': {
                        'guid': self.t.guid,
                        'slug': self.t.slug,
@@ -245,7 +245,7 @@ class VoctowebClient:
                        'original_language': self.t.languages[0],
                        'thumb_filename': self.t.local_filename_base + ".jpg",
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
-                       'conference_id': self.t.media_slug,
+                       'conference_id': self.t.voctoweb_slug,
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,

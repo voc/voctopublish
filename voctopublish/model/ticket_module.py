@@ -1,4 +1,4 @@
-#    Copyright (C) 2016  derpeter
+#    Copyright (C) 2017  derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -95,17 +95,17 @@ class Ticket:
                 self.youtube_playlists = []
 
         # voctoweb properties
-        self.profile_media_enable = self._validate_('Publishing.Media.EnableProfile')
-        self.media_enable = self._validate_('Publishing.Media.Enable')
+        self.profile_voctoweb_enable = self._validate_('Publishing.Media.EnableProfile')
+        self.voctoweb_enable = self._validate_('Publishing.Media.Enable')
         # we will fill the following variables only if voctoweb is enabled
-        if self.profile_media_enable == 'yes' and self.media_enable == 'yes':
+        if self.profile_voctoweb_enable == 'yes' and self.voctoweb_enable == 'yes':
             self.mime_type = self._validate_('Publishing.Media.MimeType')
-            self.media_thump_path = self._validate_('Publishing.Media.Thumbpath')
-            self.media_host = self._validate_('Publishing.Media.Host')
-            self.media_user = self._validate_('Publishing.Media.User')
-            self.media_path = self._validate_('Publishing.Media.Path')
-            self.media_slug = self._validate_('Publishing.Media.Slug')
-            self.media_url = self._validate_('Publishing.Media.Url', True)
+            self.voctoweb_thump_path = self._validate_('Publishing.Media.Thumbpath')
+            self.voctoweb_host = self._validate_('Publishing.Media.Host')
+            self.voctoweb_user = self._validate_('Publishing.Media.User')
+            self.voctoweb_path = self._validate_('Publishing.Media.Path')
+            self.voctoweb_slug = self._validate_('Publishing.Media.Slug')
+            self.voctoweb_url = self._validate_('Publishing.Media.Url', True)
             self.tags = [self.acronym, self.fahrplan_id]
             if self.track:
                 self.tags.append(self.track)

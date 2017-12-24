@@ -111,9 +111,9 @@ class Publisher:
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
         # voctoweb
-        if self.ticket.profile_media_enable == 'yes' and self.ticket.media_enable == 'yes':
+        if self.ticket.profile_voctoweb_enable == 'yes' and self.ticket.voctoweb_enable == 'yes':
             logging.debug(
-                'encoding profile media flag: ' + self.ticket.profile_media_enable + " project media flag: " + self.ticket.media_enable)
+                'encoding profile media flag: ' + self.ticket.profile_voctoweb_enable + " project media flag: " + self.ticket.voctoweb_enable)
             self._publish_to_voctoweb()
 
         # YouTube
@@ -282,19 +282,10 @@ class Publisher:
         """
         logging.debug("publishing to youtube")
 
-        yt = YoutubeAPI(self.config)
+        yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
         yt.setup(self.ticket.youtube_token)
 
-        # second YoutubeAPI instance for playlist management at youtube.com/mediacccde
-        # todo this code should not be specific for the media.ccc.de installation => make it general usable
-        if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
-            yt_voctoweb = YoutubeAPI(self.config)
-            yt_voctoweb.setup(self.config['youtube']['playlist_token'])
-        else:
-            logging.info('using same token for publishing and playlist management')
-            yt_voctoweb = yt
-
-        youtube_urls = yt.publish(self.ticket)
+        youtube_urls = yt.publish()
         props = {}
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
@@ -302,6 +293,15 @@ class Publisher:
         self.c3tt.set_ticket_properties(props)
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
+        # second YoutubeAPI instance for playlist management at youtube.com
+        # todo figure out why we need two tokens
+        if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
+            yt_voctoweb = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+            yt_voctoweb.setup(self.config['youtube']['playlist_token'])
+        else:
+            logging.info('using same token for publishing and playlist management')
+            yt_voctoweb = yt
+
         for url in youtube_urls:
             video_id = url.split('=', 2)[1]
             yt_voctoweb.add_to_playlists(video_id, self.ticket.youtube_playlists)
