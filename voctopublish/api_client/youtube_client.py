@@ -77,10 +77,9 @@ class YoutubeAPI:
                 logging.info('remuxing ' + self.t.local_filename + ' to ' + out_path)
 
                 try:
-                    subprocess.call(['ffmpeg', '-y', '-v', 'warning', '-nostdin', 
-                                     '-i', os.path.join(self.t.publishing_path, self.t.local_filename),
-                                     '-map', '0:0', '-map', '0:a:' + str(lang),
-                                     '-c', 'copy', '-movflags', out_path])
+                    subprocess.check_output('ffmpeg -y -v warning -nostdin -i ' +
+                                            os.path.join(self.t.publishing_path, self.t.local_filename) +
+                                            ' -map 0:0 -map 0:a:' + str(lang) + ' -c copy ' + out_path, shell=True)
                 except Exception as e_:
                     raise YouTubeException('error remuxing ' + self.t.local_filename + ' to ' + out_path) from e_
 
@@ -268,17 +267,17 @@ class YoutubeAPI:
                 raise YouTubeException('language not in lang map')
 
         tags.extend(self.t.people)
+        tags.append(self.t.slug)
+
         logging.debug('YouTube Tags: ' + str(tags))
 
         return tags
 
-    @staticmethod
-    def add_to_playlists(video_id, playlist_ids):
+    def add_to_playlists(self, video_id: str, playlist_ids):
         for p in playlist_ids:
-            YoutubeAPI.add_to_playlist(video_id, p)
+            YoutubeAPI.add_to_playlist(self, video_id, p)
 
-    @staticmethod
-    def add_to_playlist(access_token: str, video_id: str, playlist_id: str):
+    def add_to_playlist(self, video_id: str, playlist_id: str):
         """
         documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
         :param access_token:
@@ -291,7 +290,7 @@ class YoutubeAPI:
                 'part': 'snippet'
             },
             headers={
-                'Authorization': 'Bearer ' + access_token,
+                'Authorization': 'Bearer ' + self.accessToken,
                 'Content-Type': 'application/json; charset=UTF-8',
             },
             data=json.dumps({
