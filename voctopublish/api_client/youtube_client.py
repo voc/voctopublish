@@ -45,7 +45,7 @@ class YoutubeAPI:
                          'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi'}
 
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
-                                    'spa': 'La traducción española', 'gsw': '  Schwizerdüütschi Übersetzig',
+                                    'spa': 'La traducción española', 'gsw': 'Schwizerdüütschi Übersetzig',
                                     'fra': 'traduction française', 'rus': 'Russian (русский) translation'}
 
         self.youtube_urls = []
@@ -171,10 +171,6 @@ class YoutubeAPI:
                 },
         }
 
-        # if tags are set - copy them into the metadata dict
-        if self.t.youtube_tags:
-            metadata['snippet']['tags'] = list(map(str.strip, self.t.youtube_tags.split(',')))
-
         # todo refactor this to make lang more flexible
         if lang:
             if lang in self.translation_strings.keys():
@@ -247,6 +243,10 @@ class YoutubeAPI:
         :return: Returns an array of tag strings
         """
         tags = []
+
+        # if tags are set - copy them into the metadata dict
+        if self.t.youtube_tags:
+            tags.extend(map(str.strip, self.t.youtube_tags.split(',')))
 
         if self.t.track:
             tags.append(self.t.track)
