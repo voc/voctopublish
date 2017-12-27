@@ -22,11 +22,11 @@ import subprocess
 import time
 import tempfile
 import operator
-import sys
+#import sys
 import paramiko
 import requests
-import av
-import urllib.parse
+#import av
+#import urllib.parse
 
 from model.ticket_module import Ticket
 from api_client.select_thumbnail import calc_score
