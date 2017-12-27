@@ -260,14 +260,19 @@ class YoutubeAPI:
         if lang:
             if lang in self.lang_map.keys():
                 if self.t.languages[0] == lang:
-                    tags.append(self.lang_map[lang])
+                    tags.append(self.t.acronym + self.lang_map[lang])
+                    tags.append(self.t.acronym + ' ov')
                 else:
                     tags.append(self.lang_map[lang] + ' (' + self.translation_strings[lang] + ')')
+                    tags.append(self.t.acronym + ' ' + lang)
             else:
                 raise YouTubeException('language not in lang map')
+        else:
+            tags.append(self.t.acronym + ' ov')
+            tags.append(self.t.acronym + ' ' + self.t.languages[0])
 
         tags.extend(self.t.people)
-        tags.append(self.t.slug)
+        tags.append(self.t.acronym)
 
         logging.debug('YouTube Tags: ' + str(tags))
 
