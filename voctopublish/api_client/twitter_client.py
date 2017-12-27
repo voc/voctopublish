@@ -26,14 +26,14 @@ def send_tweet(ticket, config):
     # only tweet master releases
     target = ''
     if ticket.master:
-        if ticket.media_enable == 'yes' and ticket.profile_media_enable == 'yes':
+        if ticket.voctoweb_enable == 'yes' and ticket.profile_voctoweb_enable == 'yes':
             target = 'media.ccc.de'  # todo this should be generic but voctoweb is also not usefull here
         if ticket.youtube_enable == 'yes' and ticket.profile_youtube_enable == 'yes':
             if len(target) > 1:
                 target += ' and '
             target += 'YouTube'
 
-        msg = " has been released on " + target
+        msg = ' has been released on ' + target
         title = ticket.title
         if len(title) >= (280 - len(msg)):
             title = title[0:len(msg)]
