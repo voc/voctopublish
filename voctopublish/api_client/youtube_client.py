@@ -17,7 +17,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from html.parser import HTMLParser
-from html import escape
 import subprocess
 import logging
 import requests
@@ -158,7 +157,7 @@ class YoutubeAPI:
                     # YouTube does not allow <> in titles – even not as &gt;&lt;
                     'title': title.replace('<', '(').replace('>', ')'),
                     # YouTube does not allow <> in description -> escape them
-                    'description': escape(description),
+                    'description': description.replace('<', '&lt').replace('>', '&gt'),
                     'channelId': self.channelId,
                     'tags': self._select_tags(lang)
                 },
