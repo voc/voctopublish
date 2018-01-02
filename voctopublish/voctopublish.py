@@ -214,16 +214,12 @@ class Publisher:
         else:
             html5 = True
 
-        if self.ticket.mime_type.startswith('audio'):
-            # probably deprecated, just kept for reference
-            # if we have the language index we use it else we assume its 0
-            # if self.ticket.language_index and len(self.ticket.language_index) > 0:
-            #     index = int(self.ticket.language_index)
-            # else:
-            #     index = 0
-            # filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
-            filename = self.ticket.language_template % self.ticket.languages[0] + '.' + self.ticket.profile_extension
-            language = self.ticket.languages[0]
+        # if we have the language index the tracker wants to tell us about an encoding that does not contain all audio tracks of the master
+        # we need to reflect that in the target filename
+        if self.ticket.language_index:
+            index = int(self.ticket.language_index)
+            filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
+            language = self.ticket.languages[index]
         else:
             filename = self.ticket.filename
             language = self.ticket.language
