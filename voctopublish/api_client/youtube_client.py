@@ -189,6 +189,8 @@ class YoutubeAPI:
 
         logging.debug('guessed mime type for file %s as %s and its size as %u bytes' % (file, mimetype, size))
 
+
+        # https://developers.google.com/youtube/v3/docs/videos#resource
         r = requests.post(
             'https://www.googleapis.com/upload/youtube/v3/videos',
             params={
