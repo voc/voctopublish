@@ -218,7 +218,7 @@ class Publisher:
         # we need to reflect that in the target filename
         if self.ticket.language_index:
             index = int(self.ticket.language_index)
-            filename = self.ticket.language_template % self.ticket.languages[index] + '.' + self.ticket.profile_extension
+            filename = self.ticket.language_template % self.ticket.languages[index] + '_' + self.ticket.profile_slug + '.' + self.ticket.profile_extension
             language = self.ticket.languages[index]
         else:
             filename = self.ticket.filename
