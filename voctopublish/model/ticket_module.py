@@ -74,10 +74,16 @@ class Ticket:
         self.publishing_path = self._validate_('Publishing.Path')
 
         # youtube properties
-        self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
-        self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
+        if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
+            self.profile_youtube_enable = True
+        else:
+            self.profile_youtube_enable = False
+        if self._validate_('Publishing.YouTube.Enable') == 'yes':
+            self.youtube_enable = True
+        else:
+            self.youtube_enable = False
         # we will fill the following variables only if youtube is enabled
-        if self.profile_youtube_enable == 'yes' and self.youtube_enable == 'yes':
+        if self.profile_youtube_enable and self.youtube_enable:
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
@@ -95,10 +101,16 @@ class Ticket:
                 self.youtube_playlists = []
 
         # voctoweb properties
-        self.profile_voctoweb_enable = self._validate_('Publishing.Media.EnableProfile')
-        self.voctoweb_enable = self._validate_('Publishing.Media.Enable')
+        if self._validate_('Publishing.Media.EnableProfile') == 'yes':
+            self.profile_voctoweb_enable = True
+        else:
+            self.profile_voctoweb_enable = False
+        if self._validate_('Publishing.Media.Enable') == 'yes':
+            self.voctoweb_enable = True
+        else:
+            self.voctoweb_enable = False
         # we will fill the following variables only if voctoweb is enabled
-        if self.profile_voctoweb_enable == 'yes' and self.voctoweb_enable == 'yes':
+        if self.profile_voctoweb_enable and self.voctoweb_enable:
             self.mime_type = self._validate_('Publishing.Media.MimeType')
             self.voctoweb_thump_path = self._validate_('Publishing.Media.Thumbpath')
             self.voctoweb_host = self._validate_('Publishing.Media.Host')
@@ -115,7 +127,10 @@ class Ticket:
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
         # twitter properties
-        self.twitter_enable = self._validate_('Publishing.Twitter.Enable')
+        if self._validate_('Publishing.Twitter.Enable') == 'yes':
+            self.twitter_enable = True
+        else:
+            self.twitter_enable = False
 
     def _validate_(self, key, optional=False):
         value = None

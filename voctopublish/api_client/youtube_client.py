@@ -135,7 +135,7 @@ class YoutubeAPI:
         description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url])
         description = self.strip_tags(description)
 
-        if self.t.voctoweb_enable == 'yes' and self.t.profile_voctoweb_enable == 'yes':
+        if self.t.voctoweb_enable and self.t.profile_voctoweb_enable:
             if self.t.voctoweb_url:
                 description = os.path.join(self.t.voctoweb_url, self.t.slug) + '\n\n' + description
 

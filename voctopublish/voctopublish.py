@@ -111,13 +111,13 @@ class Publisher:
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
         # voctoweb
-        if self.ticket.profile_voctoweb_enable == 'yes' and self.ticket.voctoweb_enable == 'yes':
+        if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
             logging.debug(
                 'encoding profile media flag: ' + self.ticket.profile_voctoweb_enable + " project media flag: " + self.ticket.voctoweb_enable)
             self._publish_to_voctoweb()
 
         # YouTube
-        if self.ticket.profile_youtube_enable == 'yes' and self.ticket.youtube_enable == 'yes':
+        if self.ticket.profile_youtube_enable and self.ticket.youtube_enable:
             if self.ticket.has_youtube_url:
                 raise PublisherException('YoutTube URLs already exist in ticket, wont publish to youtube')
             else:
@@ -128,7 +128,7 @@ class Publisher:
         self.c3tt.set_ticket_done()
 
         # Twitter
-        if self.ticket.twitter_enable == 'yes' and self.ticket.master:
+        if self.ticket.twitter_enable and self.ticket.master:
             twitter.send_tweet(self.ticket, self.config['twitter'])
 
     def _get_ticket_from_tracker(self):
