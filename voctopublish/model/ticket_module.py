@@ -101,28 +101,28 @@ class Ticket:
                 self.youtube_playlists = []
 
         # voctoweb properties
-        if self._validate_('Publishing.Media.EnableProfile') == 'yes':
+        if self._validate_('Publishing.Voctoweb.EnableProfile') == 'yes':
             self.profile_voctoweb_enable = True
         else:
             self.profile_voctoweb_enable = False
-        if self._validate_('Publishing.Media.Enable') == 'yes':
+        if self._validate_('Publishing.Voctoweb.Enable') == 'yes':
             self.voctoweb_enable = True
         else:
             self.voctoweb_enable = False
         # we will fill the following variables only if voctoweb is enabled
         if self.profile_voctoweb_enable and self.voctoweb_enable:
-            self.mime_type = self._validate_('Publishing.Media.MimeType')
-            self.voctoweb_thump_path = self._validate_('Publishing.Media.Thumbpath')
-            self.voctoweb_host = self._validate_('Publishing.Media.Host')
-            self.voctoweb_user = self._validate_('Publishing.Media.User')
-            self.voctoweb_path = self._validate_('Publishing.Media.Path')
-            self.voctoweb_slug = self._validate_('Publishing.Media.Slug')
-            self.voctoweb_url = self._validate_('Publishing.Media.Url', True)
+            self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
+            self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
+            self.voctoweb_host = self._validate_('Publishing.Voctoweb.Host')
+            self.voctoweb_user = self._validate_('Publishing.Voctoweb.User')
+            self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
+            self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')
+            self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
             self.tags = [self.acronym, self.fahrplan_id]
             if self.track:
                 self.tags.append(self.track)
-            if 'Media.Tags' in ticket:
-                self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
+            if 'Publishing.Voctoweb.Tags' in ticket:
+                self.tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
