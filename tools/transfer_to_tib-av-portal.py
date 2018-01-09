@@ -12,13 +12,13 @@ cp.read('tib.conf')
 config = cp['TIB AV Portal']
  
 parser = argparse.ArgumentParser(description='TIB AV Portal: Upload and metadata generation ') 
-parser.add_argument('schedule', help='schedule.xml file name, path or URL')
+parser.add_argument('schedule', help='schedule.xml file name, path or HTTP URL')
 parser.add_argument('--upload', action='store_true')
 parser.add_argument('--verbose',  '-v', action='store_true', default=False)
 args = parser.parse_args() 
 
-
-#schedule = lxml.etree.parse("https://events.ccc.de/congress/2017/Fahrplan/schedule.xml")
+# lxml does only supports http and not https, compare https://stackoverflow.com/a/26164472
+#schedule = etree.fromstring(requests.get("https://events.ccc.de/congress/2017/Fahrplan/schedule.xml").content)
 #schedule = lxml.etree.parse("temp/schedule.xml")
 schedule = lxml.etree.parse(args.schedule)
 
@@ -105,7 +105,9 @@ def main():
         for a in event.find('attachments'):
             path = a.attrib['href'].split('?')[0]
             basename = os.path.basename(path)
-            if os.path.isfile('temp/{}/{}'.format(slug, basename)):
+            local_path = 'temp/{}/{}'.format(slug, basename)
+            if os.path.isfile(local_path):
+                if not dry_run: host.upload_if_newer(local_path, slug + '/' + basename)
                 material.append(('File', a.text, slug + '/' + basename))
             elif path != '/attachments/original/missing.png':
                 material.append(('URL', a.text, frab_base_url+path))
