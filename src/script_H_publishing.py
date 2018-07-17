@@ -364,7 +364,13 @@ class Publisher:
         with open(file, 'wb') as fh:
             #url = self.ticket.download_url.encode('utf-8')
             with urllib.request.urlopen(urllib.parse.quote(self.ticket.download_url, safe=':/')) as df:
-                fh.write(df.read())
+            # original version tried to write whole file to ram and ran aut of memory
+            # read in 16 kB chunks instead
+                 while True:
+                    chunk = df.read(16384)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
 
 
 class PublisherException(Exception):
