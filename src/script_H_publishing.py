@@ -356,7 +356,7 @@ class Publisher:
 
         if os.path.exists(file):
             # todo think about rereleasing here
-            logging.warning('video file already exists, please remove file')
+            logging.warning('video file "' + path + '" already exists, please remove file')
             raise PublisherException('video file already exists, please remove file')
 
         logging.debug(urllib.parse.quote(self.ticket.download_url, safe=':/'))
