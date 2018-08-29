@@ -184,7 +184,7 @@ class VoctowebClient:
                 try:
                     self.sftp.mkdir(format_folder)
                 except IOError as e:
-                    raise VoctowebException('Could not create format subdir ' + str(e)) from e
+                    raise VoctowebException('Could not create format subdir ' + format_folder + ' : ' + str(e)) from e
 
         upload_target = os.path.join(format_folder, remote_filename)
 
@@ -227,9 +227,12 @@ class VoctowebClient:
         else:
             event_url = "https://c3voc.de"
 
-        if self.t.description:
-            description = '\n\n'.join([self.t.abstract, self.t.description])
-        else:
+        if self.t.description is not None:
+            if self.t.abstract is not None:
+                description = '\n\n'.join([self.t.abstract, self.t.description])
+            else:
+                description = self.t.description
+        else: 
             description = self.t.abstract
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb

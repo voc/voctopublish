@@ -176,7 +176,6 @@ class Publisher:
             if self.ticket.voctoweb_event_id or self.ticket.recording_id:
                 logging.debug('ticket has a voctoweb_event_id or recording_id')
                 # ticket has an recording id or voctoweb event id. We assume the event exists on media
-                # todo ask media api if event exists
             else:
                 # ticket has no recording id therefore we create the event on voctoweb
                 r = vw.create_event()
@@ -184,23 +183,15 @@ class Publisher:
                     logging.info("new event created")
                     # generate the thumbnails for video releases (will not overwrite existing thumbs)
                     if self.ticket.mime_type.startswith('video'):
-                        # if not os.path.isfile(self.ticket.publishing_path + self.ticket.local_filename_base + ".jpg"):
                         vw.generate_thumbs()
                         vw.upload_thumbs()
-                        # else:
-                        #    logging.info("thumbs exist. skipping")
-
                     logging.debug('response: ' + str(r.json()))
                     try:
                         self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
                     except Exception as e_:
                         raise PublisherException('failed to set EventID on ticket') from e_
-
-                elif r.status_code == 422:
-                    # If this happens tracker and voctoweb are out of sync regarding the recording id
-                    logging.warning("event already exists => publishing")
                 else:
-                    raise RuntimeError(("ERROR: Could not add event: " + str(r.status_code) + " " + r.text))
+                    raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
 
                 # in case of a multi language release we create here the single language files
                 if len(self.ticket.languages) > 1:
