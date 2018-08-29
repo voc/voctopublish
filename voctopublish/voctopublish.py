@@ -26,6 +26,7 @@ from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
+import api_client.mastodon_client as mastodon
 from model.ticket_module import Ticket
 
 
@@ -130,6 +131,10 @@ class Publisher:
         # Twitter
         if self.ticket.twitter_enable and self.ticket.master:
             twitter.send_tweet(self.ticket, self.config['twitter'])
+
+        # Mastodon
+        if self.ticket.mastodon_enable and self.ticket.master:
+            mastodon.send_toot(self.ticket, self.config['mastodon'])
 
     def _get_ticket_from_tracker(self):
         """

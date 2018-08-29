@@ -29,3 +29,8 @@ token = <user token>
 token_secret = <user secret>
 consumer_key = <consumer key>
 consumer_secret = <consumer secret>
+
+[mastodon]
+api_base_url = <https://mastodon.social>
+email = <loginemail>
+password = <password>

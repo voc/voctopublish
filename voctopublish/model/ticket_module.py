@@ -132,6 +132,12 @@ class Ticket:
         else:
             self.twitter_enable = False
 
+        # mastodon properties
+        if self._validate_('Publishing.Mastodon.Enable') == 'yes':
+            self.mastodon_enable = True
+        else:
+            self.mastodon_enable = False
+
     def _validate_(self, key, optional=False):
         value = None
         if key in self.__tracker_ticket:
