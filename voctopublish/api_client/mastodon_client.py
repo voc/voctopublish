@@ -17,8 +17,7 @@
 
 from mastodon import Mastodon
 import logging
-
-from model.ticket_module import Ticket
+from pathlib import Path
 
 
 def send_toot(ticket, config):
@@ -26,7 +25,7 @@ def send_toot(ticket, config):
 
     target = ''
     if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
-        target = 'media.ccc.de'  # todo this should be generic but voctoweb is also not usefull here
+        target = config['voctoweb']['instance_name']
     if ticket.youtube_enable and ticket.profile_youtube_enable:
         if len(target) > 1:
             target += ' and '
@@ -38,31 +37,45 @@ def send_toot(ticket, config):
         title = title[0:len(msg)]
     message = title + msg
 
-    voctoweb_url = 'https://media.ccc.de/v/' + ticket.voctoweb_slug
-    if len(voctoweb_url) >= (500 - len(message)):
-        message = message + voctoweb_url
+    if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
+        voctoweb_url = ' ' + config['voctoweb']['frontend_url'] + '/v/' + ticket.slug
+        if len(voctoweb_url) <= (500 - len(message)):
+            message = message + voctoweb_url
+    if ticket.youtube_enable and ticket.profile_youtube_enable and len(ticket.youtube_urls['YouTube.Url0']) <= (500 - len(message)):
+        message = message + ' ' + ticket.youtube_urls['YouTube.Url0']
 
     try:
-        Mastodon.create_app(
-            'pytooterapp',
-            api_base_url=config['api_base_url'],
-            to_file='pytooter_clientcred.secret'
-        )
+        # check if we already have our client token and secret and if not get a new one
+        if not Path('./mastodon_clientcred.secret').exists():
+            logging.debug('no mastodon client credentials found, get fresh ones')
+            Mastodon.create_app(
+                'voctopublish',
+                api_base_url=config['mastodon']['api_base_url'],
+                to_file='mastodon_clientcred.secret'
+            )
+        else:
+            logging.debug('Using exisiting Mastodon client credentials')
 
         mastodon = Mastodon(
-            client_id='pytooter_clientcred.secret',
-            api_base_url='https://chaos.social'
+            client_id='mastodon_clientcred.secret',
+            api_base_url=config['mastodon']['api_base_url']
         )
-        mastodon.log_in(
-            config['email'],
-            config['password'],
-            to_file='pytooter_usercred.secret'
-        )
+
+        # check if we already have an access token, if not get a fresh one
+        if not Path('./mastodon_usercred.secret').exists():
+            logging.debug('no mastodon user credentials found, getting a fresh token')
+            mastodon.log_in(
+                config['mastodon']['email'],
+                config['mastodon']['password'],
+                to_file='mastodon_usercred.secret'
+            )
+        else:
+            logging.debug('Using existing Mastodon user token')
 
         # Create actual API instance
         mastodon = Mastodon(
             access_token='pytooter_usercred.secret',
-            api_base_url=config['api_base_url']
+            api_base_url=config['mastodon']['api_base_url']
         )
         mastodon.toot(message)
     except Exception as e_:
