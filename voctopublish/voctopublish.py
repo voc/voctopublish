@@ -114,7 +114,7 @@ class Publisher:
         # voctoweb
         if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
             logging.debug(
-                'encoding profile media flag: ' + self.ticket.profile_voctoweb_enable + " project media flag: " + self.ticket.voctoweb_enable)
+                'encoding profile media flag: ' + str(self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
             self._publish_to_voctoweb()
 
         # YouTube
@@ -123,18 +123,18 @@ class Publisher:
                 raise PublisherException('YoutTube URLs already exist in ticket, wont publish to youtube')
             else:
                 logging.debug(
-                    "encoding profile youtube flag: " + self.ticket.profile_youtube_enable + ' project youtube flag: ' + self.ticket.youtube_enable)
+                    "encoding profile youtube flag: " + str(self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(self.ticket.youtube_enable))
                 self._publish_to_youtube()
 
         self.c3tt.set_ticket_done()
 
         # Twitter
         if self.ticket.twitter_enable and self.ticket.master:
-            twitter.send_tweet(self.ticket, self.config['twitter'])
+            twitter.send_tweet(self.ticket, self.config)
 
         # Mastodon
         if self.ticket.mastodon_enable and self.ticket.master:
-            mastodon.send_toot(self.ticket, self.config['mastodon'])
+            mastodon.send_toot(self.ticket, self.config)
 
     def _get_ticket_from_tracker(self):
         """
@@ -283,6 +283,7 @@ class Publisher:
             props['YouTube.Url' + str(i)] = youtubeUrl
 
         self.c3tt.set_ticket_properties(props)
+        self.ticket.youtube_urls = props
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
         # second YoutubeAPI instance for playlist management at youtube.com
