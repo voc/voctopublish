@@ -22,30 +22,31 @@ logging = logging.getLogger()
 
 def send_tweet(ticket, config):
     logging.info("tweeting the release")
-    # todo add more logic here.
-    # only tweet master releases
     target = ''
-    if ticket.master:
-        if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
-            target = 'media.ccc.de'  # todo this should be generic but voctoweb is also not usefull here
-        if ticket.youtube_enable and ticket.profile_youtube_enable:
-            if len(target) > 1:
-                target += ' and '
-            target += 'YouTube'
+    if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
+        target = config['voctoweb']['instance_name']
+    if ticket.youtube_enable and ticket.profile_youtube_enable:
+        if len(target) > 1:
+            target += ' and '
+        target += 'YouTube'
 
-        msg = ' has been released on ' + target
-        title = ticket.title
-        if len(title) >= (280 - len(msg)):
-            title = title[0:len(msg)]
-        message = title + msg
-        # todo switch to oauth2
+    msg = ' has been released on ' + target
+    title = ticket.title
+    if len(title) >= (280 - len(msg)):
+        title = title[0:len(msg)]
+    message = title + msg
 
-        try:
-            t = Twitter(auth=OAuth(config['token'], config['token_secret'], config['consumer_key'], config['consumer_secret']))
-            ret = t.statuses.update(status=message)
-            logging.debug(ret)
-        except Exception as e_:
-            # we don't care if twitter fails here. We can handle this after rewriting this to oauth2
-            logging.error('Twittering failed: ' + str(e_))
-    else:
-        logging.info('this is not a master => no twitter')
+    # URLs on twitter are always 23 characters and we need a space as separator. If we have still enough space we add voctoweb and / or youtube url
+    if ticket.voctoweb_enable and ticket.profile_voctoweb_enable and len(message) <= (280 - 24):
+        message = message + ' ' + config['voctoweb']['frontend_url'] + '/v/' + ticket.slug
+    if ticket.youtube_enable and ticket.profile_youtube_enable and len(message) <= (280 - 24):
+        message = message + ' ' + ticket.youtube_urls['YouTube.Url0']
+
+    try:
+        t = Twitter(auth=OAuth(config['twitter']['token'], config['twitter']['token_secret'], config['twitter']['consumer_key'], config['twitter']['consumer_secret']))
+        ret = t.statuses.update(status=message)
+        logging.debug(ret)
+    except Exception as e_:
+        # we don't care if twitter fails here. We can handle this after rewriting this to oauth2
+        logging.error('Twittering failed: ' + str(e_))
+
