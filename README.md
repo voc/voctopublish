@@ -6,7 +6,7 @@ It publishes recordings an handles all necessary steps like thumbnail generation
 ### Debian / Ubuntu
 ```
 sudo apt-get install python3 python3-requests python3-pip ffmpeg
-pip3 install paramiko configparser twitter pillow mastodon
+pip3 install paramiko configparser twitter mastodon.py
 ```
 
 ## Usage

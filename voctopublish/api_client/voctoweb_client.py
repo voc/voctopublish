@@ -1,4 +1,4 @@
-#    Copyright (C) 2017  derpeter
+#    Copyright (C) 2018  derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -22,11 +22,8 @@ import subprocess
 import time
 import tempfile
 import operator
-#import sys
 import paramiko
 import requests
-#import av
-#import urllib.parse
 
 from model.ticket_module import Ticket
 from api_client.select_thumbnail import calc_score
