@@ -18,9 +18,12 @@ to_state = releasing
 # e.g. https://exmaple.com/api/
 api_url = <voctoweb api url>
 api_key = <voctoweb key>
+# url you're frontend is reachable on, used to build urls in tweets / toots
+frontend_url = <voctoweb frontend url>
+# instance name is the name you refer to you're instead with, its used for the tweets / toots
+instance_name = <voctoweb instance name>
 
 [youtube]
-enable = False
 secret = <youtube-api-secret>
 client_id = <youtube-client-id>
 
