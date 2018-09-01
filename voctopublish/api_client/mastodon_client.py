@@ -74,7 +74,7 @@ def send_toot(ticket, config):
 
         # Create actual API instance
         mastodon = Mastodon(
-            access_token='pytooter_usercred.secret',
+            access_token='mastodon_usercred.secret',
             api_base_url=config['mastodon']['api_base_url']
         )
         mastodon.toot(message)
