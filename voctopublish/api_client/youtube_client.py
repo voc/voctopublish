@@ -143,6 +143,11 @@ class YoutubeAPI:
             title = self.t.youtube_title_prefix + ' ' + title
             logging.debug('adding ' + str(self.t.youtube_title_prefix) + ' as title prefix')
 
+        # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title, where x is defined by the integer in self.t.youtube_title_prefix_speakers
+        if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(self.t.youtube_title_prefix_speakers):
+            title = (', '.join(self.t.people)) + ': ' + title
+            logging.debug('adding speaker names as title prefix: ' + title)
+
         if self.t.youtube_title_suffix:
             title = title + ' ' + self.t.youtube_title_suffix
             logging.debug('adding ' + str(self.t.youtube_title_suffix) + ' as title suffix')
