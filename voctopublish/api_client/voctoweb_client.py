@@ -24,6 +24,7 @@ import tempfile
 import operator
 import paramiko
 import requests
+import glob
 
 from model.ticket_module import Ticket
 from api_client.select_thumbnail import calc_score
@@ -156,6 +157,49 @@ class VoctowebClient:
 
         logging.info('uploading thumbs done')
 
+    def generate_timelens(self):
+        """
+        This function generates a visual timeline and thumbnail grids to be used on voctoweb
+        """
+        source = os.path.join(self.t.publishing_path, self.t.local_filename)
+        logging.info("running timelens for " + source)
+
+        outtimeline = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.timeline.jpg')
+        outthumbnails = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.thumbnails.vtt')
+
+        try:
+            r = subprocess.check_output(['timelens', source, '-w', '1000', '-h', '90', '--timeline', outtimeline, '--thumbnails', outthumbnails)
+        except subprocess.CalledProcessError as e_:
+            raise VoctowebException("Could not run timelens: " + str(e_)) from e_
+
+        logging.info("ran timelens successfully")
+
+    def upload_timelens(self):
+        """
+        Upload timelens files to the voctoweb storage.
+        """
+        logging.info("uploading timelens files")
+
+        # check if ssh connection is open
+        if self.ssh is None:
+            self._connect_ssh()
+
+        basepath = os.path.join(self.t.publishing_path, self.t.local_filename_base)
+
+        files = [basepath + ".timeline.jpg", basepath + ".thumbnails.vtt"] + glob.glob(basepath + ".thumbnails-*.jpg")
+        for file in files:
+            target = os.path.join(self.t.voctoweb_thump_path, os.path.basename(file))
+            try:
+                logging.debug(
+                    'Uploading ' + file + " to " + target)
+                self.sftp.put(file, target)
+            except paramiko.SSHException as e:
+                raise VoctowebException('could not upload thumb because of SSH problem ' + str(e)) from e
+            except IOError as e:
+                raise VoctowebException('could not upload thumb because of ' + str(e)) from e
+
+        logging.info('uploading timelens files done')
+
     def upload_file(self, local_filename, remote_filename, remote_folder):
         """
         Uploads a file from path relative to the output dir to the same path relative to the upload_dir
@@ -245,6 +289,8 @@ class VoctowebClient:
                        'original_language': self.t.languages[0],
                        'thumb_filename': self.t.local_filename_base + ".jpg",
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
+                       'timeline_filename': self.t.local_filename_base + ".timeline.jpg",
+                       'thumbnails_filename': self.t.local_filename_base + ".thumbnails.vtt",
                        'conference_id': self.t.voctoweb_slug,
                        'description': description,
                        'date': self.t.date,
