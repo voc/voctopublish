@@ -181,10 +181,12 @@ class Publisher:
                 r = vw.create_event()
                 if r.status_code in [200, 201]:
                     logging.info("new event created")
-                    # generate the thumbnails for video releases (will not overwrite existing thumbs)
+                    # generate thumbnails and a visual timeline for video releases (will not overwrite existing files)
                     if self.ticket.mime_type.startswith('video'):
                         vw.generate_thumbs()
                         vw.upload_thumbs()
+                        vw.generate_timelens()
+                        vw.upload_timelens()
                     logging.debug('response: ' + str(r.json()))
                     try:
                         self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
