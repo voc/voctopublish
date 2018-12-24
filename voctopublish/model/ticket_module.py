@@ -65,8 +65,14 @@ class Ticket:
         self.url = self._validate_('Fahrplan.URL', True)
 
         # recording ticket properties
-        self.language = self._validate_('Record.Language')
-        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
+
+        # special case languages: if Encoding.Language is present, it overrides Record.Language:
+        if 'Encoding.Language' in ticket:
+            self.language = self._validate_('Encoding.Language')
+            self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
+        else
+            self.language = self._validate_('Record.Language')
+            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
                           if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
