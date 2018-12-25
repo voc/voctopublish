@@ -58,8 +58,6 @@ class VoctowebClient:
             raise VoctowebException('Authentication failed. Please check credentials ' + str(e)) from e
         except paramiko.BadHostKeyException:
             raise VoctowebException('Bad host key. Check your known_hosts file')
-        except paramiko.PasswordRequiredException as e:
-            raise VoctowebException('Password required. No ssh key present? ' + str(e)) from e
         except paramiko.SSHException as e:
             raise VoctowebException('SSH negotiation failed ' + str(e)) from e
 
