@@ -166,7 +166,10 @@ class Publisher:
         try:
             vw = VoctowebClient(self.ticket,
                                 self.config['voctoweb']['api_key'],
-                                self.config['voctoweb']['api_url'])
+                                self.config['voctoweb']['api_url'],
+                                self.config['voctoweb']['ssh_host'],
+                                self.config['voctoweb']['ssh_port'],
+                                self.config['voctoweb']['ssh_user'])
         except Exception as e_:
             raise PublisherException('Error initializing voctoweb client. Config parameter missing') from e_
 

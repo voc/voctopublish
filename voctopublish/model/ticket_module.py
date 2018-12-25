@@ -115,8 +115,6 @@ class Ticket:
         if self.profile_voctoweb_enable and self.voctoweb_enable:
             self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
             self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
-            self.voctoweb_host = self._validate_('Publishing.Voctoweb.Host')
-            self.voctoweb_user = self._validate_('Publishing.Voctoweb.User')
             self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
             self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')
             self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)

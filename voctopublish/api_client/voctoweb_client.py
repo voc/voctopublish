@@ -31,12 +31,15 @@ from api_client.select_thumbnail import calc_score
 
 
 class VoctowebClient:
-    def __init__(self, t: Ticket, api_key, api_url):
+    def __init__(self, t: Ticket, api_key, api_url, ssh_host, ssh_port, ssh_user):
         self.t = t
         self.api_key = api_key
         self.api_url = api_url
         self.ssh = None
         self.sftp = None
+        self.ssh_host = ssh_host
+        self.ssh_port = ssh_port
+        self.ssh_user = ssh_user
 
     def _connect_ssh(self):
         """
@@ -50,7 +53,7 @@ class VoctowebClient:
         self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.ssh.connect(self.t.voctoweb_host, username=self.t.voctoweb_user)
+            self.ssh.connect(self.ssh_host, port=self.ssh_port, username=self.ssh_user, )
         except paramiko.AuthenticationException as e:
             raise VoctowebException('Authentication failed. Please check credentials ' + str(e)) from e
         except paramiko.BadHostKeyException:
@@ -61,7 +64,7 @@ class VoctowebClient:
             raise VoctowebException('SSH negotiation failed ' + str(e)) from e
 
         self.sftp = self.ssh.open_sftp()
-        logging.info('SSH connection established to ' + str(self.t.voctoweb_host))
+        logging.info('SSH connection established to ' + str(self.ssh_host))
 
     def generate_thumbs(self):
         """
@@ -145,15 +148,17 @@ class VoctowebClient:
         thumbs_ext = {".jpg", "_preview.jpg"}
         for ext in thumbs_ext:
             file = os.path.join(self.t.publishing_path, self.t.local_filename_base + ext)
+            if not os.path.isfile(file):
+                raise VoctowebException('could not upload thumb because file ' + file + ' does not exist')
             target = os.path.join(self.t.voctoweb_thump_path, self.t.local_filename_base + ext)
             try:
                 logging.debug(
                     'Uploading ' + file + " to " + target)
                 self.sftp.put(file, target)
             except paramiko.SSHException as e:
-                raise VoctowebException('could not upload thumb because of SSH problem ' + str(e)) from e
+                raise VoctowebException('could not upload thumb because of SSH problem: ' + str(e)) from e
             except IOError as e:
-                raise VoctowebException('could not upload thumb because of ' + str(e)) from e
+                raise VoctowebException('could not upload thumb to ' + target + ' because an remote error occured: ' + str(e)) from e
 
         logging.info('uploading thumbs done')
 
@@ -168,7 +173,7 @@ class VoctowebClient:
         outthumbnails = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.thumbnails.vtt')
 
         try:
-            r = subprocess.check_output(['timelens', source, '-w', '1000', '-h', '90', '--timeline', outtimeline, '--thumbnails', outthumbnails)
+            r = subprocess.check_output(['timelens', source, '-w', '1000', '-h', '90', '--timeline', outtimeline, '--thumbnails', outthumbnails])
         except subprocess.CalledProcessError as e_:
             raise VoctowebException("Could not run timelens: " + str(e_)) from e_
 
