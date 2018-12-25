@@ -22,6 +22,9 @@ api_key = <voctoweb key>
 frontend_url = <voctoweb frontend url>
 # instance name is the name you refer to you're instead with, its used for the tweets / toots
 instance_name = <voctoweb instance name>
+ssh_host = <host to release files to>
+ssh_port = <ssh port on the release host>
+ssh_user = <ssh user on the release host>
 
 [youtube]
 secret = <youtube-api-secret>
