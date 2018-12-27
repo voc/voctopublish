@@ -59,6 +59,9 @@ class Ticket:
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')
+        self.links = []
+        if 'Fahrplan.Links' in ticket:
+            self.links = self._validate_('Fahrplan.Links', True).split(' ')
         # the following are arguments that my not be present in every fahrplan
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)

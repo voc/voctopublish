@@ -279,6 +279,10 @@ class VoctowebClient:
         else: 
             description = self.t.abstract
 
+        if self.t.links:
+            for link in self.t.links:
+                description = '\n\n'.join([description, '<a href="' + link + '">' + link + '<\a>'])
+
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
