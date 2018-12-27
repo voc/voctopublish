@@ -3,3 +3,4 @@ configparser
 twitter
 requests
 mastodon.py
+pillow
