@@ -32,6 +32,14 @@ from api_client.select_thumbnail import calc_score
 
 class VoctowebClient:
     def __init__(self, t: Ticket, api_key, api_url, ssh_host, ssh_port, ssh_user):
+        """
+        :param t:
+        :param api_key: Voctoweb API Key
+        :param api_url: Voctoweb API URL
+        :param ssh_host: SSH Port of the CDN host
+        :param ssh_port: SSH Port of the CDN host
+        :param ssh_user: SSH user of the CDN host
+        """
         self.t = t
         self.api_key = api_key
         self.api_url = api_url
