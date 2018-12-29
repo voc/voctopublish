@@ -41,12 +41,12 @@ class YoutubeAPI:
         self.secret = secret
 
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
-                         'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi', 'chi': 'Chinese'}
+                         'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi', 'chi': 'Chinese', 'ara': 'Arabic'}
 
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
                                     'spa': 'La traducción española', 'gsw': 'Schwizerdüütschi Übersetzig',
                                     'fra': 'traduction française', 'rus': 'Russian (русский) translation',
-                                    'chi': '中文翻译'}
+                                    'chi': '中文翻译', 'ara': 'الترجمة العربية'}
 
         self.youtube_urls = []
         self.channelId = None
