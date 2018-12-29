@@ -152,7 +152,7 @@ class Ticket:
                 value = str(value)
         else:
             if optional:
-                logging.info("optional property was not in ticket: " + key)
+                logging.debug("optional property was not in ticket: " + key)
             else:
                 logging.debug(key + ' is missing in ticket')
                 raise TicketException(key + ' is missing in ticket')
