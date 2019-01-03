@@ -156,7 +156,7 @@ class Publisher:
         :return:
         """
         # if its an URL it probably will start with http ....
-        if self.ticket.download_url.startswith('http'):
+        if self.ticket.download_url.startswith('http') or self.ticket.download_url.startswith('ftp'):
             self._download_file()
         else:
             self._copy_file()
