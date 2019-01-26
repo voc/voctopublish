@@ -156,13 +156,17 @@ class Publisher:
         :return:
         """
         # if its an URL it probably will start with http ....
-        if self.ticket.download_url.startswith('http'):
+        if self.ticket.download_url.startswith('http') or self.ticket.download_url.startswith('ftp'):
             self._download_file()
         else:
             self._copy_file()
 
         # set recording language todo multilang
-        self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+        try:
+            self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+        except AttributeError as err_:
+            self.c3tt.set_ticket_failed('unknown language please set language in the recording ticket to proceed')
+            logging.error('unknown language please set language in the recording ticket to proceed')
 
         # tell the tracker that we finished the import
         self.c3tt.set_ticket_done()
