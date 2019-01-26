@@ -337,7 +337,7 @@ class VoctowebClient:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
         return r
 
-    def create_recording(self, local_filename, filename, folder, language, hq, html5):
+    def create_recording(self, local_filename, filename, folder, language, hq, html5, single_language=False):
         """
         create_recording a file on the voctoweb API host
         :param local_filename: this is not necessarily the value from the ticket
@@ -350,6 +350,11 @@ class VoctowebClient:
         """
         logging.info(("publishing " + filename + " to " + self.api_url))
 
+        recording_id = self.t.recording_id
+        if single_language:
+            recording_id = self.t.get_raw_property('Voctoweb.RecordingId.' + language)
+
+
         # make sure we have the file size and length
         ret = []
         if not self._get_file_details(local_filename, ret):
@@ -357,6 +362,9 @@ class VoctowebClient:
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
         url = self.api_url + 'recordings'
+        if recording_id: 
+            url += '/' + recording_id
+
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
                    'guid': self.t.guid,
@@ -379,7 +387,11 @@ class VoctowebClient:
         try:
             # todo ssl verify by config
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            r = requests.post(url, headers=headers, data=json.dumps(payload))
+            if recording_id:
+                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+            else:
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+
         except requests.exceptions.SSLError as e:
             raise VoctowebException("ssl cert error " + str(e)) from e
         # except requests.packages.urllib3.exceptions.MaxRetryError as e:
@@ -388,7 +400,13 @@ class VoctowebClient:
             raise VoctowebException(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
 
         logging.info(("publishing " + filename + " done"))
-        return r.json()['id']
+
+        if recording_id:
+            # Recording was only updated, we do not need return the recording_id as it is already part of the ticket
+            return None
+        else:
+            # Recording was created, return id to be written to the ticket
+            return r.json()['id']
 
     def _get_file_details(self, local_filename, ret):
         """
