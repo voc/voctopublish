@@ -90,7 +90,7 @@ class RecordingTicket(Ticket):
         # fahrplan properties
         self.room = self._validate_('Fahrplan.Room')
         self.fahrplan_id = self._validate_('Fahrplan.ID')
-        self.language = self._getLanguageFromString_(self._validate_('Fahrplan.Language'))
+        self.language = self._get_language_from_string_(self._validate_('Fahrplan.Language'))
 
 
 class PublishingTicket(Ticket):
