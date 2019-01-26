@@ -233,8 +233,10 @@ class Publisher:
                                            language,
                                            hq,
                                            html5)
-
-        self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
+        
+        # when the ticket was created, and not only updated: write recording_id to ticket
+        if recording_id:
+            self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 
     def _mux_to_single_language(self, vw):
         """
@@ -264,12 +266,14 @@ class Publisher:
                 raise PublisherException('error uploading ' + out_path) from e_
 
             try:
-                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[language]), True, True)
+                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[language]), hq=True, html5=True, single_language=True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
             try:
-                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
+                # when the ticket was created, and not only updated: write recording_id to ticket
+                if recording_id:
+                    self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
 
