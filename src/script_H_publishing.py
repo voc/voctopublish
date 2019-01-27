@@ -317,9 +317,9 @@ class Publisher:
         this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
         :return:
         """
-        logging.info('Copying input file from: ' + self.ticket.download_url)
         path = os.path.join(self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id)
         file = os.path.join(path, 'uncut.ts')
+        logging.info('Copying input file from: ' + self.ticket.download_url + ' to ' + file)
         if not os.path.exists(path):
             try:
                 os.makedirs(path)
@@ -339,16 +339,16 @@ class Publisher:
             raise PublisherException(e_)
 
     def _download_file(self):
-        '''
+        """
         download a file from an http / https / ftp URL an place it as a uncut.ts in the fuse folder.
         this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
         :return:
-        '''
-        logging.info('Downloading input file from: ' + self.ticket.download_url)
+        """
         # we name our input video file uncut ts so tracker will find it. This is not the nicest way to go
         # TODO find a better integration in to the pipeline
         path = os.path.join(self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id)
         file = os.path.join(path, 'uncut.ts')
+        logging.info('Downloading input file from: ' + self.ticket.download_url + ' to ' + file )
 
         if not os.path.exists(path):
             try:
@@ -366,11 +366,10 @@ class Publisher:
         logging.debug(urllib.parse.quote(self.ticket.download_url, safe=':/'))
 
         with open(file, 'wb') as fh:
-            #url = self.ticket.download_url.encode('utf-8')
             with urllib.request.urlopen(urllib.parse.quote(self.ticket.download_url, safe=':/')) as df:
-            # original version tried to write whole file to ram and ran aut of memory
-            # read in 16 kB chunks instead
-                 while True:
+                # original version tried to write whole file to ram and ran aut of memory
+                # read in 16 kB chunks instead
+                while True:
                     chunk = df.read(16384)
                     if not chunk:
                         break
