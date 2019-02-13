@@ -66,6 +66,7 @@ class Ticket:
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
         self.url = self._validate_('Fahrplan.URL', True)
+        self.date = self._validate_('Fahrplan.Date')
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')
@@ -75,6 +76,7 @@ class Ticket:
 
         # general publishing properties
         self.publishing_path = self._validate_('Publishing.Path')
+        self.publishing_tags = self._validate_('Publishing.Tags', True)
 
         # youtube properties
         if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
@@ -121,11 +123,13 @@ class Ticket:
             self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
             self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')
             self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
-            self.tags = [self.acronym, self.fahrplan_id]
+            self.voctoweb_tags = [self.acronym, self.fahrplan_id, self.date.split('-')[0]]
             if self.track:
-                self.tags.append(self.track)
+                self.voctoweb_tags.append(self.track)
             if 'Publishing.Voctoweb.Tags' in ticket:
-                self.tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
+                self.voctoweb_tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
+            if 'Publishing.Tags' in ticket:
+                self.voctoweb_tags += self._validate_('Publishing.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 

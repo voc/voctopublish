@@ -264,6 +264,9 @@ class YoutubeAPI:
         if self.t.room:
             tags.append(self.t.room)
 
+        if self.t.date:
+            tags.append(str(self.t.date).split('-')[0])
+
         if lang:
             if lang in self.lang_map.keys():
                 if self.t.languages[0] == lang:

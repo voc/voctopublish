@@ -310,7 +310,7 @@ class VoctowebClient:
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
-                       'tags': self.t.tags,
+                       'tags': self.t.voctoweb_tags,
                        'promoted': False,
                        'release_date': str(time.strftime("%Y-%m-%d"))
                    }
