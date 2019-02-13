@@ -116,13 +116,14 @@ class Ticket:
             self.voctoweb_enable = True
         else:
             self.voctoweb_enable = False
+
+        self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
         # we will fill the following variables only if voctoweb is enabled
         if self.profile_voctoweb_enable and self.voctoweb_enable:
             self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
             self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
             self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
             self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')
-            self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
             self.voctoweb_tags = [self.acronym, self.fahrplan_id, self.date.split('-')[0]]
             if self.track:
                 self.voctoweb_tags.append(self.track)
