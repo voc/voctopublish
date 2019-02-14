@@ -185,6 +185,8 @@ class YoutubeAPI:
 
         # limit title length to 100 (YouTube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
+        # limit Description length to 5000 (YouTube api conformity)
+        metadata['snippet']['description'] = metadata['snippet']['description'][:5000]
 
         if self.t.youtube_category:
             metadata['snippet']['categoryId'] = int(self.t.youtube_category)
