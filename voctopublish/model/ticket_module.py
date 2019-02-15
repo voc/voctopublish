@@ -22,6 +22,7 @@ class Ticket:
     This class is inspired by the c3tt ticket system. It handles all information we got from the tracker
     and adds some additional information.
     """
+
     def __init__(self, ticket, ticket_id):
         if not ticket:
             raise TicketException('Ticket was None type')
@@ -74,10 +75,9 @@ class Ticket:
         if 'Encoding.Language' in ticket:
             self.language = self._validate_('Encoding.Language')
             self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
-        else
+        else:
             self.language = self._validate_('Record.Language')
-            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
-                          if k.startswith('Record.Language.')}
+            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
         # general publishing properties
