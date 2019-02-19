@@ -114,7 +114,7 @@ class VoctowebClient:
 
                         scores[candidat] = calc_score(candidat)
                 except subprocess.CalledProcessError as e_:
-                    raise VoctowebException("ffmpeg exited with the folllowing error, while extracting candidates for thumbnails. " + e_.output) from e_
+                    raise VoctowebException("ffmpeg exited with the following error, while extracting candidates for thumbnails. " + e_.output) from e_
                 except Exception as e_:
                     raise VoctowebException("Could not extract candidates: " + str(r)) from e_
 
