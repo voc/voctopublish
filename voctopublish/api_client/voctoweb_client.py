@@ -102,7 +102,7 @@ class VoctowebClient:
                 scores = {}
                 interval = 180
                 candidates = [20, 30, 40]  # some fixed candidates we always want to hit
-                logging.debug("length of video used for thumbnail generation " + length)
+                logging.debug("length of video used for thumbnail generation " + str(length))
                 candidates.extend(list(range(15, length - 60, interval)))  # pick some more candidates based on the file length
                 try:
                     for pos in candidates:
