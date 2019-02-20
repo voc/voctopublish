@@ -112,8 +112,10 @@ class VoctowebClient:
                                                     ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y ' +
                                                     candidat,
                                                     shell=True)
-
-                        scores[candidat] = calc_score(candidat)
+                        if os.path.isfile(candidat):
+                            scores[candidat] = calc_score(candidat)
+                        else:
+                            logging.warning("ffmpeg was not able to create candidat for " + str(candidat))
                 except subprocess.CalledProcessError as e_:
                     raise VoctowebException("ffmpeg exited with the following error, while extracting candidates for thumbnails. " + e_.output) from e_
                 except Exception as e_:
