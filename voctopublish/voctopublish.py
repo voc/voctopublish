@@ -120,7 +120,7 @@ class Publisher:
         # YouTube
         if self.ticket.profile_youtube_enable and self.ticket.youtube_enable:
             if self.ticket.has_youtube_url:
-                raise PublisherException('YoutTube URLs already exist in ticket, wont publish to youtube')
+                raise PublisherException('YouTube URLs already exist in ticket, wont publish to youtube')
             else:
                 logging.debug(
                     "encoding profile youtube flag: " + str(self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(self.ticket.youtube_enable))
