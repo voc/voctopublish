@@ -198,10 +198,10 @@ class Publisher:
                 else:
                     raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
 
-                # in case of a multi language release we create here the single language files
-                if len(self.ticket.languages) > 1:
-                    logging.info('remuxing multi-language video into single audio files')
-                    self._mux_to_single_language(vw)
+            # in case of a multi language release we create here the single language files
+            if len(self.ticket.languages) > 1:
+                logging.info('remuxing multi-language video into single audio files')
+                self._mux_to_single_language(vw)
 
         # set hq filed based on ticket encoding profile slug
         if 'hd' in self.ticket.profile_slug:
