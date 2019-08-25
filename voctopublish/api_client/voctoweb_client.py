@@ -265,7 +265,7 @@ class VoctowebClient:
 
         logging.info("uploading " + remote_filename + " done")
 
-    def create_event(self):
+    def create_or_update_event(self):
         """
         Create a new event on the voctoweb API host
         :return:
@@ -274,6 +274,8 @@ class VoctowebClient:
 
         # prepare some variables for the api call
         url = self.api_url + 'events'
+        if self.t.voctoweb_event_id:
+           url += '/' + self.t.voctoweb_event_id
 
         if self.t.url:
             if self.t.url.startswith('//'):
@@ -332,7 +334,11 @@ class VoctowebClient:
         try:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            r = requests.post(url, headers=headers, data=json.dumps(payload))
+            if self.t.voctoweb_event_id:
+                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+            else:
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
         return r
@@ -387,7 +393,7 @@ class VoctowebClient:
         try:
             # todo ssl verify by config
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            if recording_id:
+            if self.t.recording_id:
                 r = requests.patch(url, headers=headers, data=json.dumps(payload))
             else:
                 r = requests.post(url, headers=headers, data=json.dumps(payload))
