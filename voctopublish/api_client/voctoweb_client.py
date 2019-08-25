@@ -102,6 +102,7 @@ class VoctowebClient:
                 scores = {}
                 interval = 180
                 candidates = [20, 30, 40]  # some fixed candidates we always want to hit
+                logging.debug("length of video used for thumbnail generation " + str(length))
                 candidates.extend(list(range(15, length - 60, interval)))  # pick some more candidates based on the file length
                 try:
                     for pos in candidates:
@@ -111,9 +112,12 @@ class VoctowebClient:
                                                     ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y ' +
                                                     candidat,
                                                     shell=True)
-
-                        scores[candidat] = calc_score(candidat)
-
+                        if os.path.isfile(candidat):
+                            scores[candidat] = calc_score(candidat)
+                        else:
+                            logging.warning("ffmpeg was not able to create candidat for " + str(candidat))
+                except subprocess.CalledProcessError as e_:
+                    raise VoctowebException("ffmpeg exited with the following error, while extracting candidates for thumbnails. " + e_.output) from e_
                 except Exception as e_:
                     raise VoctowebException("Could not extract candidates: " + str(r)) from e_
 
@@ -261,7 +265,7 @@ class VoctowebClient:
 
         logging.info("uploading " + remote_filename + " done")
 
-    def create_event(self):
+    def create_or_update_event(self):
         """
         Create a new event on the voctoweb API host
         :return:
@@ -270,6 +274,8 @@ class VoctowebClient:
 
         # prepare some variables for the api call
         url = self.api_url + 'events'
+        if self.t.voctoweb_event_id:
+           url += '/' + self.t.voctoweb_event_id
 
         if self.t.url:
             if self.t.url.startswith('//'):
@@ -310,7 +316,7 @@ class VoctowebClient:
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
-                       'tags': self.t.tags,
+                       'tags': self.t.voctoweb_tags,
                        'promoted': False,
                        'release_date': str(time.strftime("%Y-%m-%d"))
                    }
@@ -321,7 +327,11 @@ class VoctowebClient:
         try:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            r = requests.post(url, headers=headers, data=json.dumps(payload))
+            if self.t.voctoweb_event_id:
+                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+            else:
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
         return r

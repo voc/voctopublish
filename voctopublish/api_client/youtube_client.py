@@ -140,9 +140,8 @@ class YoutubeAPI:
         description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url])
         description = self.strip_tags(description)
 
-        if self.t.voctoweb_enable and self.t.profile_voctoweb_enable:
-            if self.t.voctoweb_url:
-                description = os.path.join(self.t.voctoweb_url, self.t.slug) + '\n\n' + description
+        if self.t.voctoweb_url:
+            description = os.path.join(self.t.voctoweb_url, self.t.slug) + '\n\n' + description
 
         if self.t.youtube_title_prefix:
             title = self.t.youtube_title_prefix + ' ' + title
@@ -190,6 +189,8 @@ class YoutubeAPI:
 
         # limit title length to 100 (YouTube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
+        # limit Description length to 5000 (YouTube api conformity)
+        metadata['snippet']['description'] = metadata['snippet']['description'][:5000]
 
         if self.t.youtube_category:
             metadata['snippet']['categoryId'] = int(self.t.youtube_category)
@@ -268,6 +269,9 @@ class YoutubeAPI:
 
         if self.t.room:
             tags.append(self.t.room)
+
+        if self.t.date:
+            tags.append(str(self.t.date).split('-')[0])
 
         if lang:
             if lang in self.lang_map.keys():

@@ -22,6 +22,7 @@ class Ticket:
     This class is inspired by the c3tt ticket system. It handles all information we got from the tracker
     and adds some additional information.
     """
+
     def __init__(self, ticket, ticket_id):
         if not ticket:
             raise TicketException('Ticket was None type')
@@ -66,15 +67,22 @@ class Ticket:
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
         self.url = self._validate_('Fahrplan.URL', True)
+        self.date = self._validate_('Fahrplan.Date')
 
         # recording ticket properties
-        self.language = self._validate_('Record.Language')
-        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
-                          if k.startswith('Record.Language.')}
+
+        # special case languages: if Encoding.Language is present, it overrides Record.Language:
+        if 'Encoding.Language' in ticket:
+            self.language = self._validate_('Encoding.Language')
+            self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
+        else:
+            self.language = self._validate_('Record.Language')
+            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
         # general publishing properties
         self.publishing_path = self._validate_('Publishing.Path')
+        self.publishing_tags = self._validate_('Publishing.Tags', True)
 
         # youtube properties
         if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
@@ -114,18 +122,21 @@ class Ticket:
             self.voctoweb_enable = True
         else:
             self.voctoweb_enable = False
+
+        self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
         # we will fill the following variables only if voctoweb is enabled
         if self.profile_voctoweb_enable and self.voctoweb_enable:
             self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
             self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
             self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
             self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')
-            self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
-            self.tags = [self.acronym, self.fahrplan_id]
+            self.voctoweb_tags = [self.acronym, self.fahrplan_id, self.date.split('-')[0]]
             if self.track:
-                self.tags.append(self.track)
+                self.voctoweb_tags.append(self.track)
             if 'Publishing.Voctoweb.Tags' in ticket:
-                self.tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
+                self.voctoweb_tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
+            if 'Publishing.Tags' in ticket:
+                self.voctoweb_tags += self._validate_('Publishing.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
