@@ -176,26 +176,29 @@ class Publisher:
         if self.ticket.master:
             # if this is master ticket we need to check if we need to create an event on voctoweb
             logging.debug('this is a master ticket')
-            if self.ticket.voctoweb_event_id or self.ticket.recording_id:
-                logging.debug('ticket has a voctoweb_event_id or recording_id')
-                # ticket has an recording id or voctoweb event id. We assume the event exists on media
-            else:
-                # ticket has no recording id therefore we create the event on voctoweb
-                r = vw.create_event()
-                if r.status_code in [200, 201]:
-                    logging.info("new event created")
-                    # generate thumbnails and a visual timeline for video releases (will not overwrite existing files)
-                    if self.ticket.mime_type.startswith('video'):
-                        vw.generate_thumbs()
-                        vw.upload_thumbs()
-                        vw.generate_timelens()
-                        vw.upload_timelens()
+            r = vw.create_or_update_event()
+            if r.status_code in [200, 201]:
+                logging.info("new event created or existing updated")
+                # generate the thumbnails (will not overwrite existing thumbs)
+                # todo move the external bash script to python code here
+                # if this is an audio only release we don' create thumbs
+                if self.ticket.mime_type.startswith('video'):
+                    vw.generate_thumbs()
+                    vw.upload_thumbs()
+                    vw.generate_timelens()
+                    vw.upload_timelens()
                     logging.debug('response: ' + str(r.json()))
-                    try:
-                        self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
-                    except Exception as e_:
-                        raise PublisherException('failed to set EventID on ticket') from e_
-                else:
+                try:
+                    # todo: only set recording id when new recording was created, and not when it was only updated
+                    self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
+                except Exception as e_:
+                    raise PublisherException('failed to Voctoweb EventID to ticket') from e_
+
+            elif r.status_code == 422:
+                # If this happens tracker and voctoweb are out of sync regarding the event id
+                # todo: write voctoweb event_id to ticket properties --Andi
+                logging.warning("event already exists => publishing")
+            else:
                     raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
 
             # in case of a multi language release we create here the single language files
@@ -227,12 +230,8 @@ class Publisher:
 
         vw.upload_file(self.ticket.local_filename, filename, self.ticket.folder)
 
-        recording_id = vw.create_recording(self.ticket.local_filename,
-                                           filename,
-                                           self.ticket.folder,
-                                           language,
-                                           hq,
-                                           html5)
+        recording_id = self.vw.create_or_update_recording(self.ticket.local_filename, filename,
+                                                self.ticket.folder, language, hq, html5)
 
         self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 
