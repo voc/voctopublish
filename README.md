@@ -5,8 +5,8 @@ It publishes recordings an handles all necessary steps like thumbnail generation
 ## Dependencies
 ### Debian / Ubuntu
 ```
-sudo apt-get install python3 python3-requests python3-pip ffmpeg
-pip3 install paramiko configparser twitter mastodon.py
+sudo apt-get install python3 python3-requests python3-pip ffmpeg timelens
+pip3 install -r requirements.txt
 ```
 
 ## Usage
