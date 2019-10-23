@@ -225,7 +225,7 @@ class C3TTClient:
         :return:
         """
         ret = self._open_rpc("C3TT.setTicketDone", ticket)
-        logging.debug(str(ret))
+        #logging.debug(str(ret))
 
     def set_ticket_failed(self, ticket, error):
         """
