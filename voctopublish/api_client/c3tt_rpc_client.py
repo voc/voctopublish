@@ -36,7 +36,6 @@ class C3TTClient:
         self.group = group
         self.host = host
         self.secret = secret
-        self.ticket_id = None
 
     def _gen_signature(self, method, args):
         """
@@ -72,16 +71,21 @@ class C3TTClient:
         hash_ = hmac.new(bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
         return hash_.hexdigest()
 
-    def _open_rpc(self, method, args=[]):
+    def _open_rpc(self, method, ticket=None, args=[]):
         """
         create xmlrpc client
         :param method:
+        :param ticket: optional, either a numeric ticket_id or an instance of Ticket class
         :param args:
         :return: attributes of the answer
         """
         logging.debug('creating XML RPC proxy: ' + self.url + "?group=" + self.group + "&hostname=" + self.host)
-        if self.ticket_id:
-            args.insert(0, self.ticket_id)
+        if ticket is not None:
+            # the ticket parameter can be either a numeric ticket_id or an instance of Ticket class
+            if isinstance(ticket, int) or isinstance(ticket, str):
+                args.insert(0, ticket)
+            else:
+                args.insert(0, ticket.id)
 
         try:
             proxy = xmlrpc.client.ServerProxy(self.url + "?group=" + self.group + "&hostname=" + self.host)
@@ -149,12 +153,11 @@ class C3TTClient:
         :parm property_filters:  return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
-        ret = self._open_rpc("C3TT.assignNextUnassignedForState", [ticket_type, to_state, property_filters])
+        ret = self._open_rpc("C3TT.assignNextUnassignedForState", args=[ticket_type, to_state, property_filters])
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
         else:
-            self.ticket_id = ret['id']
             return ret['id']
             
     def get_assigned_for_state(self, ticket_type, state, property_filters = []):
@@ -166,14 +169,13 @@ class C3TTClient:
         :parm property_filters: return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
-        ret = self._open_rpc("C3TT.getAssignedForState", [ticket_type, state, property_filters])
+        ret = self._open_rpc("C3TT.getAssignedForState", args=[ticket_type, state, property_filters])
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
         else:
             if len(ret) > 1:
                 logging.warn("multiple tickets assined, fetching first one")
-            self.ticket_id = ret[0]['id']
             return ret['id']
 
     def get_tickets_for_state(self, ticket_type, to_state, property_filters = []):
@@ -185,59 +187,52 @@ class C3TTClient:
         :parm property_filters: return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
-        ret = self._open_rpc("C3TT.getTicketsForState", [ticket_type, to_state, property_filters])
+        ret = self._open_rpc("C3TT.getTicketsForState", args=[ticket_type, to_state, property_filters])
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
         else:
             return ret
 
-    def set_ticket_properties(self, properties):
+    def set_ticket_properties(self, ticket, properties):
         """
         set ticket properties
         :param properties:
         :return: Boolean
         """
-        ret = self._open_rpc("C3TT.setTicketProperties", [properties])
+        ret = self._open_rpc("C3TT.setTicketProperties", ticket, args=[properties])
         if not ret:
             logging.error("no xml in answer")
             return False
         else:
             return True
 
-    def get_ticket_properties(self):
+    def get_ticket_properties(self, ticket):
         """
         get ticket properties
         :return:
         """
-        ret = self._open_rpc("C3TT.getTicketProperties")
+        ret = self._open_rpc("C3TT.getTicketProperties", ticket)
         if not ret:
             logging.error("no xml in answer")
             return None
         else:
             return ret
 
-    def set_ticket_done(self):
+    def set_ticket_done(self, ticket):
         """
         set Ticket status on done
         :return:
         """
-        ret = self._open_rpc("C3TT.setTicketDone")
+        ret = self._open_rpc("C3TT.setTicketDone", ticket)
         logging.debug(str(ret))
 
-    def set_ticket_failed(self, error):
+    def set_ticket_failed(self, ticket, error):
         """
         set ticket status on failed an supply a error text
         :param error:
         """
-        self._open_rpc("C3TT.setTicketFailed", [error.encode('ascii', 'xmlcharrefreplace')])
-
-    def get_ticket_id(self):
-        """
-        get the id of the ticket assigned to the client instance
-        :return: Ticket id or None if no ID is assigned yet
-        """
-        return self.ticket_id
+        self._open_rpc("C3TT.setTicketFailed", ticket, [error.encode('ascii', 'xmlcharrefreplace')])
 
 
 class C3TTException(Exception):

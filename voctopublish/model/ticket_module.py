@@ -27,7 +27,7 @@ class Ticket:
         if not ticket:
             raise TicketException('Ticket was None type')
         self.__tracker_ticket = ticket
-        self.ticket_id = ticket_id
+        self.id = ticket_id
 
         # project properties
         self.acronym = self._validate_('Project.Slug')

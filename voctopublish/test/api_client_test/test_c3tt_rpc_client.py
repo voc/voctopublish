@@ -15,7 +15,6 @@ class TestC3TTClient(unittest.TestCase):
 
     def test_init(self):
         assert self._client.url == "<server>rpc" # todo shouldn't this be an _url join?
-        assert self._client.ticket_id is None
 
     def test_gen_signature_args_empty(self):
         hash_ = self._client._gen_signature("test", [])

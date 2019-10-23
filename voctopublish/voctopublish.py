@@ -126,7 +126,7 @@ class Publisher:
                     "encoding profile youtube flag: " + str(self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(self.ticket.youtube_enable))
                 self._publish_to_youtube()
 
-        self.c3tt.set_ticket_done()
+        self.c3tt.set_ticket_done(self.ticket)
 
         # Twitter
         if self.ticket.twitter_enable and self.ticket.master:
@@ -147,10 +147,10 @@ class Publisher:
         if ticket_id:
             logging.info("Ticket ID:" + str(ticket_id))
             try:
-                tracker_ticket = self.c3tt.get_ticket_properties()
+                tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
                 logging.debug("Ticket: " + str(tracker_ticket))
             except Exception as e_:
-                self.c3tt.set_ticket_failed(e_)
+                self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             t = Ticket(tracker_ticket, ticket_id)
         else:
@@ -233,8 +233,8 @@ class Publisher:
                                            language,
                                            hq,
                                            html5)
-
-        self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
+        
+        self.c3tt.set_ticket_properties(self.ticket, {'Voctoweb.RecordingId.Master': recording_id})
 
     def _mux_to_single_language(self, vw):
         """
@@ -269,7 +269,7 @@ class Publisher:
                 raise PublisherException('creating recording ' + out_path) from e_
 
             try:
-                self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
+                self.c3tt.set_ticket_properties(self.ticket, {'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
 
@@ -287,7 +287,7 @@ class Publisher:
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
 
-        self.c3tt.set_ticket_properties(props)
+        self.c3tt.set_ticket_properties(self.ticket, props)
         self.ticket.youtube_urls = props
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
@@ -321,6 +321,6 @@ if __name__ == '__main__':
         publisher.publish()
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
+        publisher.c3tt.set_ticket_failed(publisher.ticket.id, '%s: %s' % (exc_type.__name__, e))
         logging.exception(e)
         sys.exit(-1)
