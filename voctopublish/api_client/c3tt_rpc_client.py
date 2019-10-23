@@ -155,7 +155,8 @@ class C3TTClient:
             return None
         else:
             self.ticket_id = ret['id']
-            return ret['id']
+            return ret
+
             
     def get_assigned_for_state(self, ticket_type, state, property_filters = []):
         """
@@ -172,9 +173,10 @@ class C3TTClient:
             return None
         else:
             if len(ret) > 1:
-                logging.warn("multiple tickets assined, fetching first one")
+                logging.warning("multiple tickets assined, fetching first one")
             self.ticket_id = ret[0]['id']
-            return ret['id']
+
+            return ret[0]
 
     def get_tickets_for_state(self, ticket_type, to_state, property_filters = []):
         """

@@ -23,11 +23,14 @@ class Ticket:
     and adds some additional information.
     """
 
-    def __init__(self, ticket, ticket_id):
-        if not ticket:
-            raise TicketException('Ticket was None type')
-        self.__tracker_ticket = ticket
-        self.ticket_id = ticket_id
+    def __init__(self, ticket_meta, ticket_properties):
+        if not ticket_properties:
+            raise TicketException('Ticket properties was None type')
+        self.__tracker_ticket_meta = ticket_meta
+        self.__tracker_ticket = ticket_properties
+
+        self.id = ticket_meta['id']
+        self.parent_id = ticket_meta['parent_id']
 
         # project properties
         self.acronym = self._validate_('Project.Slug')
