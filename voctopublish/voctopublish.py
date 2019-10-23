@@ -293,6 +293,7 @@ class Publisher:
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
         # second YoutubeAPI instance for playlist management at youtube.com
         # todo figure out why we need two tokens
+	# answer: if the playlist is on a different youtube channel, then the one we upload the videos to --Andi
         if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
             yt_voctoweb = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
             yt_voctoweb.setup(self.config['youtube']['playlist_token'])
