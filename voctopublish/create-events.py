@@ -117,24 +117,25 @@ class RelivePublisher:
         logging.info('requesting ticket from tracker')
         t = None
 
-        ticket_id = None
+        ticket_meta = None
         # when we are in debug mode, we first check if we are already assigned to a ticket from previous run
         if self.debug:
-            ticket_id = self.c3tt.get_assigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
+            ticket_meta = self.c3tt.get_assigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
         # otherwhise, or if that was not successful get the next unassigned one
-        if not ticket_id:
-            ticket_id = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
+        if not ticket_meta:
+            ticket_meta = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
         
-        if ticket_id:
+        if ticket_meta:
+            ticket_id = ticket_meta['id']
             logging.info("Ticket ID:" + str(ticket_id))
             try:
-                tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
-                logging.debug("Ticket: " + str(tracker_ticket))
+                ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
+                logging.debug("Ticket Properties: " + str(ticket_properties))
             except Exception as e_:
                 if not args.debug:
                     self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
-            t = Ticket(tracker_ticket, ticket_id)
+            t = Ticket(ticket_meta, ticket_properties)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
 
@@ -163,9 +164,11 @@ class RelivePublisher:
                 logging.info("new event created or existing updated")
                 
                 try:
-                    self.c3tt.set_ticket_properties(self.ticket, {'Voctoweb.EventId': r.json()['id']})
+                    # we need to write the Event ID onto the parent ticket, so the other (master) encoding tickets 
+                    # also have acccess to the Voctoweb Event ID
+                    self.c3tt.set_ticket_properties(self.ticket.parent_id, {'Voctoweb.EventId': r.json()['id']})
                 except Exception as e_:
-                    raise PublisherException('failed to Voctoweb EventID to ticket') from e_
+                    raise PublisherException('failed to Voctoweb EventID to parent ticket') from e_
 
             elif r.status_code == 422:
                 # If this happens tracker and voctoweb are out of sync regarding the event id
