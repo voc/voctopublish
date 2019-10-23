@@ -176,7 +176,7 @@ class C3TTClient:
         else:
             if len(ret) > 1:
                 logging.warn("multiple tickets assined, fetching first one")
-            return ret['id']
+            return ret[0]['id']
 
     def get_tickets_for_state(self, ticket_type, to_state, property_filters = []):
         """
