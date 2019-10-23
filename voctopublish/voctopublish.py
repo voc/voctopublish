@@ -16,6 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import configparser
+import argparse
 import socket
 import sys
 import logging
@@ -35,13 +36,14 @@ class Publisher:
     This is the main class for the Voctopublish application
     It is meant to be used with the c3tt ticket tracker
     """
-    def __init__(self):
+    def __init__(self, args = {}):
         # load config
         if not os.path.exists('client.conf'):
             raise IOError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
         self.config.read('client.conf')
+        self.notfail = args.notfail
 
         # set up logging
         logging.addLevelName(logging.WARNING, "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
@@ -63,7 +65,7 @@ class Publisher:
 
         level = self.config['general']['debug']
         if level == 'info':
-            self.logger.setLevel(logging.INFO)
+            self.logger.setLevel(logging.INFO if not args.verbose else logging.DEBUG)
         elif level == 'warning':
             self.logger.setLevel(logging.WARNING)
         elif level == 'error':
@@ -145,6 +147,10 @@ class Publisher:
         t = None
 
         ticket_meta = None
+        # when we are in notfail aka debug mode, we first check if we are already assigned to a ticket from previous run
+        if self.notfail:
+            ticket_meta = self.c3tt.get_assigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
+        # otherwhise, or if that was not successful get the next unassigned one
         if not ticket_meta:
             ticket_meta = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
         
@@ -323,6 +329,11 @@ class PublisherException(Exception):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser() 
+    parser.add_argument('--verbose',  '-v', action='store_true', default=False)
+    parser.add_argument('--notfail', action='store_true', default=False, help='do not mark ticket as failed in tracker when something goes wrong')
+
+    args = parser.parse_args() 
     try:
         publisher = Publisher()
     except Exception as e:
@@ -334,6 +345,7 @@ if __name__ == '__main__':
         publisher.publish()
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        publisher.c3tt.set_ticket_failed(publisher.ticket.id, '%s: %s' % (exc_type.__name__, e))
+        if not args.notfail:
+            publisher.c3tt.set_ticket_failed(publisher.ticket.id, '%s: %s' % (exc_type.__name__, e))
         logging.exception(e)
         sys.exit(-1)
