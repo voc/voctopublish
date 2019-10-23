@@ -156,6 +156,41 @@ class C3TTClient:
         else:
             self.ticket_id = ret['id']
             return ret['id']
+            
+    def get_assigned_for_state(self, ticket_type, state, property_filters = []):
+        """
+        Get first assigned ticket in state $state
+        function
+        :param ticket_type: type of ticket
+        :param to_state: ticket state the returned ticket will be in after this call
+        :parm property_filters: return only tickets matching given properties
+        :return: ticket id or None in case no ticket is available for the type and state in the request
+        """
+        ret = self._open_rpc("C3TT.getAssignedForState", [ticket_type, state, property_filters])
+        # if we get no xml here there is no ticket for this job
+        if not ret:
+            return None
+        else:
+            if len(ret) > 1:
+                logging.warn("multiple tickets assined, fetching first one")
+            self.ticket_id = ret[0]['id']
+            return ret['id']
+
+    def get_tickets_for_state(self, ticket_type, to_state, property_filters = []):
+        """
+        Get all tickets in state $state from projects assigned to the workerGroup, unless workerGroup is halted
+        function
+        :param ticket_type: type of ticket
+        :param to_state: ticket state the returned ticket will be in after this call
+        :parm property_filters: return only tickets matching given properties
+        :return: ticket id or None in case no ticket is available for the type and state in the request
+        """
+        ret = self._open_rpc("C3TT.getTicketsForState", [ticket_type, to_state, property_filters])
+        # if we get no xml here there is no ticket for this job
+        if not ret:
+            return None
+        else:
+            return ret
 
     def set_ticket_properties(self, properties):
         """
