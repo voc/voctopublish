@@ -143,16 +143,26 @@ class Publisher:
         """
         logging.info('requesting ticket from tracker')
         t = None
-        ticket_id = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state)
-        if ticket_id:
+
+        ticket_meta = None
+        if not ticket_meta:
+            ticket_meta = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
+        
+        if ticket_meta:
+            ticket_id = ticket_meta['id']
             logging.info("Ticket ID:" + str(ticket_id))
             try:
+<<<<<<< HEAD
                 tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
                 logging.debug("Ticket: " + str(tracker_ticket))
+=======
+                ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
+                logging.debug("Ticket Properties: " + str(ticket_properties))
+>>>>>>> 3be5457... restucture to get parent_id of ticket
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
-            t = Ticket(tracker_ticket, ticket_id)
+            t = Ticket(ticket_meta, ticket_properties)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
 
