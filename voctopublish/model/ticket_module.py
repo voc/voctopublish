@@ -32,19 +32,6 @@ class Ticket:
         # project properties
         self.acronym = self._validate_('Project.Slug')
 
-        # encoding profile properties
-        if self._validate_('EncodingProfile.IsMaster') == 'yes':
-            self.master = True
-        else:
-            self.master = False
-        self.profile_extension = self._validate_('EncodingProfile.Extension')
-        self.profile_slug = self._validate_('EncodingProfile.Slug')
-        self.filename = self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
-        self.folder = self._validate_('EncodingProfile.MirrorFolder')
-
-        # encoding properties
-        self.language_index = self._validate_('Encoding.LanguageIndex', True)
-
         # fahrplan properties
         self.slug = self._validate_('Fahrplan.Slug')
         self.guid = self._validate_('Fahrplan.GUID')
@@ -54,8 +41,6 @@ class Ticket:
         self.abstract = self._validate_('Fahrplan.Abstract', True)
         self.description = self._validate_('Fahrplan.Description', True)
         self.date = self._validate_('Fahrplan.Date')
-        self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
-        self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
         self.room = self._validate_('Fahrplan.Room')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
@@ -69,49 +54,71 @@ class Ticket:
         self.url = self._validate_('Fahrplan.URL', True)
         self.date = self._validate_('Fahrplan.Date')
 
-        # recording ticket properties
-
-        # special case languages: if Encoding.Language is present, it overrides Record.Language:
-        if 'Encoding.Language' in ticket:
-            self.language = self._validate_('Encoding.Language')
-            self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
-        else:
-            self.language = self._validate_('Record.Language')
-            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
-        self.language_template = self._validate_('Encoding.LanguageTemplate')
-
         # general publishing properties
         self.publishing_path = self._validate_('Publishing.Path')
         self.publishing_tags = self._validate_('Publishing.Tags', True)
 
-        # youtube properties
-        if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
-            self.profile_youtube_enable = True
+
+        # encoding (profile) properties
+        if self._validate_('EncodingProfile.IsMaster') == 'yes':
+            self.master = True
         else:
-            self.profile_youtube_enable = False
-        if self._validate_('Publishing.YouTube.Enable') == 'yes':
-            self.youtube_enable = True
+            self.master = False
+        self.profile_slug = self._validate_('EncodingProfile.Slug')
+        if self.profile_slug == 'relive':
+            # TODO: map two char language codes to three char ones in a more proper way...
+            lang_map = {'en': 'eng', 'de': 'deu'}   # WORKAROUND
+            self.language = lang_map[self._validate_('Fahrplan.Language')]
+            self.languages = {0: self.language}
         else:
-            self.youtube_enable = False
-        # we will fill the following variables only if youtube is enabled
-        if self.profile_youtube_enable and self.youtube_enable:
-            self.youtube_token = self._validate_('Publishing.YouTube.Token')
-            self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
-            self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
-            self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
-            self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
-            self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
-            self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
-            # check if this event has already been published to youtube
-            if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
-                self.has_youtube_url = True
+            # encoding (profile) properties
+            self.profile_extension = self._validate_('EncodingProfile.Extension', optional=True)
+            self.filename = self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
+            self.folder = self._validate_('EncodingProfile.MirrorFolder')
+            self.language_index = self._validate_('Encoding.LanguageIndex', True)
+            self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
+            self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
+
+            # recording ticket properties
+
+            # special case languages: if Encoding.Language is present, it overrides Record.Language:
+            if 'Encoding.Language' in ticket:
+                self.language = self._validate_('Encoding.Language')
+                self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
             else:
-                self.has_youtube_url = False
-            if self._validate_('Publishing.YouTube.Playlists', True) is not None:
-                self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
+                self.language = self._validate_('Record.Language')
+                self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
+            self.language_template = self._validate_('Encoding.LanguageTemplate')
+
+
+            # youtube properties
+            if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
+                self.profile_youtube_enable = True
             else:
-                self.youtube_playlists = []
-            self.youtube_urls = ''
+                self.profile_youtube_enable = False
+            if self._validate_('Publishing.YouTube.Enable') == 'yes':
+                self.youtube_enable = True
+            else:
+                self.youtube_enable = False
+            # we will fill the following variables only if youtube is enabled
+            if self.profile_youtube_enable and self.youtube_enable:
+                self.youtube_token = self._validate_('Publishing.YouTube.Token')
+                self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
+                self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
+                self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
+                self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
+                self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
+                self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
+                # check if this event has already been published to youtube
+                if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
+                    self.has_youtube_url = True
+                else:
+                    self.has_youtube_url = False
+                if self._validate_('Publishing.YouTube.Playlists', True) is not None:
+                    self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
+                else:
+                    self.youtube_playlists = []
+                self.youtube_urls = ''
 
         # voctoweb properties
         if self._validate_('Publishing.Voctoweb.EnableProfile') == 'yes':

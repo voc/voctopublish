@@ -295,6 +295,17 @@ class VoctowebClient:
             for link in self.t.links:
                 description = '\n\n'.join([description, '<a href="' + link + '">' + link + '</a>'])
 
+        images = {}
+        # only publish images if we already have them, which is not the case for relive only events
+        if hasattr(self.t, 'local_filename_base'):
+            images = {
+                'thumb_filename': self.t.local_filename_base + ".jpg",
+                'poster_filename': self.t.local_filename_base + "_preview.jpg",
+                'timeline_filename': self.t.local_filename_base + ".timeline.jpg",
+                'thumbnails_filename': self.t.local_filename_base + ".thumbnails.vtt",
+                'release_date': str(time.strftime("%Y-%m-%d"))
+            } 
+
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
@@ -306,19 +317,15 @@ class VoctowebClient:
                        'subtitle': self.t.subtitle,
                        'link': event_url,
                        'original_language': self.t.languages[0],
-                       'thumb_filename': self.t.local_filename_base + ".jpg",
-                       'poster_filename': self.t.local_filename_base + "_preview.jpg",
-                       'timeline_filename': self.t.local_filename_base + ".timeline.jpg",
-                       'thumbnails_filename': self.t.local_filename_base + ".thumbnails.vtt",
                        'conference_id': self.t.voctoweb_slug,
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
                        'tags': self.t.voctoweb_tags,
                        'promoted': False,
-                       'release_date': str(time.strftime("%Y-%m-%d"))
-                   }
-                   }
+                       **images
+                    }
+                }
         logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
         # call voctoweb api
