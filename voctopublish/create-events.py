@@ -65,7 +65,7 @@ class RelivePublisher:
 
         level = self.config['general']['debug']
         if level == 'info':
-            self.logger.setLevel(logging.INFO)
+            self.logger.setLevel(logging.INFO if not args.verbose else logging.DEBUG)
         elif level == 'warning':
             self.logger.setLevel(logging.WARNING)
         elif level == 'error':
@@ -132,7 +132,7 @@ class RelivePublisher:
                 ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
                 logging.debug("Ticket Properties: " + str(ticket_properties))
             except Exception as e_:
-                if not args.debug:
+                if not args.notfail:
                     self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             t = Ticket(ticket_meta, ticket_properties)
@@ -188,10 +188,9 @@ class PublisherException(Exception):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='generate events on voctoweb for relive ') 
     parser.add_argument('--verbose',  '-v', action='store_true', default=False)
-    parser.add_argument('--debug', action='store_true', default=False, help='do not mark ticket as failed in tracker when something goes wrong')
+    parser.add_argument('--notfail', action='store_true', default=False, help='do not mark ticket as failed in tracker when something goes wrong')
 
     args = parser.parse_args() 
-    print('debug', args.debug)
 
     try:
         publisher = RelivePublisher(args)
@@ -204,7 +203,7 @@ if __name__ == '__main__':
         publisher.create_event()
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        if not args.debug:
-            publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
+        if not args.notfail:
+            publisher.c3tt.set_ticket_failed(publisher.ticket.id, '%s: %s' % (exc_type.__name__, e))
         logging.exception(e)
         sys.exit(-1)
