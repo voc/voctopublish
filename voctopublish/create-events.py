@@ -161,12 +161,21 @@ class RelivePublisher:
             r = vw.create_or_update_event()
             if r.status_code in [200, 201]:
                 logging.info("new event created or existing updated")
+                
+                try:
+                    self.c3tt.set_ticket_properties(self.ticket, {'Voctoweb.EventId': r.json()['id']})
+                except Exception as e_:
+                    raise PublisherException('failed to Voctoweb EventID to ticket') from e_
+
             elif r.status_code == 422:
                 # If this happens tracker and voctoweb are out of sync regarding the event id
                 # todo: write voctoweb event_id to ticket properties --Andi
-                logging.warning("event already exists => publishing")
+                logging.warning("event already exists => please sync event manually")
             else:
                 raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
+
+    
+        self.c3tt.set_ticket_done(self.ticket)
 
 
 class PublisherException(Exception):
