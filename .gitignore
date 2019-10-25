@@ -44,4 +44,4 @@ Thumbs.db
 ########################
 client.conf
 .idea/
-.venv
+venv/
