@@ -53,7 +53,7 @@ class Ticket:
         self.subtitle = self._validate_('Fahrplan.Subtitle', True)
         self.abstract = self._validate_('Fahrplan.Abstract', True)
         self.description = self._validate_('Fahrplan.Description', True)
-        self.date = self._validate_('Fahrplan.Date')
+        self.date = self._validate_('Fahrplan.DateTime')
         self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
         self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
         self.room = self._validate_('Fahrplan.Room')
@@ -67,7 +67,6 @@ class Ticket:
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
         self.url = self._validate_('Fahrplan.URL', True)
-        self.date = self._validate_('Fahrplan.Date')
 
         # recording ticket properties
 
