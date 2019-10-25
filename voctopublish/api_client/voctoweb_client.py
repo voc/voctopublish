@@ -312,7 +312,6 @@ class VoctowebClient:
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
                        'timeline_filename': self.t.local_filename_base + ".timeline.jpg",
                        'thumbnails_filename': self.t.local_filename_base + ".thumbnails.vtt",
-                       'conference_id': self.t.voctoweb_slug,
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
