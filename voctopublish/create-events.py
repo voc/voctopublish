@@ -79,10 +79,7 @@ class RelivePublisher:
             self.host = self.config['C3Tracker']['host']
 
         self.ticket_type = 'encoding'
-        self.to_state = 'releasing' 
-
-        # instance variables we need later
-        self.ticket = None
+        self.to_state = 'releasing'
 
         logging.debug('creating C3TTClient')
         try:
@@ -97,16 +94,16 @@ class RelivePublisher:
         """
         Decide based on the information provided by the tracker where to publish.
         """
-        self.ticket = self._get_ticket_from_tracker()
+        ticket = self._get_ticket_from_tracker()
 
-        if not self.ticket:
+        if not ticket:
             return
 
         # voctoweb
-        if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
+        if ticket.profile_voctoweb_enable and ticket.voctoweb_enable:
             logging.debug(
-                'encoding profile media flag: ' + str(self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
-            self._publish_to_voctoweb()
+                'encoding profile media flag: ' + str(ticket.profile_voctoweb_enable) + " project media flag: " + str(ticket.voctoweb_enable))
+            self._publish_to_voctoweb(ticket)
 
 
     def _get_ticket_from_tracker(self):
@@ -119,7 +116,7 @@ class RelivePublisher:
 
         ticket_meta = None
         # when we are in debug mode, we first check if we are already assigned to a ticket from previous run
-        if self.debug:
+        if self.notfail:
             ticket_meta = self.c3tt.get_assigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
         # otherwhise, or if that was not successful get the next unassigned one
         if not ticket_meta:
@@ -141,13 +138,13 @@ class RelivePublisher:
 
         return t
 
-    def _publish_to_voctoweb(self):
+    def _publish_to_voctoweb(self, ticket):
         """
         Create a event on an voctomix instance. This includes creating a recording for each media file.
         """
         logging.info("publishing to voctoweb")
         try:
-            vw = VoctowebClient(self.ticket,
+            vw = VoctowebClient(ticket,
                                 self.config['voctoweb']['api_key'],
                                 self.config['voctoweb']['api_url'],
                                 self.config['voctoweb']['ssh_host'],
@@ -156,7 +153,7 @@ class RelivePublisher:
         except Exception as e_:
             raise PublisherException('Error initializing voctoweb client. Config parameter missing') from e_
 
-        if self.ticket.master:
+        if ticket.master:
             # if this is master ticket we need to check if we need to create an event on voctoweb
             logging.debug('this is a master ticket')
             r = vw.create_or_update_event()
@@ -166,19 +163,20 @@ class RelivePublisher:
                 try:
                     # we need to write the Event ID onto the parent ticket, so the other (master) encoding tickets 
                     # also have acccess to the Voctoweb Event ID
-                    self.c3tt.set_ticket_properties(self.ticket.parent_id, {'Voctoweb.EventId': r.json()['id']})
+                    self.c3tt.set_ticket_properties(ticket.parent_id, {'Voctoweb.EventId': r.json()['id']})
                 except Exception as e_:
                     raise PublisherException('failed to Voctoweb EventID to parent ticket') from e_
 
             elif r.status_code == 422:
                 # If this happens tracker and voctoweb are out of sync regarding the event id
+                # or we have some input error...
                 # todo: write voctoweb event_id to ticket properties --Andi
                 logging.warning("event already exists => please sync event manually")
             else:
                 raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
 
     
-        self.c3tt.set_ticket_done(self.ticket)
+        self.c3tt.set_ticket_done(ticket)
 
 
 class PublisherException(Exception):
