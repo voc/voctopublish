@@ -22,7 +22,7 @@ import logging
 import os
 import subprocess
 import argparse 
-
+import time
 
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
@@ -43,7 +43,7 @@ class RelivePublisher:
         self.config = configparser.ConfigParser()
         self.config.read('client.conf')
 
-        self.debug = args.debug
+        self.notfail = args.notfail
 
         # set up logging
         logging.addLevelName(logging.WARNING, "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.WARNING))

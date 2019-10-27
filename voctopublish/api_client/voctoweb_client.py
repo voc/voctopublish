@@ -319,7 +319,7 @@ class VoctowebClient:
                        'subtitle': self.t.subtitle,
                        'link': event_url,
                        'original_language': self.t.languages[0],
-                       'conference_id': self.t.voctoweb_slug,
+                       #'conference_id': self.t.voctoweb_slug,
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
@@ -328,7 +328,7 @@ class VoctowebClient:
                        **images
                     }
                 }
-        logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
+        logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + json.dumps(payload))
 
         # call voctoweb api
         try:

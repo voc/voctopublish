@@ -43,19 +43,18 @@ class Ticket:
         self.subtitle = self._validate_('Fahrplan.Subtitle', True)
         self.abstract = self._validate_('Fahrplan.Abstract', True)
         self.description = self._validate_('Fahrplan.Description', True)
-        self.date = self._validate_('Fahrplan.Date')
+        self.date = self._validate_('Fahrplan.DateTime')
         self.room = self._validate_('Fahrplan.Room')
         self.people = []
-        if 'Fahrplan.Person_list' in ticket:
+        if 'Fahrplan.Person_list' in ticket_properties:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')
         self.links = []
-        if 'Fahrplan.Links' in ticket:
+        if 'Fahrplan.Links' in ticket_properties:
             self.links = self._validate_('Fahrplan.Links', True).split(' ')
         # the following are arguments that my not be present in every fahrplan
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
         self.url = self._validate_('Fahrplan.URL', True)
-        self.date = self._validate_('Fahrplan.Date')
 
         # general publishing properties
         self.publishing_path = self._validate_('Publishing.Path')
@@ -85,7 +84,7 @@ class Ticket:
             # recording ticket properties
 
             # special case languages: if Encoding.Language is present, it overrides Record.Language:
-            if 'Encoding.Language' in ticket:
+            if 'Encoding.Language' in ticket_properties:
                 self.language = self._validate_('Encoding.Language')
                 self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
             else:
@@ -113,7 +112,7 @@ class Ticket:
                 self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
                 self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
                 # check if this event has already been published to youtube
-                if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
+                if 'YouTube.Url0' in ticket_properties and self._validate_('YouTube.Url0') is not None:
                     self.has_youtube_url = True
                 else:
                     self.has_youtube_url = False
@@ -143,9 +142,9 @@ class Ticket:
             self.voctoweb_tags = [self.acronym, self.fahrplan_id, self.date.split('-')[0]]
             if self.track:
                 self.voctoweb_tags.append(self.track)
-            if 'Publishing.Voctoweb.Tags' in ticket:
+            if 'Publishing.Voctoweb.Tags' in ticket_properties:
                 self.voctoweb_tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
-            if 'Publishing.Tags' in ticket:
+            if 'Publishing.Tags' in ticket_properties:
                 self.voctoweb_tags += self._validate_('Publishing.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
