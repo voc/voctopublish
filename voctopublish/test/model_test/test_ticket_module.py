@@ -82,7 +82,7 @@ class TestTicket(unittest.TestCase):
              })
 
     def test_init_success(self):
-        t = Ticket(self.ticket_json, 1)
+        t = Ticket(23, self.ticket_json, 1)
         self.assertIsNotNone(t, "Ticket not successfully created")
 
     def test_init_ticket_empty(self):

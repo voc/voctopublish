@@ -22,14 +22,11 @@ class Ticket:
     This class is inspired by the c3tt ticket system. It handles all information we got from the tracker
     and adds some additional information.
     """
-    def __init__(self, ticket_meta, ticket_properties):
-        if not ticket_properties:
-            raise TicketException('Ticket properties was None type')
-        self.__tracker_ticket_meta = ticket_meta
-        self.__tracker_ticket = ticket_properties
-
-        self.id = ticket_meta['id']
-        self.parent_id = ticket_meta['parent_id']
+    def __init__(self, ticket, ticket_id):
+        if not ticket:
+            raise TicketException('Ticket was None type')
+        self.__tracker_ticket = ticket
+        self.ticket_id = ticket_id
 
         # project properties
         self.acronym = self.__validate('Project.Slug')
@@ -76,7 +73,7 @@ class Ticket:
             self.profile_extension = self.__validate('EncodingProfile.Extension', optional=True)
             self.filename = self.__validate('EncodingProfile.Basename') + "." + self.profile_extension
             self.folder = self.__validate('EncodingProfile.MirrorFolder')
-            #self.language_index = self.__validate('Encoding.LanguageIndex', True)
+            self.language_index = self.__validate('Encoding.LanguageIndex', True)
             self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
             self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
 
@@ -86,7 +83,8 @@ class Ticket:
                 self.languages = dict(enumerate(self.__validate('Encoding.Language').split('-')))
             else:
                 self.language = self.__validate('Record.Language')
-                self.languages = {int(k.split('.')[-1]): self.__validate(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
+                self.languages = {int(k.split('.')[-1]): self.__validate(k) for k in self.__tracker_ticket.keys()
+                                  if k.startswith('Record.Language.')}
             self.language_template = self.__validate('Encoding.LanguageTemplate')
 
             # youtube properties
@@ -150,7 +148,8 @@ class Ticket:
                 if len(self.languages) > 1:
                     self.translation_recordings = {}
                     for index in self.languages.keys():
-                        self.translation_recordings.update({self.languages[index]: self.__validate('Voctoweb.RecordingId.' + self.languages[index])})
+                        self.translation_recordings.update(
+                            {self.languages[index]: self.__validate('Voctoweb.RecordingId.' + self.languages[index])})
 
         # twitter properties
         if self.__validate('Publishing.Twitter.Enable') == 'yes':

@@ -92,12 +92,11 @@ class VoctowebClient:
                 raise VoctowebException("ERROR: could not get duration") from e_
 
         length = int(r.decode())
-#        length = av.container.open(os.path.join(self.t.publishing_path, self.t.local_filename).duration)
 
-        outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.jpg')
-        outjpg_preview = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_preview.jpg')
+        out_jpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.jpg')
+        out_jpg_preview = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_preview.jpg')
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory() as tmp_dir:
             # now extract candidates and convert to non-anamorphic images
             # we use equidistant sampling, but skip parts of the file that might contain pre-/postroles
             # also, use higher resolution sampling at the beginning, as there's usually some interesting stuff there
@@ -110,7 +109,7 @@ class VoctowebClient:
                 candidates.extend(list(range(15, length - 60, interval)))  # pick some more candidates based on the file length
                 try:
                     for pos in candidates:
-                        candidat = os.path.join(tmpdir, str(pos) + '.png')
+                        candidat = os.path.join(tmp_dir, str(pos) + '.png')
                         r = subprocess.check_output('ffmpeg -loglevel error -ss ' + str(pos) + ' -i ' +
                                                     source +
                                                     ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y ' +
@@ -135,14 +134,14 @@ class VoctowebClient:
             # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
             try:
                 r = subprocess.check_output(
-                    'ffmpeg -loglevel error -i ' + winner + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
+                    'ffmpeg -loglevel error -i ' + winner + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + out_jpg,
                     shell=True)
             except subprocess.CalledProcessError as e_:
                 raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
 
             try:
                 r = subprocess.check_output(
-                    'ffmpeg -loglevel error -i ' + winner + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg_preview,
+                    'ffmpeg -loglevel error -i ' + winner + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + out_jpg_preview,
                     shell=True)
             except Exception as e_:
                 raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
@@ -183,11 +182,11 @@ class VoctowebClient:
         source = os.path.join(self.t.publishing_path, self.t.local_filename)
         logging.info("running timelens for " + source)
 
-        outtimeline = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.timeline.jpg')
-        outthumbnails = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.thumbnails.vtt')
+        out_timeline = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.timeline.jpg')
+        out_thumbnails = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.thumbnails.vtt')
 
         try:
-            subprocess.check_output(['timelens', source, '-w', '1000', '-h', '90', '--timeline', outtimeline, '--thumbnails', outthumbnails])
+            subprocess.check_output(['timelens', source, '-w', '1000', '-h', '90', '--timeline', out_timeline, '--thumbnails', out_thumbnails])
         except subprocess.CalledProcessError as e_:
             raise VoctowebException("Could not run timelens: " + str(e_)) from e_
 
@@ -221,6 +220,7 @@ class VoctowebClient:
     def upload_file(self, local_filename, remote_filename, remote_folder):
         """
         Uploads a file from path relative to the output dir to the same path relative to the upload_dir
+        Existing files will be deleted before upload.
         We can't use the file and folder names from the ticket here as we need to change these for multi language audio
         :param local_filename:
         :param remote_filename:
@@ -251,7 +251,7 @@ class VoctowebClient:
         try:
             self.sftp.stat(upload_target)
         except IOError:
-            pass  # if the file not exists we can go to the upload
+            pass  # if the file does not exists we can go to the upload
         else:
             try:
                 self.sftp.remove(upload_target)
@@ -333,16 +333,25 @@ class VoctowebClient:
         logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
         # call voctoweb api
-        try:
-            # TODO make ssl verify a config option
-            # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            if self.t.voctoweb_event_id:
-                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+        # check if the ticket already contains an event id
+        if self.t.voctoweb_event_id:
+            # check the public API if voctoweb knows this event before patching it
+            try:
+                r = requests.get(url[:-3] + "public/events/" + self.t.voctoweb_event_id)
+            except requests.exceptions.BaseHTTPError as e_:
+                raise VoctowebException("error while checking event id with public API") from e_
+            if r.status_code == 200:
+                try:
+                    r = requests.patch(url, headers=headers, data=json.dumps(payload))
+                except requests.exceptions.BaseHTTPError as e_:
+                    raise VoctowebException("error while patching event") from e_
             else:
-                r = requests.post(url, headers=headers, data=json.dumps(payload))
+                raise VoctowebException("Event id from ticket is not known to voctoweb. Something is out of sync")
 
-        except requests.exceptions.RetryError as e:
-            raise VoctowebException("Error during creation of event: " + str(e)) from e
+            try:
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+            except requests.exceptions.RetryError as e:
+                raise VoctowebException("Error during creation of event: " + str(e)) from e
         return r
 
     def create_recording(self, local_filename, filename, folder, language, hq, html5, single_language=False):
@@ -352,19 +361,23 @@ class VoctowebClient:
         :param filename: this is not necessarily the value from the ticket
         :param folder: this is not necessarily the value from the ticket
         :param language:
-        :param hq:
+        :param hq: boolean, defines if it is the high quality release or a SD downscale
         :param html5:
+        :param single_language: handle special case for single language muxe
         :return:
         """
-        logging.info(("publishing " + filename + " to " + self.api_url))
+        logging.info("publishing " + filename + " to " + self.api_url)
 
-        recording_id = self.t.recording_id
+        recording_id = self.t.recording_id_master
         if single_language:
-            recording_id = self.t.get_raw_property('Voctoweb.RecordingId.' + language)
+            try:
+                recording_id = self.t.translation_recordings[language]
+            except:
+                raise VoctowebClient('no recording id for ticket found. Something is out of sync')
 
         # make sure we have the file size and length
         ret = []
-        if not self._get_file_details(local_filename, ret):
+        if not self.__get_file_details(local_filename, ret):
             raise VoctowebException('could not get file details')
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
@@ -394,7 +407,7 @@ class VoctowebClient:
         try:
             # todo ssl verify by config
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            if self.t.recording_id:
+            if self.t.recording_id_master:
                 r = requests.patch(url, headers=headers, data=json.dumps(payload))
             else:
                 r = requests.post(url, headers=headers, data=json.dumps(payload))
@@ -414,11 +427,11 @@ class VoctowebClient:
             # Recording was created, return id to be written to the ticket
             return r.json()['id']
 
-    def _get_file_details(self, local_filename, ret):
+    def __get_file_details(self, local_filename, ret):
         """
         get file size and length of the media file
         :param local_filename:
-        :param ret:
+        :param ret: #todo make the function return an array instead
         :return:
         """
         if local_filename is None:

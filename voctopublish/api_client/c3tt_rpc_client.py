@@ -18,20 +18,19 @@ import xmlrpc.client
 import hashlib
 import hmac
 import socket
-import urllib
+from urllib.parse import quote
 import xml
 import logging
 
 
 class C3TTClient:
-    """
-    group: worker group
-    secret: client secret
-    host: client hostname (will be taken from local host if set to None)
-    url: tracker url (without the rpc)
-    """
-
     def __init__(self, url, group, host, secret):
+        """
+        :param url: tracker url (without the rpc)
+        :param group: worker group
+        :param host: client hostname (will be taken from local host if set to None)
+        :param secret: client secret
+        """
         self.url = url + "rpc"
         self.group = group
         self.host = host
@@ -46,7 +45,7 @@ class C3TTClient:
         :param args:
         :return: hmac signature
         """
-        sig_args = urllib.parse.quote(self.url + "&" + method + "&" + self.group + "&" + self.host + "&", "~")
+        sig_args = quote(self.url + "&" + method + "&" + self.group + "&" + self.host + "&", "~")
 
         # add method args
         if len(args) > 0:
@@ -58,14 +57,14 @@ class C3TTClient:
                 if isinstance(arg, dict):
                     kvs = []
                     for k, v in args[i].items():
-                        kvs.append(urllib.parse.quote('[' + str(k) + ']', '~') + '=' + urllib.parse.quote(str(v), '~'))
+                        kvs.append(quote('[' + str(k) + ']', '~') + '=' + quote(str(v), '~'))
                     arg = '&'.join(kvs)
                 else:
-                    arg = urllib.parse.quote(str(arg), '~')
+                    arg = quote(str(arg), '~')
 
                 sig_args = str(sig_args) + str(arg)
                 if i < (len(args) - 1):
-                    sig_args = sig_args + urllib.parse.quote('&')
+                    sig_args = sig_args + quote('&')
                 i += 1
 
         # generate the hmac hash with the key
@@ -110,7 +109,7 @@ class C3TTClient:
             logging.debug(method + str(args))
             result = getattr(proxy, method)(*args)
         except xml.parsers.expat.ExpatError as err:
-            msg = "A expat err occured\n"
+            msg = "A expat err occurred\n"
             msg += err
             raise C3TTException(msg) from err
         except xmlrpc.client.Fault as err:
@@ -139,7 +138,7 @@ class C3TTClient:
         """
         return str(self._open_rpc("C3TT.getVersion"))
 
-    def assign_next_unassigned_for_state(self, ticket_type, to_state, property_filters = []):
+    def assign_next_unassigned_for_state(self, ticket_type, to_state, property_filters=[]):
         """
         check for new ticket on tracker and get assignment
         this also sets the ticket id in the c3tt client instance and has therefore be called before any ticket related
@@ -157,34 +156,31 @@ class C3TTClient:
             self.ticket_id = ret['id']
             return ret
 
-            
-    def get_assigned_for_state(self, ticket_type, state, property_filters = []):
+    def get_assigned_for_state(self, ticket_type, to_state, property_filters=[]):
         """
-        Get first assigned ticket in state $state
-        function
+        Get first assigned ticket in state
         :param ticket_type: type of ticket
         :param to_state: ticket state the returned ticket will be in after this call
-        :parm property_filters: return only tickets matching given properties
+        :param property_filters: return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
-        ret = self._open_rpc("C3TT.getAssignedForState", [ticket_type, state, property_filters])
+        ret = self._open_rpc("C3TT.getAssignedForState", [ticket_type, to_state, property_filters])
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
         else:
             if len(ret) > 1:
-                logging.warning("multiple tickets assined, fetching first one")
+                logging.warning("multiple tickets assigned, fetching first one")
             self.ticket_id = ret[0]['id']
 
             return ret[0]
 
-    def get_tickets_for_state(self, ticket_type, to_state, property_filters = []):
+    def get_tickets_for_state(self, ticket_type, to_state, property_filters=[]):
         """
-        Get all tickets in state $state from projects assigned to the workerGroup, unless workerGroup is halted
-        function
+        Get all tickets in the provided state from projects assigned to the workerGroup, unless workerGroup is halted
         :param ticket_type: type of ticket
         :param to_state: ticket state the returned ticket will be in after this call
-        :parm property_filters: return only tickets matching given properties
+        :param property_filters: return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
         ret = self._open_rpc("C3TT.getTicketsForState", [ticket_type, to_state, property_filters])
@@ -225,7 +221,7 @@ class C3TTClient:
         :return:
         """
         ret = self._open_rpc("C3TT.setTicketDone")
-        logging.debug(str(ret))
+        logging.debug("set_ticket_done returned " + str(ret))
 
     def set_ticket_failed(self, error):
         """
