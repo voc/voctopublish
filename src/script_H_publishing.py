@@ -32,7 +32,7 @@ from model.ticket_module import RecordingTicket
 from model.ticket_module import PublishingTicket
 
 
-class Publisher:
+class Worker:
     """
     This is the main class for the publishing application
     It is meant to be used with the c3tt ticket tracker
@@ -382,30 +382,30 @@ class PublisherException(Exception):
 
 if __name__ == '__main__':
     try:
-        publisher = Publisher()
+        w = Worker()
     except Exception as e:
         logging.error(e)
         logging.exception(e)
         sys.exit(-1)
 
-    if publisher.ticket:
-        if publisher.worker_type == 'releasing':
+    if w.ticket:
+        if w.worker_type == 'releasing':
             try:
-                publisher.publish()
+                w.publish()
             except Exception as e:
-                publisher.c3tt.set_ticket_failed(str(e))
+                w.c3tt.set_ticket_failed(str(e))
                 logging.exception(e)
                 sys.exit(-1)
-        elif publisher.worker_type == 'recording':
+        elif w.worker_type == 'recording':
             try:
-                publisher.download()
+                w.download()
             except Exception as e:
-                publisher.c3tt.set_ticket_failed(str(e))
+                w.c3tt.set_ticket_failed(str(e))
                 logging.exception(e)
                 sys.exit(-1)
         else:
             logging.error('unknown ticket type')
-            publisher.c3tt.set_ticket_failed('unknown ticket type')
+            w.c3tt.set_ticket_failed('unknown ticket type')
             sys.exit(-1)
     else:
         sys.exit(0)
