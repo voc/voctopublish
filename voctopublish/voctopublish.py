@@ -199,7 +199,7 @@ class Publisher:
                 # todo: write voctoweb event_id to ticket properties --Andi
                 logging.warning("event already exists => publishing")
             else:
-                    raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
+                    raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.text))
 
             # in case of a multi language release we create here the single language files
             if len(self.ticket.languages) > 1:
