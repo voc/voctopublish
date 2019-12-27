@@ -238,6 +238,16 @@ class VoctowebClient:
         except IOError as e:
             if e.errno == errno.ENOENT:
                 try:
+                    # Check if parent directory exists and if not create it.
+                    try:
+                        self.sftp.stat(self.t.voctoweb_path)
+                    except IOError as e:
+                        if e.errno == errno.ENOENT:
+                            try:
+                                self.sftp.mkdir(self.t.voctoweb_path)
+                            except IOError as e:
+                                raise VoctowebException('Could not create parent subdir ' + self.t.voctoweb_path + ' : ' + str(e)) from e
+                    # Finally create format folder
                     self.sftp.mkdir(format_folder)
                 except IOError as e:
                     raise VoctowebException('Could not create format subdir ' + format_folder + ' : ' + str(e)) from e
