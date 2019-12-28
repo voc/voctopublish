@@ -283,10 +283,6 @@ class VoctowebClient:
         logging.info('creating event on ' + self.api_url + ' in conference ' + self.t.voctoweb_slug)
 
         # prepare some variables for the api call
-        url = self.api_url + 'events'
-        if self.t.voctoweb_event_id:
-           url += '/' + self.t.voctoweb_event_id
-
         if self.t.url:
             if self.t.url.startswith('//'):
                 event_url = 'https:' + self.t.url
@@ -328,8 +324,10 @@ class VoctowebClient:
                        'tags': self.t.voctoweb_tags,
                        'promoted': False,
                        'release_date': str(time.strftime("%Y-%m-%d"))
-                   }
-                   }
+                      }
+                    }
+
+        url = self.api_url + 'events'
         logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
         # call voctoweb api
@@ -337,9 +335,18 @@ class VoctowebClient:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
             if self.t.voctoweb_event_id:
-                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+                r = requests.patch(url + '/' + self.t.guid, headers=headers, data=json.dumps(payload))
+                if r.status_code == 422:
+                    # event does not exist, create new one
+                    r = requests.post(url, headers=headers, data=json.dumps(payload))
+
             else:
                 r = requests.post(url, headers=headers, data=json.dumps(payload))
+                # event already exists so update metadata
+                if r.status_code == 422:
+                    r = requests.patch(url + '/' + self.t.guid, headers=headers, data=json.dumps(payload))
+
+
 
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
