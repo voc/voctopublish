@@ -224,8 +224,8 @@ class C3TTClient:
         set Ticket status on done
         :return:
         """
-        ret = self._open_rpc("C3TT.setTicketDone", ticket)
-        #logging.debug(str(ret))
+        ret = self._open_rpc("C3TT.setTicketDone")
+        logging.debug(str(ret))
 
     def set_ticket_failed(self, ticket, error):
         """

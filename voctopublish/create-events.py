@@ -103,7 +103,7 @@ class RelivePublisher:
         if ticket.profile_voctoweb_enable and ticket.voctoweb_enable:
             logging.debug(
                 'encoding profile media flag: ' + str(ticket.profile_voctoweb_enable) + " project media flag: " + str(ticket.voctoweb_enable))
-            self._publish_to_voctoweb(ticket)
+            self._publish_event_to_voctoweb(ticket)
 
 
     def _get_ticket_from_tracker(self):
@@ -138,11 +138,10 @@ class RelivePublisher:
 
         return t
 
-    def _publish_to_voctoweb(self, ticket):
+    def _publish_event_to_voctoweb(self, ticket):
         """
         Create a event on an voctomix instance. This includes creating a recording for each media file.
         """
-        logging.info("publishing to voctoweb")
         try:
             vw = VoctowebClient(ticket,
                                 self.config['voctoweb']['api_key'],
@@ -153,19 +152,30 @@ class RelivePublisher:
         except Exception as e_:
             raise PublisherException('Error initializing voctoweb client. Config parameter missing') from e_
 
-        if ticket.master:
+        if not(ticket.voctoweb_event_id):
             # if this is master ticket we need to check if we need to create an event on voctoweb
+
+            # check if event exists on voctoweb instance, and abort if this is already the case
+            r = vw.get_event()
+            if r.status_code != 404:
+                self.c3tt.set_ticket_done(ticket)
+                print('event already exists, abort!')
+                return
+
+
             logging.debug('this is a master ticket')
             r = vw.create_or_update_event()
             if r.status_code in [200, 201]:
                 logging.info("new event created or existing updated")
                 
+                '''
                 try:
                     # we need to write the Event ID onto the parent ticket, so the other (master) encoding tickets 
                     # also have acccess to the Voctoweb Event ID
                     self.c3tt.set_ticket_properties(ticket.parent_id, {'Voctoweb.EventId': r.json()['id']})
                 except Exception as e_:
                     raise PublisherException('failed to Voctoweb EventID to parent ticket') from e_
+                '''
 
             elif r.status_code == 422:
                 # If this happens tracker and voctoweb are out of sync regarding the event id
@@ -174,8 +184,16 @@ class RelivePublisher:
                 logging.warning("event already exists => please sync event manually")
             else:
                 raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
+            
+            print(os.path.join(ticket.voctoweb_url, ticket.slug))
+        else:
+            logging.info("nothing to to, is already pubilshed")
+            print(os.path.join(ticket.voctoweb_url, ticket.slug))
+            print("master? ", ticket.master )
+            print("event id:", ticket.voctoweb_event_id)
 
-    
+
+
         self.c3tt.set_ticket_done(ticket)
 
 
@@ -201,7 +219,5 @@ if __name__ == '__main__':
         publisher.create_event()
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        if not args.notfail:
-            publisher.c3tt.set_ticket_failed(publisher.ticket.id, '%s: %s' % (exc_type.__name__, e))
         logging.exception(e)
         sys.exit(-1)

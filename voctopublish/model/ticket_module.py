@@ -67,6 +67,7 @@ class Ticket:
         else:
             self.master = False
         self.profile_slug = self._validate_('EncodingProfile.Slug')
+        print('Ticket Type:', self.profile_slug)
         if self.profile_slug == 'relive':
             # TODO: map two char language codes to three char ones in a more proper way...
             lang_map = {'en': 'eng', 'de': 'deu'}   # WORKAROUND

@@ -265,17 +265,23 @@ class VoctowebClient:
 
         logging.info("uploading " + remote_filename + " done")
 
+
+    def get_event(self):
+        """
+        Gets event on the voctoweb API host via GUID
+        :return:
+        """
+        url = self.api_url + 'events'
+        headers = {'CONTENT-TYPE': 'application/json'}
+        r = requests.get(url + '/' + self.t.guid, headers=headers)
+        return r
+
     def create_or_update_event(self):
         """
         Create a new event on the voctoweb API host
         :return:
         """
         logging.info('creating event on ' + self.api_url + ' in conference ' + self.t.voctoweb_slug)
-
-        # prepare some variables for the api call
-        url = self.api_url + 'events'
-        if self.t.voctoweb_event_id:
-           url += '/' + self.t.voctoweb_event_id
 
         if self.t.url:
             if self.t.url.startswith('//'):
@@ -328,19 +334,27 @@ class VoctowebClient:
                        **images
                     }
                 }
-        logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + json.dumps(payload))
-
         # call voctoweb api
         try:
-            # TODO make ssl verify a config option
-            # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
+
+            # prepare some variables for the api call
+            url = self.api_url + 'events'
+            logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + json.dumps(payload))
             if self.t.voctoweb_event_id:
-                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+                try:
+                    logging.info("trying to patch event " + self.t.guid)
+                    r = requests.patch(url + '/' + self.t.guid, headers=headers, data=json.dumps(payload))
+                except:
+                    logging.info("... faild, trying to create new event " + self.t.guid)
+                    r = requests.post(url, headers=headers, data=json.dumps(payload))
             else:
+                logging.info("trying to create new event " + self.t.guid)
                 r = requests.post(url, headers=headers, data=json.dumps(payload))
 
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
+        
+        print()
         return r
 
     def create_recording(self, local_filename, filename, folder, language, hq, html5, single_language=False):
