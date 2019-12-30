@@ -62,10 +62,10 @@ class Ticket:
 
 
         # encoding (profile) properties
-        if self._validate_('EncodingProfile.IsMaster') == 'yes':
-            self.master = True
-        else:
-            self.master = False
+        #if self._validate_('EncodingProfile.IsMaster') == 'yes':
+        #    self.master = True
+        #else:
+        self.master = False
         self.profile_slug = self._validate_('EncodingProfile.Slug')
         print('Ticket Type:', self.profile_slug)
         if self.profile_slug == 'relive':
@@ -136,7 +136,7 @@ class Ticket:
         self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
         # we will fill the following variables only if voctoweb is enabled
         if self.profile_voctoweb_enable and self.voctoweb_enable:
-            self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
+            self.mime_type = self._validate_('Publishing.Voctoweb.MimeType', True)
             self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
             self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
             self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')

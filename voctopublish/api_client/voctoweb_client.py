@@ -22,7 +22,7 @@ import subprocess
 import time
 import tempfile
 import operator
-import paramiko
+#import paramiko
 import requests
 import glob
 
@@ -271,9 +271,12 @@ class VoctowebClient:
         Gets event on the voctoweb API host via GUID
         :return:
         """
-        url = self.api_url + 'events'
-        headers = {'CONTENT-TYPE': 'application/json'}
-        r = requests.get(url + '/' + self.t.guid, headers=headers)
+        try: 
+            url = self.api_url[:-4] + "public/events/" + self.t.guid
+            print(url)
+            r = requests.get(url) 
+        except requests.exceptions.BaseHTTPError as e_: 
+            raise VoctowebException("error while checking event id with public API") from e_ 
         return r
 
     def create_or_update_event(self):

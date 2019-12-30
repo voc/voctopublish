@@ -37,11 +37,11 @@ class RelivePublisher:
     """
     def __init__(self, args = {}):
         # load config
-        if not os.path.exists('client.conf'):
+        if not os.path.exists('/home/andi/relive/client.conf'):
             raise IOError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
-        self.config.read('client.conf')
+        self.config.read('/home/andi/relive/client.conf')
 
         self.notfail = args.notfail
 
@@ -90,11 +90,11 @@ class RelivePublisher:
         except Exception as e_:
             raise PublisherException('Config parameter missing or empty, please check config') from e_
 
-    def create_event(self):
+    def create_event(self, ticket_id):
         """
         Decide based on the information provided by the tracker where to publish.
         """
-        ticket = self._get_ticket_from_tracker()
+        ticket = self._get_ticket_by_id(ticket_id)
 
         if not ticket:
             return
@@ -104,6 +104,27 @@ class RelivePublisher:
             logging.debug(
                 'encoding profile media flag: ' + str(ticket.profile_voctoweb_enable) + " project media flag: " + str(ticket.voctoweb_enable))
             self._publish_event_to_voctoweb(ticket)
+
+    def _get_ticket_by_id(self, ticket_id):
+        """
+        Request a ticket from tracker
+        :return: a ticket object or None in case no ticket is available
+        """
+        logging.info('requesting ticket from tracker')
+        t = None
+
+        logging.info("Ticket ID:" + str(ticket_id))
+        try:
+            ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
+            logging.debug("Ticket Properties: " + str(ticket_properties))
+        except Exception as e_:
+            raise e_
+        ticket_properties['EncodingProfile.Slug'] = 'relive'
+        ticket_properties['Publishing.Voctoweb.EnableProfile'] = 'yes'
+        t = Ticket({'id': ticket_id, 'parent_id': None}, ticket_properties)
+
+        return t
+
 
 
     def _get_ticket_from_tracker(self):
@@ -170,6 +191,7 @@ class RelivePublisher:
             r = vw.create_or_update_event()
             if r.status_code in [200, 201]:
                 logging.info("new event created or existing updated")
+                self.c3tt.set_ticket_properties(ticket.id, {'Voctoweb.EventId': r.json()['id']})
                 
                 '''
                 try:
@@ -197,7 +219,7 @@ class RelivePublisher:
 
 
 
-        self.c3tt.set_ticket_done(ticket)
+        #self.c3tt.set_ticket_done(ticket)
 
 
 class PublisherException(Exception):
@@ -206,6 +228,7 @@ class PublisherException(Exception):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='generate events on voctoweb for relive ') 
+    parser.add_argument('ticket', action="store", help="integer id of an tracker ticket")
     parser.add_argument('--verbose',  '-v', action='store_true', default=False)
     parser.add_argument('--notfail', action='store_true', default=False, help='do not mark ticket as failed in tracker when something goes wrong')
 
@@ -219,7 +242,7 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     try:
-        publisher.create_event()
+        publisher.create_event(args.ticket)
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         logging.exception(e)
