@@ -74,26 +74,36 @@ class YoutubeAPI:
         # handle multi language events
         if len(self.t.languages) > 1:
             logging.debug('Languages: ' + str(self.t.languages))
+
+            i = 0
             for lang in self.t.languages:
-                out_filename = self.t.fahrplan_id + "-" + self.t.profile_slug + "-audio" + str(lang) + "." + self.t.profile_extension
-                out_path = os.path.join(self.t.publishing_path, out_filename)
+                video_url = self.t.get_raw_property('YouTube.Url{}'.format(i))
+                if video_url and self.t.youtube_update != 'force':
+                    logging.info('Video track {} is already on youtube, returning previous URL {}'.format(i, video_url))
+                else: 
+                    out_filename = self.t.fahrplan_id + "-" + self.t.profile_slug + "-audio" + str(lang) + "." + self.t.profile_extension
+                    out_path = os.path.join(self.t.publishing_path, out_filename)
 
-                logging.info('remuxing ' + self.t.local_filename + ' to ' + out_path)
+                    logging.info('remuxing ' + self.t.local_filename + ' to ' + out_path)
 
-                try:
-                    subprocess.check_output('ffmpeg -y -v warning -nostdin -i ' +
-                                            os.path.join(self.t.publishing_path, self.t.local_filename) +
-                                            ' -map 0:0 -map 0:a:' + str(lang) + ' -c copy ' + out_path, shell=True)
-                except Exception as e_:
-                    raise YouTubeException('error remuxing ' + self.t.local_filename + ' to ' + out_path) from e_
+                    try:
+                        subprocess.check_output('ffmpeg -y -v warning -nostdin -i ' +
+                                                os.path.join(self.t.publishing_path, self.t.local_filename) +
+                                                ' -map 0:0 -map 0:a:' + str(lang) + ' -c copy ' + out_path, shell=True)
+                    except Exception as e_:
+                        raise YouTubeException('error remuxing ' + self.t.local_filename + ' to ' + out_path) from e_
 
-                if int(lang) == 0:
-                    lang = None
-                else:
-                    lang = self.t.languages[lang]
+                    if int(lang) == 0:
+                        lang = None
+                    else:
+                        lang = self.t.languages[lang]
 
-                video_id = self.upload(out_path, lang)
-                self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
+                    video_id = self.upload(out_path, lang)
+                    video_url = 'https://www.youtube.com/watch?v=' + video_id
+                    logging.info("published %s video track to %s" % (lang, video_url))
+                
+                self.youtube_urls.append(video_url)
+                i += 1
         else:
             video_id = self.upload(os.path.join(self.t.publishing_path, self.t.local_filename), None)
 

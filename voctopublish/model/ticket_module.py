@@ -94,6 +94,7 @@ class Ticket:
             self.youtube_enable = False
         # we will fill the following variables only if youtube is enabled
         if self.profile_youtube_enable and self.youtube_enable:
+            self.youtube_update = self._validate_('Publishing.YouTube.Update', optional=True)
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
