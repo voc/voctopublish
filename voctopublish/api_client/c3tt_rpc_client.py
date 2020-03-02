@@ -234,6 +234,15 @@ class C3TTClient:
         """
         self._open_rpc("C3TT.setTicketFailed", ticket, [error.encode('ascii', 'xmlcharrefreplace')])
 
+    def create_encoding_ticket(self, ticket, profile):
+        """
+        create a encoding ticket below a meta ticket
+        :ticket: the ticket id or a ticket object
+        :profile: id of the encoding profile
+        :properties: an array of properties (optional)
+        """
+        ret = self._open_rpc("C3TT.createEncodingTicket", ticket, args=[profile])
+        return ret
 
 class C3TTException(Exception):
     pass
