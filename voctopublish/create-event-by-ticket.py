@@ -37,11 +37,13 @@ class RelivePublisher:
     """
     def __init__(self, args = {}):
         # load config
-        if not os.path.exists('/home/andi/relive/client.conf'):
+        config_path = '../client.conf'
+
+        if not os.path.exists(config_path):
             raise IOError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
-        self.config.read('/home/andi/relive/client.conf')
+        self.config.read(config_path)
 
         self.notfail = args.notfail
 
@@ -83,10 +85,16 @@ class RelivePublisher:
 
         logging.debug('creating C3TTClient')
         try:
-            self.c3tt = C3TTClient(self.config['C3Tracker']['url'],
-                                   self.config['C3Tracker']['group'],
+            def get_var(key, env_key):
+                if env_key in os.environ:
+                    return os.environ[env_key]
+                else:
+                    return self.config['C3Tracker'][key]
+
+            self.c3tt = C3TTClient(get_var('url', 'CRS_TRACKER'),
+                                   get_var('group', 'CRS_TOKEN'),
                                    self.host,
-                                   self.config['C3Tracker']['secret'])
+                                   get_var('secret', 'CRS_SECRET'))
         except Exception as e_:
             raise PublisherException('Config parameter missing or empty, please check config') from e_
 
@@ -191,7 +199,7 @@ class RelivePublisher:
             r = vw.create_or_update_event()
             if r.status_code in [200, 201]:
                 logging.info("new event created or existing updated")
-                self.c3tt.set_ticket_properties(ticket.id, {'Voctoweb.EventId': r.json()['id']})
+                # self.c3tt.set_ticket_properties(ticket.id, {'Voctoweb.EventId': r.json()['id']})
                 
                 '''
                 try:
