@@ -363,15 +363,15 @@ class Worker:
             logging.warning('video file "' + path + '" already exists, please remove file')
             raise PublisherException('video file already exists, please remove file')
 
-        logging.debug(urllib.parse.quote(self.ticket.download_url, safe=':/'))
-
         with open(file, 'wb') as fh:
             url = self.ticket.download_url
             url_decoded = urllib.parse.unquote(url)
             # if the unquoted URL has the same length as the input it was not url encoded
             if len(url) != len(url_decoded):
                 # if it was encoded we decode it before passing it further
+                logging.debug("URL: " + url + " was url encoded, decoding it before processing")
                 url = url_decoded
+            logging.debug("Downloading file from: " + urllib.parse.quote(self.ticket.download_url, safe=':/'))
             with urllib.request.urlopen(urllib.parse.quote(url, safe=':/')) as df:
                 # original version tried to write whole file to ram and ran aut of memory
                 # read in 16 kB chunks instead
