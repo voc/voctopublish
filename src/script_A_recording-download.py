@@ -367,6 +367,7 @@ class Worker:
             url = self.ticket.download_url
             url_decoded = urllib.parse.unquote(url)
             # if the unquoted URL has the same length as the input it was not url encoded
+            logging.debug("Test if url is encoded, len url: " + str(len(url)) + " len url decoded: " + str(len(url_decoded)) )
             if len(url) != len(url_decoded):
                 # if it was encoded we decode it before passing it further
                 logging.debug("URL: " + url + " was url encoded, decoding it before processing")
