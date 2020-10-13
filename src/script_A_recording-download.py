@@ -366,7 +366,13 @@ class Worker:
         logging.debug(urllib.parse.quote(self.ticket.download_url, safe=':/'))
 
         with open(file, 'wb') as fh:
-            with urllib.request.urlopen(urllib.parse.quote(self.ticket.download_url, safe=':/')) as df:
+            url = self.ticket.download_url
+            url_decoded = urllib.parse.unquote(url)
+            # if the unquoted URL has the same length as the input it was not url encoded
+            if len(url) != len(url_decoded):
+                # if it was encoded we decode it before passing it further
+                url = url_decoded
+            with urllib.request.urlopen(urllib.parse.quote(url, safe=':/')) as df:
                 # original version tried to write whole file to ram and ran aut of memory
                 # read in 16 kB chunks instead
                 while True:
