@@ -372,7 +372,7 @@ class Worker:
                 # if it was encoded we decode it before passing it further
                 logging.debug("URL: " + url + " was url encoded, decoding it before processing")
                 url = url_decoded
-            logging.debug("Downloading file from: " + urllib.parse.quote(self.ticket.download_url, safe=':/'))
+            logging.debug("Downloading file from: " + url)
             with urllib.request.urlopen(urllib.parse.quote(url, safe=':/')) as df:
                 # original version tried to write whole file to ram and ran aut of memory
                 # read in 16 kB chunks instead
