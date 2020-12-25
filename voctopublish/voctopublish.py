@@ -98,6 +98,7 @@ class Publisher:
         self.ticket = self._get_ticket_from_tracker()
 
         if not self.ticket:
+            logging.debug('not ticket, returning')
             return
 
         # check source file and filesystem permissions
@@ -111,12 +112,16 @@ class Publisher:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
+        logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
         if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
             logging.debug(
                 'encoding profile media flag: ' + str(self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
             self._publish_to_voctoweb()
+        else:
+            logging.debug("no voctoweb :(")
 
+        logging.debug("#youtube {} {}".format(self.ticket.profile_youtube_enable, self.ticket.youtube_enable))
         # YouTube
         if self.ticket.profile_youtube_enable and self.ticket.youtube_enable:
             if self.ticket.has_youtube_url and self.ticket.youtube_update != 'force' and len(self.ticket.languages) <= 1:
@@ -126,7 +131,10 @@ class Publisher:
                 logging.debug(
                     "encoding profile youtube flag: " + str(self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(self.ticket.youtube_enable))
                 self._publish_to_youtube()
+        else:
+            logging.debug("no youtube :(")
 
+        logging.debug('#done')
         self.c3tt.set_ticket_done()
 
         # Twitter
