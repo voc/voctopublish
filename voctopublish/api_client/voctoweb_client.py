@@ -309,7 +309,7 @@ class VoctowebClient:
                    'acronym': self.t.voctoweb_slug,
                    'event': {
                        'guid': self.t.guid,
-                       'slug': self.t.slug,
+                       #'slug': self.t.slug,
                        'title': self.t.title,
                        'subtitle': self.t.subtitle,
                        'link': event_url,
@@ -335,16 +335,16 @@ class VoctowebClient:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
             if self.t.voctoweb_event_id:
-                r = requests.patch(url + '/' + self.t.guid, headers=headers, data=json.dumps(payload))
+                r = requests.patch(url + '/' + self.t.guid, headers=headers, json=payload)
                 if r.status_code == 422:
                     # event does not exist, create new one
-                    r = requests.post(url, headers=headers, data=json.dumps(payload))
+                    r = requests.post(url, headers=headers, json={**payload, 'event': { 'slug': self.t.slug, **payload['event'] } })
 
             else:
-                r = requests.post(url, headers=headers, data=json.dumps(payload))
+                r = requests.post(url, headers=headers, json={**payload, 'event': { 'slug': self.t.slug, **payload['event'] } })
                 # event already exists so update metadata
                 if r.status_code == 422:
-                    r = requests.patch(url + '/' + self.t.guid, headers=headers, data=json.dumps(payload))
+                    r = requests.patch(url + '/' + self.t.guid, headers=headers, json=payload)
 
 
 
