@@ -160,11 +160,8 @@ class C3TTClient:
         if not ret:
             return None
         else:
-<<<<<<< HEAD
-            return ret['id']
-=======
+
             return ret
->>>>>>> 3be5457... restucture to get parent_id of ticket
             
     def get_assigned_for_state(self, ticket_type, state, property_filters = []):
         """
@@ -182,11 +179,7 @@ class C3TTClient:
         else:
             if len(ret) > 1:
                 logging.warn("multiple tickets assined, fetching first one")
-<<<<<<< HEAD
-            return ret['id']
-=======
             return ret[0]
->>>>>>> 3be5457... restucture to get parent_id of ticket
 
     def get_tickets_for_state(self, ticket_type, to_state, property_filters = []):
         """

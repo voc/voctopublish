@@ -152,13 +152,8 @@ class Publisher:
             ticket_id = ticket_meta['id']
             logging.info("Ticket ID:" + str(ticket_id))
             try:
-<<<<<<< HEAD
-                tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
-                logging.debug("Ticket: " + str(tracker_ticket))
-=======
                 ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
                 logging.debug("Ticket Properties: " + str(ticket_properties))
->>>>>>> 3be5457... restucture to get parent_id of ticket
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
