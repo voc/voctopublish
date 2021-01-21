@@ -36,4 +36,8 @@
 ehthumbs.db
 Thumbs.db
 
+# python chache
+__pycache__/
+*.py[cod]
+
 client.conf
