@@ -51,6 +51,29 @@ class Ticket:
                 raise TicketException(key + ' is missing in ticket')
         return value
 
+    @staticmethod
+    def _get_language_from_string_(lang):
+        # https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
+        lang_map = {
+            'ar': 'ara',
+            'de': 'deu',
+            'deutsch': 'deu',
+            'en': 'eng',
+            'englisch': 'eng',
+            'es': 'spa',
+            'fr': 'fra',
+            'gsw': 'gsw',
+            'zh': 'chi'
+        }
+
+        out = []
+        for l in lang.split('-'):
+            if l in lang_map:
+                out.append(lang_map[l])
+            else:
+                raise TicketException('language ' + l + ' not in language map')
+        return '-'.join(out)
+
 
 class RecordingTicket(Ticket):
     '''
@@ -67,13 +90,7 @@ class RecordingTicket(Ticket):
         # fahrplan properties
         self.room = self._validate_('Fahrplan.Room')
         self.fahrplan_id = self._validate_('Fahrplan.ID')
-        lang_in = self._validate_('Fahrplan.Language')
-        # todo make a lookup table which can be used app wide
-        if lang_in == 'de' or lang_in == 'deutsch':
-            self.language = 'deu'
-        elif lang_in == 'en' or lang_in == 'englisch':
-            self.language = 'eng'
-
+        self.language = self._get_language_from_string_(self._validate_('Fahrplan.Language'))
 
 
 class PublishingTicket(Ticket):
