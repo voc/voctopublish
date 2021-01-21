@@ -71,7 +71,7 @@ class C3TTClient:
         hash_ = hmac.new(bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
         return hash_.hexdigest()
 
-    def _open_rpc(self, method, ticket=None, args=[]):
+    def _open_rpc(self, method, ticket=None, args=None):
         """
         create xmlrpc client
         :param method:
@@ -80,6 +80,8 @@ class C3TTClient:
         :return: attributes of the answer
         """
         logging.debug('creating XML RPC proxy: ' + self.url + "?group=" + self.group + "&hostname=" + self.host)
+        if args is None:
+            args = []
         if ticket is not None:
             # the ticket parameter can be either a numeric ticket_id or an instance of Ticket class
             if isinstance(ticket, int) or isinstance(ticket, str):
@@ -230,6 +232,7 @@ class C3TTClient:
     def set_ticket_failed(self, ticket, error):
         """
         set ticket status on failed an supply a error text
+        :param ticket: id of ticket
         :param error:
         """
         self._open_rpc("C3TT.setTicketFailed", ticket, [error.encode('ascii', 'xmlcharrefreplace')])
@@ -243,6 +246,22 @@ class C3TTClient:
         """
         ret = self._open_rpc("C3TT.createEncodingTicket", ticket, args=[profile])
         return ret
+
+    def create_meta_ticket(self, project: int, title: str, fahrplan_id: int, properties=None):
+        """
+        create a new meta ticket in a project
+        :param project: id of the project
+        :param title: title of the ticket
+        :param fahrplan_id: id of the talk in fahrplan
+        :param properties: optional list of properties
+        """
+        args = [project, title, fahrplan_id]
+        if properties:
+            args.append(properties)
+
+        ret = self._open_rpc('C3TT.createMetaTicket', args=args)
+        return ret
+
 
 class C3TTException(Exception):
     pass
