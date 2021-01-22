@@ -200,6 +200,7 @@ class C3TTClient:
     def set_ticket_properties(self, ticket, properties):
         """
         set ticket properties
+        :param ticket:
         :param properties:
         :return: Boolean
         """

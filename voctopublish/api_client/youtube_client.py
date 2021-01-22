@@ -41,16 +41,17 @@ class YoutubeAPI:
         self.secret = secret
 
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
-            'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi', 'chi': 'Chinese', 'ara': 'Arabic',
-            'hrv': 'Croatian', 'pol': 'Polish'
-        }
+                         'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi', 'chi': 'Chinese', 'ara': 'Arabic',
+                         'hrv': 'Croatian', 'pol': 'Polish', 'por': 'Portuguese'
+                         }
 
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
                                     'spa': 'La traducción española', 'gsw': 'Schwizerdüütschi Übersetzig',
                                     'fra': 'traduction française', 'rus': 'Russian (русский) translation',
                                     'chi': '中文翻译', 'ara': 'الترجمة العربية',
-                                    'hrv': 'Hrvatski prijevod', 'pol': 'Prijevod s poljskog'
-        }
+                                    'hrv': 'Hrvatski prijevod', 'pol': 'Prijevod s poljskog',
+                                    'por': 'Tradução portuguesa'
+                                    }
 
         self.youtube_urls = []
         self.channelId = None
@@ -74,26 +75,37 @@ class YoutubeAPI:
         # handle multi language events
         if len(self.t.languages) > 1:
             logging.debug('Languages: ' + str(self.t.languages))
+
+            i = 0
             for lang in self.t.languages:
-                out_filename = self.t.fahrplan_id + "-" + self.t.profile_slug + "-audio" + str(lang) + "." + self.t.profile_extension
-                out_path = os.path.join(self.t.publishing_path, out_filename)
-
-                logging.info('remuxing ' + self.t.local_filename + ' to ' + out_path)
-
-                try:
-                    subprocess.check_output('ffmpeg -y -v warning -nostdin -i ' +
-                                            os.path.join(self.t.publishing_path, self.t.local_filename) +
-                                            ' -map 0:0 -map 0:a:' + str(lang) + ' -c copy ' + out_path, shell=True)
-                except Exception as e_:
-                    raise YouTubeException('error remuxing ' + self.t.local_filename + ' to ' + out_path) from e_
-
-                if int(lang) == 0:
-                    lang = None
+                video_url = self.t.get_raw_property('YouTube.Url{}'.format(i))
+                if video_url and self.t.youtube_update != 'force':
+                    logging.info('Video track {} is already on youtube, returning previous URL {}'.format(i, video_url))
                 else:
-                    lang = self.t.languages[lang]
+                    out_filename = self.t.fahrplan_id + "-" + self.t.profile_slug + "-audio" + str(
+                        lang) + "." + self.t.profile_extension
+                    out_path = os.path.join(self.t.publishing_path, out_filename)
 
-                video_id = self.upload(out_path, lang)
-                self.youtube_urls.append('https://www.youtube.com/watch?v=' + video_id)
+                    logging.info('remuxing ' + self.t.local_filename + ' to ' + out_path)
+
+                    try:
+                        subprocess.check_output('ffmpeg -y -v warning -nostdin -i ' +
+                                                os.path.join(self.t.publishing_path, self.t.local_filename) +
+                                                ' -map 0:0 -map 0:a:' + str(lang) + ' -c copy ' + out_path, shell=True)
+                    except Exception as e_:
+                        raise YouTubeException('error remuxing ' + self.t.local_filename + ' to ' + out_path) from e_
+
+                    if int(lang) == 0:
+                        lang = None
+                    else:
+                        lang = self.t.languages[lang]
+
+                    video_id = self.upload(out_path, lang)
+                    video_url = 'https://www.youtube.com/watch?v=' + video_id
+                    logging.info("published %s video track to %s" % (lang, video_url))
+
+                self.youtube_urls.append(video_url)
+                i += 1
         else:
             video_id = self.upload(os.path.join(self.t.publishing_path, self.t.local_filename), None)
 
@@ -200,7 +212,6 @@ class YoutubeAPI:
 
         logging.debug('guessed mime type for file %s as %s and its size as %u bytes' % (file, mimetype, size))
 
-
         # https://developers.google.com/youtube/v3/docs/videos#resource
         r = requests.post(
             'https://www.googleapis.com/upload/youtube/v3/videos',
@@ -226,7 +237,8 @@ class YoutubeAPI:
         if 'location' not in r.headers:
             raise YouTubeException('Video creation did not return a location-header to upload to: %s' % (r.headers,))
 
-        logging.info('successfully created video and received upload-url from %s' % (r.headers['server'] if 'server' in r.headers else '-'))
+        logging.info('successfully created video and received upload-url from %s' % (
+            r.headers['server'] if 'server' in r.headers else '-'))
         logging.debug('uploading video-data to %s' % r.headers['location'])
 
         with open(file, 'rb') as fp:

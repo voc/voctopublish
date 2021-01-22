@@ -238,6 +238,16 @@ class VoctowebClient:
         except IOError as e:
             if e.errno == errno.ENOENT:
                 try:
+                    # Check if parent directory exists and if not create it.
+                    try:
+                        self.sftp.stat(self.t.voctoweb_path)
+                    except IOError as e:
+                        if e.errno == errno.ENOENT:
+                            try:
+                                self.sftp.mkdir(self.t.voctoweb_path)
+                            except IOError as e:
+                                raise VoctowebException('Could not create parent subdir ' + self.t.voctoweb_path + ' : ' + str(e)) from e
+                    # Finally create format folder
                     self.sftp.mkdir(format_folder)
                 except IOError as e:
                     raise VoctowebException('Could not create format subdir ' + format_folder + ' : ' + str(e)) from e
@@ -265,7 +275,7 @@ class VoctowebClient:
 
         logging.info("uploading " + remote_filename + " done")
 
-    def create_event(self):
+    def create_or_update_event(self):
         """
         Create a new event on the voctoweb API host
         :return:
@@ -273,8 +283,6 @@ class VoctowebClient:
         logging.info('creating event on ' + self.api_url + ' in conference ' + self.t.voctoweb_slug)
 
         # prepare some variables for the api call
-        url = self.api_url + 'events'
-
         if self.t.url:
             if self.t.url.startswith('//'):
                 event_url = 'https:' + self.t.url
@@ -301,7 +309,7 @@ class VoctowebClient:
                    'acronym': self.t.voctoweb_slug,
                    'event': {
                        'guid': self.t.guid,
-                       'slug': self.t.slug,
+                       #'slug': self.t.slug,
                        'title': self.t.title,
                        'subtitle': self.t.subtitle,
                        'link': event_url,
@@ -310,27 +318,41 @@ class VoctowebClient:
                        'poster_filename': self.t.local_filename_base + "_preview.jpg",
                        'timeline_filename': self.t.local_filename_base + ".timeline.jpg",
                        'thumbnails_filename': self.t.local_filename_base + ".thumbnails.vtt",
-                       'conference_id': self.t.voctoweb_slug,
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
                        'tags': self.t.voctoweb_tags,
                        'promoted': False,
                        'release_date': str(time.strftime("%Y-%m-%d"))
-                   }
-                   }
+                      }
+                    }
+
+        url = self.api_url + 'events'
         logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
 
         # call voctoweb api
         try:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            r = requests.post(url, headers=headers, data=json.dumps(payload))
+            if self.t.voctoweb_event_id:
+                r = requests.patch(url + '/' + self.t.guid, headers=headers, json=payload)
+                if r.status_code == 422:
+                    # event does not exist, create new one
+                    r = requests.post(url, headers=headers, json={**payload, 'event': { 'slug': self.t.slug, **payload['event'] } })
+
+            else:
+                r = requests.post(url, headers=headers, json={**payload, 'event': { 'slug': self.t.slug, **payload['event'] } })
+                # event already exists so update metadata
+                if r.status_code == 422:
+                    r = requests.patch(url + '/' + self.t.guid, headers=headers, json=payload)
+
+
+
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
         return r
 
-    def create_recording(self, local_filename, filename, folder, language, hq, html5):
+    def create_recording(self, local_filename, filename, folder, language, hq, html5, single_language=False):
         """
         create_recording a file on the voctoweb API host
         :param local_filename: this is not necessarily the value from the ticket
@@ -343,6 +365,11 @@ class VoctowebClient:
         """
         logging.info(("publishing " + filename + " to " + self.api_url))
 
+        recording_id = self.t.recording_id
+        if single_language:
+            recording_id = self.t.get_raw_property('Voctoweb.RecordingId.' + language)
+
+
         # make sure we have the file size and length
         ret = []
         if not self._get_file_details(local_filename, ret):
@@ -350,6 +377,9 @@ class VoctowebClient:
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
         url = self.api_url + 'recordings'
+        if recording_id: 
+            url += '/' + recording_id
+
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {'api_key': self.api_key,
                    'guid': self.t.guid,
@@ -372,7 +402,11 @@ class VoctowebClient:
         try:
             # todo ssl verify by config
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
-            r = requests.post(url, headers=headers, data=json.dumps(payload))
+            if recording_id:
+                r = requests.patch(url, headers=headers, data=json.dumps(payload))
+            else:
+                r = requests.post(url, headers=headers, data=json.dumps(payload))
+
         except requests.exceptions.SSLError as e:
             raise VoctowebException("ssl cert error " + str(e)) from e
         # except requests.packages.urllib3.exceptions.MaxRetryError as e:
@@ -381,7 +415,13 @@ class VoctowebClient:
             raise VoctowebException(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
 
         logging.info(("publishing " + filename + " done"))
-        return r.json()['id']
+
+        if recording_id:
+            # Recording was only updated, we do not need return the recording_id as it is already part of the ticket
+            return None
+        else:
+            # Recording was created, return id to be written to the ticket
+            return r.json()['id']
 
     def _get_file_details(self, local_filename, ret):
         """

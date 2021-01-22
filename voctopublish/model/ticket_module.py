@@ -53,9 +53,9 @@ class Ticket:
         self.subtitle = self._validate_('Fahrplan.Subtitle', True)
         self.abstract = self._validate_('Fahrplan.Abstract', True)
         self.description = self._validate_('Fahrplan.Description', True)
-        self.date = self._validate_('Fahrplan.Date')
+        self.date = self._validate_('Fahrplan.DateTime')
         self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
-        self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
+        self.local_filename_base = self.fahrplan_id + "-" + self.guid
         self.room = self._validate_('Fahrplan.Room')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
@@ -67,7 +67,6 @@ class Ticket:
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
         self.url = self._validate_('Fahrplan.URL', True)
-        self.date = self._validate_('Fahrplan.Date')
 
         # recording ticket properties
 
@@ -95,6 +94,7 @@ class Ticket:
             self.youtube_enable = False
         # we will fill the following variables only if youtube is enabled
         if self.profile_youtube_enable and self.youtube_enable:
+            self.youtube_update = self._validate_('Publishing.YouTube.Update', optional=True)
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)

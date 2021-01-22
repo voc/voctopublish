@@ -98,6 +98,7 @@ class Publisher:
         self.ticket = self._get_ticket_from_tracker()
 
         if not self.ticket:
+            logging.debug('not ticket, returning')
             return
 
         # check source file and filesystem permissions
@@ -111,21 +112,29 @@ class Publisher:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
+        logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
         if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
             logging.debug(
                 'encoding profile media flag: ' + str(self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
             self._publish_to_voctoweb()
+        else:
+            logging.debug("no voctoweb :(")
 
+        logging.debug("#youtube {} {}".format(self.ticket.profile_youtube_enable, self.ticket.youtube_enable))
         # YouTube
         if self.ticket.profile_youtube_enable and self.ticket.youtube_enable:
-            if self.ticket.has_youtube_url:
-                raise PublisherException('YouTube URLs already exist in ticket, wont publish to youtube')
+            if self.ticket.has_youtube_url and self.ticket.youtube_update != 'force' and len(self.ticket.languages) <= 1:
+                if not self.ticket.youtube_update != 'ignore':
+                    raise PublisherException('YouTube URLs already exist in ticket, wont publish to youtube')
             else:
                 logging.debug(
                     "encoding profile youtube flag: " + str(self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(self.ticket.youtube_enable))
                 self._publish_to_youtube()
+        else:
+            logging.debug("no youtube :(")
 
+        logging.debug('#done')
         self.c3tt.set_ticket_done(self.ticket)
 
         # Twitter
@@ -147,7 +156,7 @@ class Publisher:
         ticket_meta = None
         if not ticket_meta:
             ticket_meta = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
-        
+
         if ticket_meta:
             ticket_id = ticket_meta['id']
             logging.info("Ticket ID:" + str(ticket_id))
@@ -186,7 +195,7 @@ class Publisher:
                 # ticket has an recording id or voctoweb event id. We assume the event exists on media
             else:
                 # ticket has no recording id therefore we create the event on voctoweb
-                r = vw.create_event()
+                r = vw.create_or_update_event()
                 if r.status_code in [200, 201]:
                     logging.info("new event created")
                     # generate thumbnails and a visual timeline for video releases (will not overwrite existing files)
@@ -197,11 +206,17 @@ class Publisher:
                         vw.upload_timelens()
                     logging.debug('response: ' + str(r.json()))
                     try:
-                        self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
+                        # todo: only set recording id when new recording was created, and not when it was only updated
+                        self.c3tt.set_ticket_properties(self, {'Voctoweb.EventId': r.json()['id']})
                     except Exception as e_:
-                        raise PublisherException('failed to set EventID on ticket') from e_
+                        raise PublisherException('failed to Voctoweb EventID to ticket') from e_
+
+                elif r.status_code == 422:
+                    # If this happens tracker and voctoweb are out of sync regarding the event id
+                    # todo: write voctoweb event_id to ticket properties --Andi
+                    logging.warning("event already exists => publishing")
                 else:
-                    raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.content))
+                    raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.text))
 
             # in case of a multi language release we create here the single language files
             if len(self.ticket.languages) > 1:
@@ -238,8 +253,10 @@ class Publisher:
                                            language,
                                            hq,
                                            html5)
-        
-        self.c3tt.set_ticket_properties(self.ticket, {'Voctoweb.RecordingId.Master': recording_id})
+
+        # when the ticket was created, and not only updated: write recording_id to ticket
+        if recording_id:
+            self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
 
     def _mux_to_single_language(self, vw):
         """
@@ -269,12 +286,14 @@ class Publisher:
                 raise PublisherException('error uploading ' + out_path) from e_
 
             try:
-                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[language]), True, True)
+                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[language]), hq=True, html5=True, single_language=True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
             try:
-                self.c3tt.set_ticket_properties(self.ticket, {'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
+                # when the ticket was created, and not only updated: write recording_id to ticket
+                if recording_id:
+                    self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
 
@@ -297,8 +316,6 @@ class Publisher:
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
         # second YoutubeAPI instance for playlist management at youtube.com
-        # todo figure out why we need two tokens
-	# answer: if the playlist is on a different youtube channel, then the one we upload the videos to --Andi
         if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
             yt_voctoweb = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
             yt_voctoweb.setup(self.config['youtube']['playlist_token'])
