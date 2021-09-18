@@ -193,7 +193,7 @@ class YoutubeAPI:
                     'privacyStatus': privacy,
                     'embeddable': True,
                     'publicStatsViewable': True,
-                    'license': 'creativeCommon',
+                    'license': 'creativeCommon' if 'https://creativecommons.org/licenses/by' in self.t.get_raw_property('Meta.Licence') else None,
                 },
             'recordingDetails':
                 {
