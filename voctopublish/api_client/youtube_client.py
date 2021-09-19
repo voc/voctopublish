@@ -176,6 +176,12 @@ class YoutubeAPI:
         else:
             privacy = 'private'
 
+        license = self.t.get_raw_property('Meta.License')
+        if license and 'https://creativecommons.org/licenses/by' in license:
+            license = 'creativeCommon'
+        else:
+            license = 'youtube'
+
         metadata = {
             'snippet':
                 {
@@ -193,7 +199,7 @@ class YoutubeAPI:
                     'privacyStatus': privacy,
                     'embeddable': True,
                     'publicStatsViewable': True,
-                    'license': 'creativeCommon' if 'https://creativecommons.org/licenses/by' in self.t.get_raw_property('Meta.Licence') else None,
+                    'license': license, 
                 },
             'recordingDetails':
                 {
