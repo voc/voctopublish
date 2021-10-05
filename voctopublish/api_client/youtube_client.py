@@ -22,6 +22,7 @@ import logging
 import requests
 import json
 import mimetypes
+import langcodes
 import os
 
 from model.ticket_module import Ticket
@@ -149,7 +150,9 @@ class YoutubeAPI:
         else:
             url = ''
 
-        description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url])
+        topline = ["#" + x.replace(' ', '') if x else '' for x in [self.t.acronym, self.t.track]]
+
+        description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url, ' '.join(topline)])
         description = self.strip_tags(description)
 
         if self.t.voctoweb_url:
@@ -173,6 +176,12 @@ class YoutubeAPI:
         else:
             privacy = 'private'
 
+        license = self.t.get_raw_property('Meta.License')
+        if license and 'https://creativecommons.org/licenses/by' in license:
+            license = 'creativeCommon'
+        else:
+            license = 'youtube'
+
         metadata = {
             'snippet':
                 {
@@ -181,14 +190,20 @@ class YoutubeAPI:
                     # YouTube does not allow <> in description -> escape them
                     'description': description.replace('<', '&lt').replace('>', '&gt'),
                     'channelId': self.channelId,
-                    'tags': self._select_tags(lang)
+                    'tags': self._select_tags(lang),
+                    'defaultLanguage': langcodes.get(self.t.languages[0]).language,
+                    'defaultAudioLanguage': langcodes.get(lang or self.t.languages[0]).language,
                 },
             'status':
                 {
                     'privacyStatus': privacy,
                     'embeddable': True,
                     'publicStatsViewable': True,
-                    'license': 'creativeCommon',
+                    'license': license, 
+                },
+            'recordingDetails':
+                {
+                    'recordingDate': self.t.date,
                 },
         }
 
@@ -217,7 +232,7 @@ class YoutubeAPI:
             'https://www.googleapis.com/upload/youtube/v3/videos',
             params={
                 'uploadType': 'resumable',
-                'part': 'snippet,status'
+                'part': 'snippet,status,recordingDetails'
             },
             headers={
                 'Authorization': 'Bearer ' + self.accessToken,
@@ -230,7 +245,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             if 400 == r.status_code:
-                raise YouTubeException(r.json()['error']['message'] + '\n' + r.text)
+                raise YouTubeException(r.json()['error']['message'] + '\n' + r.text + '\n\n' + json.dumps(metadata, indent=2))
             else:
                 raise YouTubeException('Video creation failed with error-code %u: %s' % (r.status_code, r.text))
 

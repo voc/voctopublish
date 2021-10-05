@@ -4,3 +4,4 @@ twitter
 requests
 mastodon.py
 pillow
+langcodes

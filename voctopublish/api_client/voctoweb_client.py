@@ -328,7 +328,7 @@ class VoctowebClient:
                     }
 
         url = self.api_url + 'events'
-        logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
+        logging.debug("api url: " + url + ' header: ' + str(headers) + ' slug: ' + str(self.t.slug) + ' payload: ' + str(payload))
 
         # call voctoweb api
         try:
@@ -342,6 +342,7 @@ class VoctowebClient:
 
             else:
                 r = requests.post(url, headers=headers, json={**payload, 'event': { 'slug': self.t.slug, **payload['event'] } })
+                logging.debug("got response with code %d: %r" % (r.status_code, r.text))
                 # event already exists so update metadata
                 if r.status_code == 422:
                     r = requests.patch(url + '/' + self.t.guid, headers=headers, json=payload)
