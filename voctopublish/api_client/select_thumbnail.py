@@ -80,25 +80,25 @@ def calc_score(path):
     return s3 + s4 + s7
 
 
-scores = {}
-
-verbose = 0
-if sys.argv[1] == "-v":
-    verbose = 1
-    sys.argv.pop(1)
-
-for f in sys.argv[1:]:
-    score = calc_score(f)
-
-    scores[f] = score
-
-sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
-
-if verbose == 1:
-    print("scores:")
-
-    for (f, score) in sorted_scores:
-        print("%10s: %f" % (f, score))
-
-else:
-    print(sorted_scores[0][0])
+# scores = {}
+#
+# verbose = 0
+# if sys.argv[1] == "-v":
+#     verbose = 1
+#     sys.argv.pop(1)
+#
+# for f in sys.argv[1:]:
+#     score = calc_score(f)
+#
+#     scores[f] = score
+#
+# sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
+#
+# if verbose == 1:
+#     print("scores:")
+#
+#     for (f, score) in sorted_scores:
+#         print("%10s: %f" % (f, score))
+#
+# else:
+#     print(sorted_scores[0][0])

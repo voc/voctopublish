@@ -1,4 +1,4 @@
-#    Copyright (C) 2017  derpeter
+#    Copyright (C) 2021  derpeter
 #    derpeter@berlin.ccc.de
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -19,14 +19,14 @@ import logging
 
 class Ticket:
     """
-    This class is inspired by the c3tt ticket system. If handles all information we got from the tracker
+    This class is inspired by the c3tt ticket system. It handles all information we got from the tracker
     and adds some additional information.
     """
     def __init__(self, ticket, ticket_id):
         if not ticket:
             raise TicketException('Ticket was None type')
         self.__tracker_ticket = ticket
-        self.ticket_id = ticket_id
+        self.id = ticket_id
 
         # project properties
         self.acronym = self._validate_('Project.Slug')
@@ -128,57 +128,121 @@ class PublishingTicket(Ticket):
         self.subtitle = self._validate_('Fahrplan.Subtitle', True)
         self.abstract = self._validate_('Fahrplan.Abstract', True)
         self.description = self._validate_('Fahrplan.Description', True)
-        self.date = self._validate_('Fahrplan.Date')
+        self.date = self._validate_('Fahrplan.DateTime')
         self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
-        self.local_filename_base = self.fahrplan_id + "-" + self.profile_slug
+        self.local_filename_base = self.fahrplan_id + "-" + self.guid
         self.room = self._validate_('Fahrplan.Room')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
             self.people = self._validate_('Fahrplan.Person_list').split(', ')
+        self.links = []
+        if 'Fahrplan.Links' in ticket:
+            self.links = self._validate_('Fahrplan.Links', True).split(' ')
         # the following are arguments that my not be present in every fahrplan
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
+        self.url = self._validate_('Fahrplan.URL', True)
+
+        # recording ticket properties
+
+        # special case languages: if Encoding.Language is present, it overrides Record.Language:
+        if 'Encoding.Language' in ticket:
+            self.language = self._validate_('Encoding.Language')
+            self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
+        else:
+            self.language = self._validate_('Record.Language')
+            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
+        self.language_template = self._validate_('Encoding.LanguageTemplate')
+
+        # general publishing properties
+        self.publishing_path = self._validate_('Publishing.Path')
+        self.publishing_tags = self._validate_('Publishing.Tags', True)
 
         # youtube properties
-        self.profile_youtube_enable = self._validate_('Publishing.YouTube.EnableProfile')
-        self.youtube_enable = self._validate_('Publishing.YouTube.Enable')
+        if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
+            self.profile_youtube_enable = True
+        else:
+            self.profile_youtube_enable = False
+        if self._validate_('Publishing.YouTube.Enable') == 'yes':
+            self.youtube_enable = True
+        else:
+            self.youtube_enable = False
         # we will fill the following variables only if youtube is enabled
-        if self.profile_youtube_enable == 'yes' and self.youtube_enable == 'yes':
+        if self.profile_youtube_enable and self.youtube_enable:
+            self.youtube_update = self._validate_('Publishing.YouTube.Update', optional=True)
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
             self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
-            if self.track:
-                self.youtube_tags += self.track
             self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
+            self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
             self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
             # check if this event has already been published to youtube
             if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
                 self.has_youtube_url = True
             else:
                 self.has_youtube_url = False
+            if self._validate_('Publishing.YouTube.Playlists', True) is not None:
+                self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
+            else:
+                self.youtube_playlists = []
+            self.youtube_urls = ''
 
         # voctoweb properties
-        self.profile_media_enable = self._validate_('Publishing.Media.EnableProfile')
-        self.media_enable = self._validate_('Publishing.Media.Enable')
+        if self._validate_('Publishing.Voctoweb.EnableProfile') == 'yes':
+            self.profile_voctoweb_enable = True
+        else:
+            self.profile_voctoweb_enable = False
+        if self._validate_('Publishing.Voctoweb.Enable') == 'yes':
+            self.voctoweb_enable = True
+        else:
+            self.voctoweb_enable = False
+
+        self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
         # we will fill the following variables only if voctoweb is enabled
-        if self.profile_media_enable == 'yes' and self.media_enable == 'yes':
-            self.mime_type = self._validate_('Publishing.Media.MimeType')
-            self.media_thump_path = self._validate_('Publishing.Media.Thumbpath')
-            self.media_host = self._validate_('Publishing.Media.Host')
-            self.media_user = self._validate_('Publishing.Media.User')
-            self.media_path = self._validate_('Publishing.Media.Path')
-            self.media_slug = self._validate_('Publishing.Media.Slug')
-            self.media_url = self._validate_('Publishing.Media.Url', True)
-            self.tags = [self.acronym, self.fahrplan_id]
+        if self.profile_voctoweb_enable and self.voctoweb_enable:
+            self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
+            self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
+            self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
+            self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')
+            self.voctoweb_tags = [self.acronym, self.fahrplan_id, self.date.split('-')[0]]
             if self.track:
-                self.tags.append(self.track)
-            if 'Media.Tags' in ticket:
-                self.tags += self._validate_('Media.Tags').replace(' ', '').split(',')
+                self.voctoweb_tags.append(self.track)
+            if 'Publishing.Voctoweb.Tags' in ticket:
+                self.voctoweb_tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
+            if 'Publishing.Tags' in ticket:
+                self.voctoweb_tags += self._validate_('Publishing.Tags').replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
+            self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
         # twitter properties
-        self.twitter_enable = self._validate_('Publishing.Twitter.Enable')
+        if self._validate_('Publishing.Twitter.Enable') == 'yes':
+            self.twitter_enable = True
+        else:
+            self.twitter_enable = False
+
+        # mastodon properties
+        if self._validate_('Publishing.Mastodon.Enable') == 'yes':
+            self.mastodon_enable = True
+        else:
+            self.mastodon_enable = False
+
+    def _validate_(self, key, optional=False):
+        value = None
+        if key in self.__tracker_ticket:
+            value = self.__tracker_ticket[key]
+            if not value and not optional:
+                logging.debug(key + ' is empty in ticket')
+                raise TicketException(key + ' is empty in ticket')
+            else:
+                value = str(value)
+        else:
+            if optional:
+                logging.debug("optional property was not in ticket: " + key)
+            else:
+                logging.debug(key + ' is missing in ticket')
+                raise TicketException(key + ' is missing in ticket')
+        return value
 
 
 class TicketException(Exception):
