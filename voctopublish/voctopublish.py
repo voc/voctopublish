@@ -33,6 +33,7 @@ from model.ticket_module import Ticket
 from model.ticket_module import RecordingTicket
 from model.ticket_module import PublishingTicket
 
+
 class Worker:
     """
     This is the main class for the Voctopublish application
@@ -241,8 +242,8 @@ class Worker:
         else:
             html5 = True
 
-        # if we have the language index the tracker wants to tell us about an encoding that does not contain all audio tracks of the master
-        # we need to reflect that in the target filename
+        # if we have the language index the tracker wants to tell us about an encoding that does not contain all
+        # audio tracks of the master we need to reflect that in the target filename
         if self.ticket.language_index:
             index = int(self.ticket.language_index)
             filename = self.ticket.language_template % self.ticket.languages[index] + '_' + self.ticket.profile_slug + '.' + self.ticket.profile_extension
