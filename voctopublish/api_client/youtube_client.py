@@ -318,7 +318,7 @@ class YoutubeAPI:
         if lang:
             if lang in self.lang_map.keys():
                 if self.t.languages[0] == lang:
-                    tags.append(self.t.acronym + self.lang_map[lang])
+                    tags.append(self.t.acronym + ' ' + self.lang_map[lang])
                     tags.append(self.t.acronym + ' ov')
                 else:
                     tags.append(self.lang_map[lang] + ' (' + self.translation_strings[lang] + ')')
