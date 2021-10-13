@@ -75,6 +75,12 @@ class TestYouTubeClient(unittest.TestCase):
         self.assertEqual(snippet['defaultLanguage'], 'en')
         self.assertEqual(snippet['defaultAudioLanguage'], 'ru')
 
+        client.upload('testdata/video.mp4', 'ind')
+        post_data = json.loads(mock_post.call_args[1]['data'])
+        snippet = post_data['snippet']
+        self.assertEqual(snippet['defaultLanguage'], 'en')
+        self.assertEqual(snippet['defaultAudioLanguage'], 'id')
+
     def build_client(self, additional_ticket_data = {}):
         ticket_data = self.ticket_data.copy()
         ticket_data.update(additional_ticket_data)
