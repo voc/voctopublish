@@ -68,18 +68,30 @@ class TestYouTubeClient(unittest.TestCase):
         snippet = post_data['snippet']
         self.assertEqual(snippet['defaultLanguage'], 'en')
         self.assertEqual(snippet['defaultAudioLanguage'], 'en')
+        self.assertEqual(snippet['title'], 'Test Event')
+        self.assertEqual(snippet['description'], '\n\n\n\n\n\n\n\n\n\n#yt-test')
 
         client.upload('testdata/video.mp4', 'rus')
         post_data = json.loads(mock_post.call_args[1]['data'])
         snippet = post_data['snippet']
         self.assertEqual(snippet['defaultLanguage'], 'en')
         self.assertEqual(snippet['defaultAudioLanguage'], 'ru')
+        self.assertEqual(snippet['title'], 'Test Event - Russian (русский) translation')
+        self.assertEqual(snippet['description'], '\n\n\n\n\n\n\n\n\n\n#yt-test')
 
         client.upload('testdata/video.mp4', 'ind')
         post_data = json.loads(mock_post.call_args[1]['data'])
         snippet = post_data['snippet']
         self.assertEqual(snippet['defaultLanguage'], 'en')
         self.assertEqual(snippet['defaultAudioLanguage'], 'id')
+        self.assertEqual(snippet['title'], 'Test Event - Terjemahan bahasa Indonesia')
+        self.assertEqual(snippet['description'], '\n\n\n\n\n\n\n\n\n\n#yt-test')
+
+        client = self.build_client({'Fahrplan.Track': 'Track 1'})
+        client.upload('testdata/video.mp4', 'ind')
+        post_data = json.loads(mock_post.call_args[1]['data'])
+        snippet = post_data['snippet']
+        self.assertEqual(snippet['description'], '\n\n\n\n\n\n\n\n\n\n#yt-test #Track1')
 
     def build_client(self, additional_ticket_data = {}):
         ticket_data = self.ticket_data.copy()

@@ -152,7 +152,7 @@ class YoutubeAPI:
         else:
             url = ''
 
-        topline = ["#" + x.replace(' ', '') if x else '' for x in [self.t.acronym, self.t.track]]
+        topline = ["#" + x.replace(' ', '') for x in [self.t.acronym, self.t.track] if x]
 
         description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url, ' '.join(topline)])
         description = self.strip_tags(description)
