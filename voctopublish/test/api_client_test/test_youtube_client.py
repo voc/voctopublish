@@ -93,6 +93,34 @@ class TestYouTubeClient(unittest.TestCase):
         snippet = post_data['snippet']
         self.assertEqual(snippet['description'], '\n\n\n\n\n\n\n\n\n\n#yt-test #Track1 #yt-testind')
 
+        client = self.build_client({'Publishing.YouTube.TitlePrefix': '[My Prefix]'})
+        client.upload('testdata/video.mp4', None)
+        post_data = json.loads(mock_post.call_args[1]['data'])
+        snippet = post_data['snippet']
+        self.assertEqual(snippet['title'], '[My Prefix] Test Event')
+
+        client.upload('testdata/video.mp4', 'ind')
+        post_data = json.loads(mock_post.call_args[1]['data'])
+        snippet = post_data['snippet']
+        self.assertEqual(snippet['title'], '[My Prefix] Test Event - Terjemahan bahasa Indonesia')
+
+        client = self.build_client({'Publishing.YouTube.TitleSuffix': '- My Suffix'})
+        client.upload('testdata/video.mp4', None)
+        post_data = json.loads(mock_post.call_args[1]['data'])
+        snippet = post_data['snippet']
+        self.assertEqual(snippet['title'], 'Test Event - My Suffix')
+
+        client.upload('testdata/video.mp4', 'ind')
+        post_data = json.loads(mock_post.call_args[1]['data'])
+        snippet = post_data['snippet']
+        self.assertEqual(snippet['title'], 'Test Event - My Suffix - Terjemahan bahasa Indonesia')
+
+        client = self.build_client({'Publishing.YouTube.TitlePrefixSpeakers': 2, 'Fahrplan.Person_list': 'Alice, Bob'})
+        client.upload('testdata/video.mp4', None)
+        post_data = json.loads(mock_post.call_args[1]['data'])
+        snippet = post_data['snippet']
+        self.assertEqual(snippet['title'], 'Alice, Bob: Test Event')
+
     def build_client(self, additional_ticket_data = {}):
         ticket_data = self.ticket_data.copy()
         ticket_data.update(additional_ticket_data)

@@ -129,7 +129,7 @@ class YoutubeAPI:
         # todo change function name
         # todo add the license properly
 
-        title = self.t.title
+        title = self._build_title(lang)
         if self.t.subtitle:
             subtitle = self.t.subtitle
         else:
@@ -162,19 +162,6 @@ class YoutubeAPI:
         if self.t.voctoweb_url:
             description = os.path.join(self.t.voctoweb_url, self.t.slug) + '\n\n' + description
 
-        if self.t.youtube_title_prefix:
-            title = self.t.youtube_title_prefix + ' ' + title
-            logging.debug('adding ' + str(self.t.youtube_title_prefix) + ' as title prefix')
-
-        # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title, where x is defined by the integer in self.t.youtube_title_prefix_speakers
-        if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(self.t.youtube_title_prefix_speakers):
-            title = (', '.join(self.t.people)) + ': ' + title
-            logging.debug('adding speaker names as title prefix: ' + title)
-
-        if self.t.youtube_title_suffix:
-            title = title + ' ' + self.t.youtube_title_suffix
-            logging.debug('adding ' + str(self.t.youtube_title_suffix) + ' as title suffix')
-
         if self.t.youtube_privacy:
             privacy = self.t.youtube_privacy
         else:
@@ -189,8 +176,7 @@ class YoutubeAPI:
         metadata = {
             'snippet':
                 {
-                    # YouTube does not allow <> in titles – even not as &gt;&lt;
-                    'title': title.replace('<', '(').replace('>', ')'),
+                    'title': title,
                     # YouTube does not allow <> in description -> escape them
                     'description': description.replace('<', '&lt').replace('>', '&gt'),
                     'channelId': self.channelId,
@@ -210,13 +196,6 @@ class YoutubeAPI:
                     'recordingDate': self.t.date,
                 },
         }
-
-        # todo refactor this to make lang more flexible
-        if lang:
-            if lang in self.translation_strings.keys():
-                metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
-            else:
-                raise YouTubeException('language not defined in translation strings')
 
         # limit title length to 100 (YouTube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
@@ -292,6 +271,38 @@ class YoutubeAPI:
         logging.info('successfully uploaded video as %s', youtube_url)
 
         return video['id']
+
+    def _build_title(self, lang=None):
+        """
+        Build the title
+        :param lang: if present the language will be added to the title
+        :return: Returns the title string
+        """
+        title = self.t.title
+
+        if self.t.youtube_title_prefix:
+            title = self.t.youtube_title_prefix + ' ' + title
+            logging.debug('adding ' + str(self.t.youtube_title_prefix) + ' as title prefix')
+
+        # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title,
+        # where x is defined by the integer in self.t.youtube_title_prefix_speakers
+        if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(self.t.youtube_title_prefix_speakers):
+            title = (', '.join(self.t.people)) + ': ' + title
+            logging.debug('adding speaker names as title prefix: ' + title)
+
+        if self.t.youtube_title_suffix:
+            title = title + ' ' + self.t.youtube_title_suffix
+            logging.debug('adding ' + str(self.t.youtube_title_suffix) + ' as title suffix')
+
+        # todo refactor this to make lang more flexible
+        if lang:
+            if lang in self.translation_strings.keys():
+                title += ' - ' + self.translation_strings[lang]
+            else:
+                raise YouTubeException('language not defined in translation strings')
+
+        # YouTube does not allow <> in titles – even not as &gt;&lt;
+        return title.replace('<', '(').replace('>', ')')
 
     def _select_tags(self, lang=None):
         """
