@@ -176,8 +176,10 @@ class PublishingTicket(Ticket):
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
             self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
             self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
+            self.youtube_translation_title_prefix = self._validate_('Publishing.YouTube.TranslationTitlePrefix', True)
             self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
             self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
+            self.youtube_translation_title_suffix = self._validate_('Publishing.YouTube.TranslationTitleSuffix', True)
             self.youtube_urls = {}
             # check if this event has already been published to youtube
             if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
