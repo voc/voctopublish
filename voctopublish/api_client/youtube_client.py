@@ -264,10 +264,14 @@ class YoutubeAPI:
         :return: Returns the title string
         """
         title = self.t.title
+        language = lang if lang else self.t.languages[0]
 
-        if self.t.youtube_title_prefix:
-            title = self.t.youtube_title_prefix + ' ' + title
-            logging.debug('adding ' + str(self.t.youtube_title_prefix) + ' as title prefix')
+        title_prefix = self.t.youtube_translation_title_prefix \
+                if lang and self.t.youtube_translation_title_prefix else self.t.youtube_title_prefix
+        if title_prefix:
+            title_prefix = self._replace_language_placeholders(title_prefix, language)
+            title = title_prefix + ' ' + title
+            logging.debug('adding ' + str(title_prefix) + ' as title prefix')
 
         # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title,
         # where x is defined by the integer in self.t.youtube_title_prefix_speakers
@@ -275,19 +279,38 @@ class YoutubeAPI:
             title = (', '.join(self.t.people)) + ': ' + title
             logging.debug('adding speaker names as title prefix: ' + title)
 
-        if self.t.youtube_title_suffix:
-            title = title + ' ' + self.t.youtube_title_suffix
-            logging.debug('adding ' + str(self.t.youtube_title_suffix) + ' as title suffix')
+        title_suffix = self.t.youtube_translation_title_suffix \
+                if lang and self.t.youtube_translation_title_suffix else self.t.youtube_title_suffix
+        if title_suffix:
+            title_suffix = self._replace_language_placeholders(title_suffix, language)
+            title = title + ' ' + title_suffix
+            logging.debug('adding ' + str(title_suffix) + ' as title suffix')
 
-        # todo refactor this to make lang more flexible
-        if lang:
-            if lang in self.translation_strings.keys():
-                title += ' - ' + self.translation_strings[lang]
-            else:
-                raise YouTubeException('language not defined in translation strings')
+        if lang and not self.t.youtube_translation_title_prefix and not self.t.youtube_translation_title_suffix:
+            title += self._replace_language_placeholders(' - ${translation}', lang)
 
         # YouTube does not allow <> in titles – even not as &gt;&lt;
         return title.replace('<', '(').replace('>', ')')
+
+    def _replace_language_placeholders(self, string, lang):
+        """
+        Replace language related placeholders in a string
+        :param string: string where the placeholders should be replaced
+        :param lang: the language
+        :return: Returns the string with applied replacements
+        """
+        translation = ''
+        language_name = ''
+        if lang:
+            if lang in self.translation_strings.keys() and lang in self.lang_map:
+                translation = self.translation_strings[lang]
+                language_name = self.lang_map[lang]
+            else:
+                raise YouTubeException('language not defined in translation strings')
+
+        return string.replace('${translation}', translation) \
+                .replace('${language_code}', lang) \
+                .replace('${language_name}', language_name)
 
     def _select_tags(self, lang=None):
         """

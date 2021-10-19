@@ -121,6 +121,33 @@ class TestYouTubeClient(unittest.TestCase):
         snippet = post_data['snippet']
         self.assertEqual(snippet['title'], 'Alice, Bob: Test Event')
 
+    def test_build_title(self):
+        client = self.build_client()
+        self.assertEqual(client._build_title(), 'Test Event')
+        self.assertEqual(client._build_title('rus'), 'Test Event - Russian (русский) translation')
+
+        client = self.build_client({
+            'Publishing.YouTube.TitlePrefix': '[My Prefix]',
+            'Publishing.YouTube.TranslationTitlePrefix': '[My Prefix (${translation})]'}
+        )
+        self.assertEqual(client._build_title(), '[My Prefix] Test Event')
+        self.assertEqual(client._build_title('rus'), '[My Prefix (Russian (русский) translation)] Test Event')
+
+        client = self.build_client({
+            'Publishing.YouTube.TitleSuffix': '- My Suffix',
+            'Publishing.YouTube.TranslationTitleSuffix': '- My Suffix (${translation})'
+        })
+        self.assertEqual(client._build_title(), 'Test Event - My Suffix')
+        self.assertEqual(client._build_title('rus'), 'Test Event - My Suffix (Russian (русский) translation)')
+
+        client = self.build_client({
+            'Publishing.YouTube.TitleSuffix': '- ${translation} - ${language_code} - ${language_name} (Original)',
+            'Publishing.YouTube.TranslationTitleSuffix': '- ${translation} - ${language_code} - ${language_name} (Translation)'
+        })
+        self.assertEqual(client._build_title(), 'Test Event - english translation - eng - English (Original)')
+        self.assertEqual(client._build_title('rus'), 'Test Event - Russian (русский) translation - rus - Russian (Translation)')
+
+
     def build_client(self, additional_ticket_data = {}):
         ticket_data = self.ticket_data.copy()
         ticket_data.update(additional_ticket_data)
