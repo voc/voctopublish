@@ -254,6 +254,15 @@ class PublishingTicket(Ticket):
                 raise TicketException(key + ' is missing in ticket')
         return value
 
+    def get_raw_property(self, key, optional=True):
+        value = None
+        if key in self.__tracker_ticket:
+            value = self.__tracker_ticket[key]
+        else:
+            if not optional:
+                logging.debug(key + ' is missing in ticket')
+                raise TicketException(key + ' is missing in ticket')
+        return value
 
 class TicketException(Exception):
     pass
