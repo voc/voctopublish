@@ -29,6 +29,7 @@ from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
 import api_client.mastodon_client as mastodon
+import api_client.googlechat_client as googlechat
 from model.ticket_module import Ticket
 from model.ticket_module import RecordingTicket
 from model.ticket_module import PublishingTicket
@@ -151,6 +152,10 @@ class Worker:
         # Mastodon
         if self.ticket.mastodon_enable and self.ticket.master:
             mastodon.send_toot(self.ticket, self.config)
+
+        # Google Chat (former Hangouts Chat)
+        if self.ticket.googlechat_webhook_url and self.ticket.master:
+            googlechat.send_chat_message(self.ticket, self.config)
 
     def _get_ticket_from_tracker(self):
         """

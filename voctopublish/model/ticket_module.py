@@ -227,6 +227,9 @@ class PublishingTicket(Ticket):
         else:
             self.mastodon_enable = False
 
+        # googlechat properties
+        self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
+
     def _validate_(self, key, optional=False):
         value = None
         if key in self.__tracker_ticket:
