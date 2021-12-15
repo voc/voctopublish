@@ -104,16 +104,20 @@ class Ticket:
             self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
             self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
             self.youtube_translation_title_suffix = self._validate_('Publishing.YouTube.TranslationTitleSuffix', True)
+            self.youtube_urls = {}
             # check if this event has already been published to youtube
             if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
                 self.has_youtube_url = True
+
+                for key in ticket:
+                    if key.startswith('YouTube.'):
+                        self.youtube_urls[key] = self._validate_(key)
             else:
                 self.has_youtube_url = False
             if self._validate_('Publishing.YouTube.Playlists', True) is not None:
                 self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
             else:
                 self.youtube_playlists = []
-            self.youtube_urls = ''
 
         # voctoweb properties
         if self._validate_('Publishing.Voctoweb.EnableProfile') == 'yes':
@@ -153,6 +157,9 @@ class Ticket:
             self.mastodon_enable = True
         else:
             self.mastodon_enable = False
+
+        # googlechat properties
+        self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
 
     def _validate_(self, key, optional=False):
         value = None
