@@ -33,6 +33,7 @@ import api_client.googlechat_client as googlechat
 from model.ticket_module import Ticket
 from model.ticket_module import RecordingTicket
 from model.ticket_module import PublishingTicket
+from tools.thumbnails import ThumbnailGenerator
 
 
 class Worker:
@@ -119,6 +120,13 @@ class Worker:
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
+
+        logging.debug("#thumbnails")
+        thumbs = ThumbnailGenerator(self.ticket, self.config)
+
+        if not thumbs.exists:
+            thumbs.generate()
+        logging.debug("thumbnail generated")
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb

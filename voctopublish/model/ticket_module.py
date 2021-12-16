@@ -157,6 +157,7 @@ class PublishingTicket(Ticket):
         # general publishing properties
         self.publishing_path = self._validate_('Publishing.Path')
         self.publishing_tags = self._validate_('Publishing.Tags', True)
+        self.thumbnail_file = self._validate_('Publishing.Thumbnail.PathOverride', True)
 
         # youtube properties
         if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
