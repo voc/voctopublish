@@ -256,7 +256,7 @@ class Publisher:
                                            language,
                                            hq,
                                            html5)
-        
+
         # when the ticket was created, and not only updated: write recording_id to ticket
         if recording_id:
             self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
@@ -306,7 +306,7 @@ class Publisher:
         """
         logging.debug("publishing to youtube")
 
-        yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        yt = YoutubeAPI(self.ticket, self.thumbs, self.config['youtube']['client_id'], self.config['youtube']['secret'])
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls = yt.publish()
