@@ -26,6 +26,7 @@ import langcodes
 import os
 
 from model.ticket_module import Ticket
+from tools.thumbnails import ThumbnailGenerator
 
 logging = logging.getLogger()
 
@@ -36,8 +37,9 @@ class YoutubeAPI:
     https://developers.google.com/youtube/v3/docs
     """
 
-    def __init__(self, t: Ticket, client_id: str, secret: str):
+    def __init__(self, t: Ticket, thumb: ThumbnailGenerator, client_id: str, secret: str):
         self.t = t
+        self.thumbnail = thumb
         self.client_id = client_id
         self.secret = secret
 
@@ -257,7 +259,7 @@ class YoutubeAPI:
         logging.debug('uploading video-data to %s' % r.headers['location'])
 
         with open(file, 'rb') as fp:
-            r = requests.put(
+            upload = requests.put(
                 r.headers['location'],
                 headers={
                     'Authorization': 'Bearer ' + self.accessToken,
@@ -266,10 +268,22 @@ class YoutubeAPI:
                 data=fp
             )
 
-            if 200 != r.status_code and 201 != r.status_code:
+            if 200 != upload.status_code and 201 != upload.status_code:
                 raise YouTubeException('uploading video failed with error-code %u: %s' % (r.status_code, r.text))
 
         video = r.json()
+
+        with open(self.thumbnail.path, 'rb') as fp:
+            logging.debug('setting %s as thumbnail', self.thumbnail.path)
+
+            thumb_upload = requests.post(
+                'https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=' + video['id'],
+                headers={
+                    'Authorization': 'Bearer ' + self.accessToken,
+                    'Content-Type': 'application/octet-stream',
+                },
+                data=fp
+            )
 
         youtube_url = 'https://www.youtube.com/watch?v=' + video['id']
         logging.info('successfully uploaded video as %s', youtube_url)
