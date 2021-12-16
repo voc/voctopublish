@@ -83,24 +83,23 @@ class VoctowebClient:
         outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.jpg')
         outjpg_preview = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_preview.jpg')
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
-            # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
-            try:
-                r = subprocess.check_output(
-                    'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
-                    shell=True)
-            except subprocess.CalledProcessError as e_:
-                raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
+        # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
+        # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
+        try:
+            r = subprocess.check_output(
+                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
+                shell=True)
+        except subprocess.CalledProcessError as e_:
+            raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
 
-            try:
-                r = subprocess.check_output(
-                    'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg_preview,
-                    shell=True)
-            except Exception as e_:
-                raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
+        try:
+            r = subprocess.check_output(
+                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg_preview,
+                shell=True)
+        except Exception as e_:
+            raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
 
-            logging.info("thumbnails generated")
+        logging.info("thumbnails reformatted for voctowob")
 
     def upload_thumbs(self):
         """
