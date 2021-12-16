@@ -17,11 +17,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from shutil import move
+from operator import itemgetter
 from os.path import isfile, join
+from shutil import move
 from subprocess import CalledProcessError, check_output
 from tempfile import TemporaryDirectory
-from operator import itemgetter
 
 from api_client.select_thumbnail import calc_score
 from model.ticket_module import Ticket
