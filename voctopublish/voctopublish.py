@@ -97,6 +97,7 @@ class Publisher:
         Decide based on the information provided by the tracker where to publish.
         """
         self.ticket = self._get_ticket_from_tracker()
+        self.thumbs = ThumbnailGenerator(self.ticket, self.config)
 
         if not self.ticket:
             logging.debug('not ticket, returning')
@@ -113,12 +114,8 @@ class Publisher:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
-        logging.debug("#thumbnails")
-        thumbs = ThumbnailGenerator(self.ticket, self.config)
-
-        if not thumbs.exists:
-            thumbs.generate()
-        logging.debug("thumbnail generated")
+        if not self.thumbs.exists:
+            self.thumbs.generate()
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
@@ -187,6 +184,7 @@ class Publisher:
         logging.info("publishing to voctoweb")
         try:
             vw = VoctowebClient(self.ticket,
+                                self.thumbs,
                                 self.config['voctoweb']['api_key'],
                                 self.config['voctoweb']['api_url'],
                                 self.config['voctoweb']['ssh_host'],
