@@ -29,6 +29,7 @@ import api_client.twitter_client as twitter
 import api_client.mastodon_client as mastodon
 import api_client.googlechat_client as googlechat
 from model.ticket_module import Ticket
+from tools.thumbnails import ThumbnailGenerator
 
 
 class Publisher:
@@ -112,6 +113,13 @@ class Publisher:
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
+
+        logging.debug("#thumbnails")
+        thumbs = ThumbnailGenerator(self.ticket, self.config)
+
+        if not thumbs.exists:
+            thumbs.generate()
+        logging.debug("thumbnail generated")
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
