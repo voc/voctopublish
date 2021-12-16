@@ -49,6 +49,10 @@ class ThumbnailGenerator:
         if self.exists:
             raise ThumbnailException("generate() called, but thumbnail already exists!")
 
+        if self.ticket.thumbnail_file:
+            # don't ever try to override a custom thumbnail
+            raise FileNotFoundError(self.path)
+
         source = join(self.ticket.publishing_path, self.ticket.local_filename)
         logging.info("generating thumbs for " + source)
 
