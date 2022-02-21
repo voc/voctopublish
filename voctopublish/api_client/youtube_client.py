@@ -295,6 +295,9 @@ class YoutubeAPI:
         if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(self.t.youtube_title_prefix_speakers):
             title = (', '.join(self.t.people)) + ': ' + title
             logging.debug('adding speaker names as title prefix: ' + title)
+        elif self.t.youtube_title_append_speakers and len(self.t.people) <= int(self.t.youtube_title_append_speakers):
+            title += ' (' + (', '.join(self.t.people)) + ')'
+            logging.debug('appending speaker names to title: ' + title)
 
         title_suffix = self.t.youtube_translation_title_suffix \
                 if lang and self.t.youtube_translation_title_suffix else self.t.youtube_title_suffix

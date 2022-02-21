@@ -178,6 +178,7 @@ class PublishingTicket(Ticket):
             self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
             self.youtube_translation_title_prefix = self._validate_('Publishing.YouTube.TranslationTitlePrefix', True)
             self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
+            self.youtube_title_append_speakers = self._validate_('Publishing.YouTube.TitleAppendSpeakers', True)
             self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
             self.youtube_translation_title_suffix = self._validate_('Publishing.YouTube.TranslationTitleSuffix', True)
             self.youtube_urls = {}
