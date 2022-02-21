@@ -372,6 +372,71 @@ class YoutubeAPI:
 
         return tags
 
+    def depublish(self):
+        """
+        depublish videos on youtube
+        :return:
+        """
+        logging.info("depublishing Ticket %s (%s) to youtube" % (self.t.fahrplan_id, self.t.title))
+
+
+        # second YoutubeAPI instance for playlist management at youtube.com, if the playlist is on a different channel that the video
+        #if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
+        #    yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        #    yt.setup(self.config['youtube']['playlist_token'])
+        #else:
+        #    logging.debug('using same token for publishing and playlist management')
+        yt = self
+
+        i = 0
+        depublished_urls = []
+        props = {}
+        for lang in self.t.languages:
+            video_url = self.t.get_raw_property(f'YouTube.Url{i}')
+            if video_url:
+                try:
+                    video_id = video_url.split('=', 2)[1]
+                    self.update_metadata(video_id, {
+                        'id': video_id,
+                        'status': {'privacyStatus': 'private'}
+                    })
+                    logging.info("depublished %s video track from %s" % (lang, video_url))
+                    depublished_urls.append(video_url)
+                    props[f'YouTube.Url{i}'] = ''
+
+                    if self.t.youtube_playlists:
+                        yt.remove_from_playlists(video_id, self.t.youtube_playlists)
+                except Exception as e:
+                    logging.error(f"debublishing of {video_url} failed with {e}")
+
+                i += 1
+            return depublished_urls, props
+
+
+    def update_metadata(self, video_id, metadata):
+
+        # https://developers.google.com/youtube/v3/docs/videos#resource
+        r = requests.put(
+            'https://youtube.googleapis.com/youtube/v3/videos',
+            params={
+                'part': 'status' # TODO extract keys from ','.join(metadata.keys())
+            },
+            headers={
+                'Authorization': 'Bearer ' + self.accessToken,
+                'Content-Type': 'application/json; charset=UTF-8',
+            },
+            data=json.dumps(metadata)
+        )
+
+        if 200 != r.status_code:
+            logging.debug(metadata)
+            if 400 == r.status_code:
+                raise YouTubeException(r.json()['error']['message'] + '\n' + r.text + '\n\n' + json.dumps(metadata, indent=2))
+            else:
+                raise YouTubeException('Video update failed with error-code %u: %s' % (r.status_code, r.text))
+        return r
+
+
     def add_to_playlists(self, video_id: str, playlist_ids):
         for p in playlist_ids:
             YoutubeAPI.add_to_playlist(self, video_id, p)
@@ -405,6 +470,58 @@ class YoutubeAPI:
                 'Adding video to playlist failed with error-code %u: %s' % (r.status_code, r.text))
 
         logging.info('video added to playlist: ' + playlist_id)
+
+    def remove_from_playlists(self, video_id: str, ids):
+        """
+        documentation: https://developers.google.com/youtube/v3/docs/playlistItems/list
+        :param video_id:
+        :param ids: list or string of playlist ids
+        """
+        r = requests.get(
+            'https://www.googleapis.com/youtube/v3/playlistItems',
+            params={
+                'part': 'id',
+                'id': ','.join(ids),
+                'videoId': video_id,
+            },
+            headers={
+                'Authorization': 'Bearer ' + self.accessToken,
+                'Content-Type': 'application/json; charset=UTF-8',
+            },
+        )
+
+        if 200 != r.status_code:
+            raise YouTubeException(
+                'Could not lookup playlist item ids, failed with error-code %u: %s' % (r.status_code, r.text))
+
+        for item in r.json()['items']:
+            remove_playlist_item(item['id'])
+
+    def remove_playlist_item(self, item_id: str):
+        """
+        documentation: https://developers.google.com/youtube/v3/docs/playlistItems/delete
+        :param item_id:
+        """
+        r = requests.delete(
+            'https://www.googleapis.com/youtube/v3/playlistItems',
+            params={
+                'part': 'id'
+            },
+            headers={
+                'Authorization': 'Bearer ' + self.accessToken,
+                'Content-Type': 'application/json; charset=UTF-8',
+            },
+            data=json.dumps({
+                'id': item_id,
+            })
+        )
+
+        if 204 != r.status_code:
+            raise YouTubeException(
+                'Removing video from playlist failed with error-code %u: %s' % (r.status_code, r.text))
+
+        logging.info('video removed from playlist ')
+
 
     @staticmethod
     def update_thumbnail(access_token: str, video_id: str, thumbnail: str):
