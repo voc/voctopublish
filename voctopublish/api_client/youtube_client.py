@@ -414,8 +414,8 @@ class YoutubeAPI:
                 except Exception as e:
                     logging.error(f"debublishing of {video_url} failed with {e}")
 
-                i += 1
-            return depublished_urls, props
+            i += 1
+        return depublished_urls, props
 
 
     def update_metadata(self, video_id, metadata):
