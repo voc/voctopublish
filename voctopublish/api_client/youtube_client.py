@@ -273,17 +273,7 @@ class YoutubeAPI:
 
         video = r.json()
 
-        with open(self.thumbnail.path, 'rb') as fp:
-            logging.debug('setting %s as thumbnail', self.thumbnail.path)
-
-            thumb_upload = requests.post(
-                'https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=' + video['id'],
-                headers={
-                    'Authorization': 'Bearer ' + self.accessToken,
-                    'Content-Type': 'application/octet-stream',
-                },
-                data=fp
-            )
+        YoutubeAPI.update_thumbnail(self.accessToken, video['id'], self.thumbnail.path)
 
         youtube_url = 'https://www.youtube.com/watch?v=' + video['id']
         logging.info('successfully uploaded video as %s', youtube_url)
