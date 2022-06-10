@@ -28,6 +28,7 @@ from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
 import api_client.mastodon_client as mastodon
 from model.ticket_module import Ticket
+from tools.thumbnails import ThumbnailGenerator
 
 
 class Publisher:
@@ -96,6 +97,7 @@ class Publisher:
         Decide based on the information provided by the tracker where to publish.
         """
         self.ticket = self._get_ticket_from_tracker()
+        self.thumbs = ThumbnailGenerator(self.ticket, self.config)
 
         if not self.ticket:
             logging.debug('not ticket, returning')
@@ -111,6 +113,9 @@ class Publisher:
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
+
+        if not self.thumbs.exists:
+            self.thumbs.generate()
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
@@ -179,6 +184,7 @@ class Publisher:
         logging.info("publishing to voctoweb")
         try:
             vw = VoctowebClient(self.ticket,
+                                self.thumbs,
                                 self.config['voctoweb']['api_key'],
                                 self.config['voctoweb']['api_url'],
                                 self.config['voctoweb']['ssh_host'],
@@ -303,7 +309,7 @@ class Publisher:
         """
         logging.debug("publishing to youtube")
 
-        yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        yt = YoutubeAPI(self.ticket, self.thumbs, self.config['youtube']['client_id'], self.config['youtube']['secret'])
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls = yt.publish()

@@ -26,6 +26,7 @@ import langcodes
 import os
 
 from model.ticket_module import Ticket
+from tools.thumbnails import ThumbnailGenerator
 
 logging = logging.getLogger()
 
@@ -36,8 +37,9 @@ class YoutubeAPI:
     https://developers.google.com/youtube/v3/docs
     """
 
-    def __init__(self, t: Ticket, client_id: str, secret: str):
+    def __init__(self, t: Ticket, thumb: ThumbnailGenerator, client_id: str, secret: str):
         self.t = t
+        self.thumbnail = thumb
         self.client_id = client_id
         self.secret = secret
 
@@ -240,7 +242,7 @@ class YoutubeAPI:
         logging.debug('uploading video-data to %s' % r.headers['location'])
 
         with open(file, 'rb') as fp:
-            r = requests.put(
+            upload = requests.put(
                 r.headers['location'],
                 headers={
                     'Authorization': 'Bearer ' + self.accessToken,
@@ -249,10 +251,23 @@ class YoutubeAPI:
                 data=fp
             )
 
-            if 200 != r.status_code and 201 != r.status_code:
+            if 200 != upload.status_code and 201 != upload.status_code:
                 raise YouTubeException('uploading video failed with error-code %u: %s' % (r.status_code, r.text))
 
-        video = r.json()
+        video = upload.json()
+
+        outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_youtube.jpg')
+
+        try:
+            r = subprocess.check_output(
+                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
+                shell=True)
+            logging.info("thumbnails reformatted for youtube")
+        except Exception as e_:
+            raise YoutubeException("Could not scale thumbnail: " + r.decode('utf-8')) from e_
+
+
+        YoutubeAPI.update_thumbnail(self.accessToken, video['id'], outjpg)
 
         youtube_url = 'https://www.youtube.com/watch?v=' + video['id']
         logging.info('successfully uploaded video as %s', youtube_url)
@@ -538,7 +553,7 @@ class YoutubeAPI:
         if 200 != r.status_code:
             raise YouTubeException('Video update failed with error-code %u: %s' % (r.status_code, r.text))
 
-        logging.info('Thumbnails for ' + str(id) + ' updated')
+        logging.info(f'Thumbnails for {video_id} updated')
 
     @staticmethod
     def get_playlist(access_token: str, playlist_id: str):
