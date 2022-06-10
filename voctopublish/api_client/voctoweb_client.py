@@ -99,7 +99,7 @@ class VoctowebClient:
         except Exception as e_:
             raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
 
-        logging.info("thumbnails reformatted for voctowob")
+        logging.info("thumbnails reformatted for voctoweb")
 
     def upload_thumbs(self):
         """

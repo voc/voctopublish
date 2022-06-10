@@ -395,7 +395,7 @@ class YoutubeAPI:
         if 200 != r.status_code:
             raise YouTubeException('Video update failed with error-code %u: %s' % (r.status_code, r.text))
 
-        logging.info('Thumbnails for ' + str(video_id) + ' updated')
+        logging.info(f'Thumbnails for {video_id} updated')
 
     @staticmethod
     def get_playlist(access_token: str, playlist_id: str):
