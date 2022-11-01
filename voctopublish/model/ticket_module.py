@@ -215,6 +215,12 @@ class PublishingTicket(Ticket):
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
+        # shell commands
+        self.shell_commands = {}
+        for key in ticket:
+            if key.startswith('Publishing.ShellCommands.'):
+                self.shell_commands[key] = self._validate_(key)
+
         # twitter properties
         if self._validate_('Publishing.Twitter.Enable') == 'yes':
             self.twitter_enable = True
