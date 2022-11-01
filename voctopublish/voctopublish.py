@@ -139,6 +139,23 @@ class Publisher:
         else:
             logging.debug("no youtube :(")
 
+        if self.ticket.shell_commands and self.ticket.master:
+            if self.config.get('general', {}).get('enable_shell_commands', False):
+                for identifier, command in self.ticket.shell_commands.items():
+                    try:
+                        for line in subprocess.check_output(
+                            command.format(
+                                source_file_name=self.ticket.local_filename,
+                                source_full_path=os.path.join(self.ticket.publishing_path, self.ticket.local_filename),
+                            ),
+                            shell=True
+                        ).decode().splitlines():
+                            logging.info(identifier + ": " + line)
+                    except subprocess.CalledProcessError as e:
+                        raise PublisherException(identifier + " failed: " + repr(e))
+            else:
+                raise PublisherException("Shell Commands requested but not enabled in voctopublish config")
+
         logging.debug('#done')
         self.c3tt.set_ticket_done(self.ticket)
 
