@@ -140,7 +140,7 @@ class Publisher:
             logging.debug("no youtube :(")
 
         if self.ticket.shell_commands and self.ticket.master:
-            if self.config.get('general', {}).get('enable_shell_commands', False):
+            if self.config['general'].get('enable_shell_commands', False):
                 for identifier, command in self.ticket.shell_commands.items():
                     try:
                         for line in subprocess.check_output(
