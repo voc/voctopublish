@@ -27,6 +27,7 @@ import shutil
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
+from api_client.rclone_client import RCloneClient
 import api_client.twitter_client as twitter
 import api_client.mastodon_client as mastodon
 import api_client.googlechat_client as googlechat
@@ -157,6 +158,20 @@ class Worker:
                 self._publish_to_youtube()
         else:
             logging.debug("no youtube :(")
+
+        logging.debug(f"#rclone {self.ticket.rclone_enabled}")
+        if self.ticket.rclone_enabled:
+            if self.ticket.master or not self.ticket.rclone_only_master:
+                rclone = RCloneClient(self.ticket, self.config)
+                ret = rclone.upload()
+                if ret not in (0, 9):
+                    raise PublisherException(f"rclone failed with exit code {ret}")
+            else:
+                logging.debug(
+                    "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
+                )
+        else:
+            logging.debug("no rclone :(")
 
         logging.debug('#done')
         self.c3tt.set_ticket_done(self.ticket)

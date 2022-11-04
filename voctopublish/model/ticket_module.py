@@ -222,6 +222,13 @@ class PublishingTicket(Ticket):
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
+        # rclone properties
+        # this is a not-very-often-used property, so we add a default for it
+        self.rclone_enabled = self._validate_('Publishing.Rclone.Enable', True) == 'yes'
+        if self.rclone_enabled:
+            self.rclone_destination = self._validate_('Publishing.Rclone.Destination')
+            self.rclone_only_master = self._validate_('Publishing.Rclone.OnlyMaster') == 'yes'
+
         # twitter properties
         if self._validate_('Publishing.Twitter.Enable') == 'yes':
             self.twitter_enable = True
