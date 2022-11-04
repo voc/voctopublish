@@ -224,14 +224,14 @@ class Worker:
                         vw.upload_timelens()
                     logging.debug('response: ' + str(r.json()))
                     try:
-                        # todo: only set recording id when new recording was created, and not when it was only updated
+                        # TODO only set recording id when new recording was created, and not when it was only updated
                         self.c3tt.set_ticket_properties(self, {'Voctoweb.EventId': r.json()['id']})
                     except Exception as e_:
                         raise PublisherException('failed to Voctoweb EventID to ticket') from e_
 
                 elif r.status_code == 422:
                     # If this happens tracker and voctoweb are out of sync regarding the event id
-                    # todo: write voctoweb event_id to ticket properties --Andi
+                    # TODO write voctoweb event_id to ticket properties --Andi
                     logging.warning("event already exists => publishing")
                 else:
                     raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.text))
@@ -356,12 +356,12 @@ class Worker:
         else:
             self._copy_file()
 
-        # set recording language todo multilang
+        # set recording language TODO multilang
         try:
             self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
         except AttributeError as err_:
-            self.c3tt.set_ticket_failed('unknown language please set language in the recording ticket to proceed')
-            logging.error('unknown language please set language in the recording ticket to proceed')
+            self.c3tt.set_ticket_failed('unknown language, please set language in the recording ticket to proceed')
+            logging.error('unknown language, please set language in the recording ticket to proceed')
 
         # tell the tracker that we finished the import
         self.c3tt.set_ticket_done()
@@ -384,7 +384,7 @@ class Worker:
                 raise PublisherException(e)
 
         if os.path.exists(file):
-            # todo think about rereleasing here
+            # TODO think about rereleasing here
             logging.warning('video file already exists, please remove file')
             raise PublisherException('video file already exists, please remove file')
 
@@ -414,7 +414,7 @@ class Worker:
                 raise PublisherException(e)
 
         if os.path.exists(file):
-            # todo think about rereleasing here
+            # TODO think about rereleasing here
             logging.warning('video file "' + path + '" already exists, please remove file')
             raise PublisherException('video file already exists, please remove file')
 
@@ -429,7 +429,7 @@ class Worker:
                 url = url_decoded
             logging.debug("Downloading file from: " + url)
             with urllib.request.urlopen(urllib.parse.quote(url, safe=':/')) as df:
-                # original version tried to write whole file to ram and ran aut of memory
+                # original version tried to write whole file to ram and ran out of memory
                 # read in 16 kB chunks instead
                 while True:
                     chunk = df.read(16384)
