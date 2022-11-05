@@ -166,6 +166,10 @@ class Worker:
                 ret = rclone.upload()
                 if ret not in (0, 9):
                     raise PublisherException(f"rclone failed with exit code {ret}")
+                self.c3tt.set_ticket_properties({
+                    'Rclone.DestinationFileName': rclone.destination,
+                    'Rclone.ReturnCode': str(ret),
+                })
             else:
                 logging.debug(
                     "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
