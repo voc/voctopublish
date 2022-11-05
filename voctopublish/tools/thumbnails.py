@@ -23,7 +23,7 @@ from shutil import move
 from subprocess import CalledProcessError, check_output
 from tempfile import TemporaryDirectory
 
-from api_client.select_thumbnail import calc_score
+from select_thumbnail import calc_score
 from model.ticket_module import Ticket
 
 
