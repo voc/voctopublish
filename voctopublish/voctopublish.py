@@ -43,6 +43,8 @@ class Worker:
     """
 
     def __init__(self):
+        self.ticket = None
+
         # load config
         if not os.path.exists('client.conf'):
             raise IOError("Error: config file not found")
@@ -80,18 +82,20 @@ class Worker:
             self.logger.setLevel(logging.DEBUG)
 
         self.worker_type = self.config['general']['worker_type']
+        if self.worker_type == 'releasing':
+            self.ticket_type = 'encoding'
+            self.to_state = 'releasing'
+        elif self.worker_type == 'recording':
+            self.ticket_type = 'recording'
+            self.to_state = 'recording'
+        else:
+            logging.error('Unknown worker type ' + self.worker_type)
+            raise PublisherException('Unknown worker type ' + self.worker_type)
 
-        # get a ticket from the tracker and initialize the ticket object
         if self.config['C3Tracker']['host'] == "None":
             self.host = socket.getfqdn()
         else:
             self.host = self.config['C3Tracker']['host']
-
-        self.ticket_type = self.config['C3Tracker']['ticket_type']
-        self.to_state = self.config['C3Tracker']['to_state']
-
-        # instance variables we need later
-        self.ticket = None
 
         logging.debug('creating C3TTClient')
         try:
