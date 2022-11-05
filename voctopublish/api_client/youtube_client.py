@@ -26,6 +26,7 @@ import langcodes
 import os
 
 from model.ticket_module import Ticket
+from tools.thumbnails import ThumbnailGenerator
 
 logging = logging.getLogger()
 
@@ -36,14 +37,15 @@ class YoutubeAPI:
     https://developers.google.com/youtube/v3/docs
     """
 
-    def __init__(self, t: Ticket, client_id: str, secret: str):
+    def __init__(self, t: Ticket, thumb: ThumbnailGenerator, client_id: str, secret: str):
         self.t = t
+        self.thumbnail = thumb
         self.client_id = client_id
         self.secret = secret
 
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
                          'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi', 'chi': 'Chinese', 'ara': 'Arabic',
-                         'hrv': 'Croatian', 'pol': 'Polish', 'por': 'Portuguese'
+                         'hrv': 'Croatian', 'pol': 'Polish', 'por': 'Portuguese', 'ind': 'Indonesian'
                          }
 
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
@@ -51,7 +53,7 @@ class YoutubeAPI:
                                     'fra': 'traduction française', 'rus': 'Russian (русский) translation',
                                     'chi': '中文翻译', 'ara': 'الترجمة العربية',
                                     'hrv': 'Hrvatski prijevod', 'pol': 'Prijevod s poljskog',
-                                    'por': 'Tradução portuguesa'
+                                    'por': 'Tradução portuguesa', 'ind': 'Terjemahan bahasa Indonesia'
                                     }
 
         self.youtube_urls = []
@@ -127,7 +129,7 @@ class YoutubeAPI:
         # todo change function name
         # todo add the license properly
 
-        title = self.t.title
+        title = self._build_title(lang)
         if self.t.subtitle:
             subtitle = self.t.subtitle
         else:
@@ -150,26 +152,15 @@ class YoutubeAPI:
         else:
             url = ''
 
-        topline = ["#" + x.replace(' ', '') if x else '' for x in [self.t.acronym, self.t.track]]
+        topline = ["#" + x.replace(' ', '') for x in [self.t.acronym, self.t.track] if x]
+        if self.t.acronym and lang and lang != self.t.languages[0]:
+            topline.append(("#" + self.t.acronym + lang).replace(' ', ''))
 
         description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url, ' '.join(topline)])
         description = self.strip_tags(description)
 
         if self.t.voctoweb_url:
             description = os.path.join(self.t.voctoweb_url, self.t.slug) + '\n\n' + description
-
-        if self.t.youtube_title_prefix:
-            title = self.t.youtube_title_prefix + ' ' + title
-            logging.debug('adding ' + str(self.t.youtube_title_prefix) + ' as title prefix')
-
-        # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title, where x is defined by the integer in self.t.youtube_title_prefix_speakers
-        if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(self.t.youtube_title_prefix_speakers):
-            title = (', '.join(self.t.people)) + ': ' + title
-            logging.debug('adding speaker names as title prefix: ' + title)
-
-        if self.t.youtube_title_suffix:
-            title = title + ' ' + self.t.youtube_title_suffix
-            logging.debug('adding ' + str(self.t.youtube_title_suffix) + ' as title suffix')
 
         if self.t.youtube_privacy:
             privacy = self.t.youtube_privacy
@@ -185,8 +176,7 @@ class YoutubeAPI:
         metadata = {
             'snippet':
                 {
-                    # YouTube does not allow <> in titles – even not as &gt;&lt;
-                    'title': title.replace('<', '(').replace('>', ')'),
+                    'title': title,
                     # YouTube does not allow <> in description -> escape them
                     'description': description.replace('<', '&lt').replace('>', '&gt'),
                     'channelId': self.channelId,
@@ -206,13 +196,6 @@ class YoutubeAPI:
                     'recordingDate': self.t.date,
                 },
         }
-
-        # todo refactor this to make lang more flexible
-        if lang:
-            if lang in self.translation_strings.keys():
-                metadata['snippet']['title'] += ' - ' + self.translation_strings[lang]
-            else:
-                raise YouTubeException('language not defined in translation strings')
 
         # limit title length to 100 (YouTube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]
@@ -257,7 +240,7 @@ class YoutubeAPI:
         logging.debug('uploading video-data to %s' % r.headers['location'])
 
         with open(file, 'rb') as fp:
-            r = requests.put(
+            upload = requests.put(
                 r.headers['location'],
                 headers={
                     'Authorization': 'Bearer ' + self.accessToken,
@@ -266,15 +249,83 @@ class YoutubeAPI:
                 data=fp
             )
 
-            if 200 != r.status_code and 201 != r.status_code:
+            if 200 != upload.status_code and 201 != upload.status_code:
                 raise YouTubeException('uploading video failed with error-code %u: %s' % (r.status_code, r.text))
 
-        video = r.json()
+        video = upload.json()
+
+        outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_youtube.jpg')
+
+        try:
+            r = subprocess.check_output(
+                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
+                shell=True)
+            logging.info("thumbnails reformatted for youtube")
+        except Exception as e_:
+            raise YoutubeException("Could not scale thumbnail: " + r.decode('utf-8')) from e_
+
+
+        YoutubeAPI.update_thumbnail(self.accessToken, video['id'], outjpg)
 
         youtube_url = 'https://www.youtube.com/watch?v=' + video['id']
         logging.info('successfully uploaded video as %s', youtube_url)
 
         return video['id']
+
+    def _build_title(self, lang=None):
+        """
+        Build the title
+        :param lang: if present the language will be added to the title
+        :return: Returns the title string
+        """
+        title = self.t.title
+        language = lang if lang else self.t.languages[0]
+
+        title_prefix = self.t.youtube_translation_title_prefix \
+                if lang and self.t.youtube_translation_title_prefix else self.t.youtube_title_prefix
+        if title_prefix:
+            title_prefix = self._replace_language_placeholders(title_prefix, language)
+            title = title_prefix + ' ' + title
+            logging.debug('adding ' + str(title_prefix) + ' as title prefix')
+
+        # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title,
+        # where x is defined by the integer in self.t.youtube_title_prefix_speakers
+        if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(self.t.youtube_title_prefix_speakers):
+            title = (', '.join(self.t.people)) + ': ' + title
+            logging.debug('adding speaker names as title prefix: ' + title)
+
+        title_suffix = self.t.youtube_translation_title_suffix \
+                if lang and self.t.youtube_translation_title_suffix else self.t.youtube_title_suffix
+        if title_suffix:
+            title_suffix = self._replace_language_placeholders(title_suffix, language)
+            title = title + ' ' + title_suffix
+            logging.debug('adding ' + str(title_suffix) + ' as title suffix')
+
+        if lang and not self.t.youtube_translation_title_prefix and not self.t.youtube_translation_title_suffix:
+            title += self._replace_language_placeholders(' - ${translation}', lang)
+
+        # YouTube does not allow <> in titles – even not as &gt;&lt;
+        return title.replace('<', '(').replace('>', ')')
+
+    def _replace_language_placeholders(self, string, lang):
+        """
+        Replace language related placeholders in a string
+        :param string: string where the placeholders should be replaced
+        :param lang: the language
+        :return: Returns the string with applied replacements
+        """
+        translation = ''
+        language_name = ''
+        if lang:
+            if lang in self.translation_strings.keys() and lang in self.lang_map:
+                translation = self.translation_strings[lang]
+                language_name = self.lang_map[lang]
+            else:
+                raise YouTubeException('language not defined in translation strings')
+
+        return string.replace('${translation}', translation) \
+                .replace('${language_code}', lang) \
+                .replace('${language_name}', language_name)
 
     def _select_tags(self, lang=None):
         """
@@ -303,7 +354,7 @@ class YoutubeAPI:
         if lang:
             if lang in self.lang_map.keys():
                 if self.t.languages[0] == lang:
-                    tags.append(self.t.acronym + self.lang_map[lang])
+                    tags.append(self.t.acronym + ' ' + self.lang_map[lang])
                     tags.append(self.t.acronym + ' ov')
                 else:
                     tags.append(self.lang_map[lang] + ' (' + self.translation_strings[lang] + ')')
@@ -380,7 +431,7 @@ class YoutubeAPI:
         if 200 != r.status_code:
             raise YouTubeException('Video update failed with error-code %u: %s' % (r.status_code, r.text))
 
-        logging.info('Thumbnails for ' + str(id) + ' updated')
+        logging.info(f'Thumbnails for {video_id} updated')
 
     @staticmethod
     def get_playlist(access_token: str, playlist_id: str):

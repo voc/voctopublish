@@ -157,6 +157,7 @@ class PublishingTicket(Ticket):
         # general publishing properties
         self.publishing_path = self._validate_('Publishing.Path')
         self.publishing_tags = self._validate_('Publishing.Tags', True)
+        self.thumbnail_file = self._validate_('Publishing.Thumbnail.PathOverride', True)
 
         # youtube properties
         if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
@@ -175,18 +176,24 @@ class PublishingTicket(Ticket):
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
             self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
             self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
+            self.youtube_translation_title_prefix = self._validate_('Publishing.YouTube.TranslationTitlePrefix', True)
             self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
             self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
+            self.youtube_translation_title_suffix = self._validate_('Publishing.YouTube.TranslationTitleSuffix', True)
+            self.youtube_urls = {}
             # check if this event has already been published to youtube
             if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
                 self.has_youtube_url = True
+
+                for key in ticket:
+                    if key.startswith('YouTube.'):
+                        self.youtube_urls[key] = self._validate_(key)
             else:
                 self.has_youtube_url = False
             if self._validate_('Publishing.YouTube.Playlists', True) is not None:
                 self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
             else:
                 self.youtube_playlists = []
-            self.youtube_urls = ''
 
         # voctoweb properties
         if self._validate_('Publishing.Voctoweb.EnableProfile') == 'yes':
@@ -227,6 +234,9 @@ class PublishingTicket(Ticket):
         else:
             self.mastodon_enable = False
 
+        # googlechat properties
+        self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
+
     def _validate_(self, key, optional=False):
         value = None
         if key in self.__tracker_ticket:
@@ -244,6 +254,15 @@ class PublishingTicket(Ticket):
                 raise TicketException(key + ' is missing in ticket')
         return value
 
+    def get_raw_property(self, key, optional=True):
+        value = None
+        if key in self.__tracker_ticket:
+            value = self.__tracker_ticket[key]
+        else:
+            if not optional:
+                logging.debug(key + ' is missing in ticket')
+                raise TicketException(key + ' is missing in ticket')
+        return value
 
 class TicketException(Exception):
     pass

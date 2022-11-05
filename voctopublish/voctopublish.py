@@ -29,9 +29,11 @@ from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
 import api_client.mastodon_client as mastodon
+import api_client.googlechat_client as googlechat
 from model.ticket_module import Ticket
 from model.ticket_module import RecordingTicket
 from model.ticket_module import PublishingTicket
+from tools.thumbnails import ThumbnailGenerator
 
 
 class Worker:
@@ -103,6 +105,7 @@ class Worker:
         Decide based on the information provided by the tracker where to publish.
         """
         self.ticket = self._get_ticket_from_tracker()
+        self.thumbs = ThumbnailGenerator(self.ticket, self.config)
 
         if not self.ticket:
             logging.debug('not ticket, returning')
@@ -118,6 +121,9 @@ class Worker:
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
+
+        if not self.thumbs.exists:
+            self.thumbs.generate()
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
@@ -151,6 +157,10 @@ class Worker:
         # Mastodon
         if self.ticket.mastodon_enable and self.ticket.master:
             mastodon.send_toot(self.ticket, self.config)
+
+        # Google Chat (former Hangouts Chat)
+        if self.ticket.googlechat_webhook_url and self.ticket.master:
+            googlechat.send_chat_message(self.ticket, self.config)
 
     def _get_ticket_from_tracker(self):
         """
@@ -186,6 +196,7 @@ class Worker:
         logging.info("publishing to voctoweb")
         try:
             vw = VoctowebClient(self.ticket,
+                                self.thumbs,
                                 self.config['voctoweb']['api_key'],
                                 self.config['voctoweb']['api_url'],
                                 self.config['voctoweb']['ssh_host'],
@@ -213,14 +224,14 @@ class Worker:
                         vw.upload_timelens()
                     logging.debug('response: ' + str(r.json()))
                     try:
-                        # todo: only set recording id when new recording was created, and not when it was only updated
+                        # TODO only set recording id when new recording was created, and not when it was only updated
                         self.c3tt.set_ticket_properties(self, {'Voctoweb.EventId': r.json()['id']})
                     except Exception as e_:
                         raise PublisherException('failed to Voctoweb EventID to ticket') from e_
 
                 elif r.status_code == 422:
                     # If this happens tracker and voctoweb are out of sync regarding the event id
-                    # todo: write voctoweb event_id to ticket properties --Andi
+                    # TODO write voctoweb event_id to ticket properties --Andi
                     logging.warning("event already exists => publishing")
                 else:
                     raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.text))
@@ -310,7 +321,7 @@ class Worker:
         """
         logging.debug("publishing to youtube")
 
-        yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        yt = YoutubeAPI(self.ticket, self.thumbs, self.config['youtube']['client_id'], self.config['youtube']['secret'])
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls = yt.publish()
@@ -345,12 +356,12 @@ class Worker:
         else:
             self._copy_file()
 
-        # set recording language todo multilang
+        # set recording language TODO multilang
         try:
             self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
         except AttributeError as err_:
-            self.c3tt.set_ticket_failed('unknown language please set language in the recording ticket to proceed')
-            logging.error('unknown language please set language in the recording ticket to proceed')
+            self.c3tt.set_ticket_failed('unknown language, please set language in the recording ticket to proceed')
+            logging.error('unknown language, please set language in the recording ticket to proceed')
 
         # tell the tracker that we finished the import
         self.c3tt.set_ticket_done()
@@ -373,7 +384,7 @@ class Worker:
                 raise PublisherException(e)
 
         if os.path.exists(file):
-            # todo think about rereleasing here
+            # TODO think about rereleasing here
             logging.warning('video file already exists, please remove file')
             raise PublisherException('video file already exists, please remove file')
 
@@ -403,7 +414,7 @@ class Worker:
                 raise PublisherException(e)
 
         if os.path.exists(file):
-            # todo think about rereleasing here
+            # TODO think about rereleasing here
             logging.warning('video file "' + path + '" already exists, please remove file')
             raise PublisherException('video file already exists, please remove file')
 
@@ -418,7 +429,7 @@ class Worker:
                 url = url_decoded
             logging.debug("Downloading file from: " + url)
             with urllib.request.urlopen(urllib.parse.quote(url, safe=':/')) as df:
-                # original version tried to write whole file to ram and ran aut of memory
+                # original version tried to write whole file to ram and ran out of memory
                 # read in 16 kB chunks instead
                 while True:
                     chunk = df.read(16384)

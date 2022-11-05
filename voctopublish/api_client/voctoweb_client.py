@@ -28,12 +28,14 @@ import glob
 
 from model.ticket_module import Ticket
 from api_client.select_thumbnail import calc_score
+from tools.thumbnails import ThumbnailGenerator
 
 
 class VoctowebClient:
-    def __init__(self, t: Ticket, api_key, api_url, ssh_host, ssh_port, ssh_user):
+    def __init__(self, t: Ticket, thumb: ThumbnailGenerator, api_key, api_url, ssh_host, ssh_port, ssh_user):
         """
         :param t:
+        :param thumb:
         :param api_key: Voctoweb API Key
         :param api_url: Voctoweb API URL
         :param ssh_host: SSH Port of the CDN host
@@ -41,6 +43,7 @@ class VoctowebClient:
         :param ssh_user: SSH user of the CDN host
         """
         self.t = t
+        self.thumbnail = thumb
         self.api_key = api_key
         self.api_url = api_url
         self.ssh = None
@@ -77,73 +80,26 @@ class VoctowebClient:
         This function generates thumbnails to be used on voctoweb
         :return:
         """
-        source = os.path.join(self.t.publishing_path, self.t.local_filename)
-        logging.info("generating thumbs for " + source)
-
-        try:
-            r = subprocess.check_output(
-                'ffprobe -print_format flat -show_format -loglevel quiet ' + source + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
-                shell=True)
-        except Exception as e_:
-            raise VoctowebException("ERROR: could not get duration " + r.decode('utf-8')) from e_
-
-        length = int(r.decode())
-#        length = av.container.open(os.path.join(self.t.publishing_path, self.t.local_filename).duration)
-
         outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.jpg')
         outjpg_preview = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_preview.jpg')
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # now extract candidates and convert to non-anamorphic images
-            # we use equidistant sampling, but skip parts of the file that might contain pre-/postroles
-            # also, use higher resolution sampling at the beginning, as there's usually some interesting stuff there
+        # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
+        # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
+        try:
+            r = subprocess.check_output(
+                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
+                shell=True)
+        except subprocess.CalledProcessError as e_:
+            raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
 
-            if length > 20:
-                scores = {}
-                interval = 180
-                candidates = [20, 30, 40]  # some fixed candidates we always want to hit
-                logging.debug("length of video used for thumbnail generation " + str(length))
-                candidates.extend(list(range(15, length - 60, interval)))  # pick some more candidates based on the file length
-                try:
-                    for pos in candidates:
-                        candidat = os.path.join(tmpdir, str(pos) + '.png')
-                        r = subprocess.check_output('ffmpeg -loglevel error -ss ' + str(pos) + ' -i ' +
-                                                    source +
-                                                    ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y ' +
-                                                    candidat,
-                                                    shell=True)
-                        if os.path.isfile(candidat):
-                            scores[candidat] = calc_score(candidat)
-                        else:
-                            logging.warning("ffmpeg was not able to create candidat for " + str(candidat))
-                except subprocess.CalledProcessError as e_:
-                    raise VoctowebException("ffmpeg exited with the following error, while extracting candidates for thumbnails. " + e_.output) from e_
-                except Exception as e_:
-                    raise VoctowebException("Could not extract candidates: " + str(r)) from e_
+        try:
+            r = subprocess.check_output(
+                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg_preview,
+                shell=True)
+        except Exception as e_:
+            raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
 
-                sorted_scores = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)
-                winner = sorted_scores[0][0]
-                logging.debug('Winner: ' + winner)
-            else:
-                winner = source
-
-            # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
-            # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
-            try:
-                r = subprocess.check_output(
-                    'ffmpeg -loglevel error -i ' + winner + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
-                    shell=True)
-            except subprocess.CalledProcessError as e_:
-                raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
-
-            try:
-                r = subprocess.check_output(
-                    'ffmpeg -loglevel error -i ' + winner + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg_preview,
-                    shell=True)
-            except Exception as e_:
-                raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
-
-            logging.info("thumbnails generated")
+        logging.info("thumbnails reformatted for voctoweb")
 
     def upload_thumbs(self):
         """
