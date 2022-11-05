@@ -44,7 +44,7 @@ class Worker:
 
     def __init__(self):
         self.ticket = None
-
+        self.thumbs = None
         # load config
         if not os.path.exists('client.conf'):
             raise IOError("Error: config file not found")
@@ -128,9 +128,9 @@ class Worker:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
-        thumbs = ThumbnailGenerator(self.ticket, self.config)
-        if not thumbs.exists():
-            thumbs.generate()
+        self.thumbs = ThumbnailGenerator(self.ticket, self.config)
+        if not self.thumbs.exists():
+            self.thumbs.generate()
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
@@ -204,7 +204,7 @@ class Worker:
 
     def _publish_to_voctoweb(self):
         """
-        Create a event on an voctomix instance. This includes creating a recording for each media file.
+        Create an event on a voctoweb instance. This includes creating a recording for each media file.
         """
         logging.info("publishing to voctoweb")
         try:
@@ -223,7 +223,7 @@ class Worker:
             logging.debug('this is a master ticket')
             if self.ticket.voctoweb_event_id or self.ticket.recording_id:
                 logging.debug('ticket has a voctoweb_event_id or recording_id')
-                # ticket has an recording id or voctoweb event id. We assume the event exists on media
+                # ticket has a recording id or voctoweb event id. We assume the event exists on voctoweb
             else:
                 # ticket has no recording id therefore we create the event on voctoweb
                 r = vw.create_or_update_event()
