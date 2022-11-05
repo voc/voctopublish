@@ -41,6 +41,7 @@ class Worker:
     This is the main class for the Voctopublish application
     It is meant to be used with the c3tt ticket tracker
     """
+
     def __init__(self):
         # load config
         if not os.path.exists('client.conf'):
@@ -59,7 +60,8 @@ class Worker:
 
         sh = logging.StreamHandler(sys.stdout)
         if self.config['general']['debug']:
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
         else:
             formatter = logging.Formatter('%(asctime)s - %(message)s')
 
@@ -113,7 +115,8 @@ class Worker:
 
         # check source file and filesystem permissions
         if not os.path.isfile(os.path.join(self.ticket.publishing_path, self.ticket.local_filename)):
-            raise IOError('Source file does not exist ' + os.path.join(self.ticket.publishing_path, self.ticket.local_filename))
+            raise IOError(
+                'Source file does not exist ' + os.path.join(self.ticket.publishing_path, self.ticket.local_filename))
         if not os.path.exists(os.path.join(self.ticket.publishing_path)):
             raise IOError('Output path does not exist ' + os.path.join(self.ticket.publishing_path))
         if os.path.getsize(os.path.join(self.ticket.publishing_path, self.ticket.local_filename)) == 0:
@@ -129,7 +132,8 @@ class Worker:
         # voctoweb
         if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
             logging.debug(
-                'encoding profile media flag: ' + str(self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
+                'encoding profile media flag: ' + str(
+                    self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
             self._publish_to_voctoweb()
         else:
             logging.debug("no voctoweb :(")
@@ -137,12 +141,15 @@ class Worker:
         logging.debug("#youtube {} {}".format(self.ticket.profile_youtube_enable, self.ticket.youtube_enable))
         # YouTube
         if self.ticket.profile_youtube_enable and self.ticket.youtube_enable:
-            if self.ticket.has_youtube_url and self.ticket.youtube_update != 'force' and len(self.ticket.languages) <= 1:
+            if self.ticket.has_youtube_url and self.ticket.youtube_update != 'force' and len(
+                    self.ticket.languages) <= 1:
                 if not self.ticket.youtube_update != 'ignore':
                     raise PublisherException('YouTube URLs already exist in ticket, wont publish to youtube')
             else:
                 logging.debug(
-                    "encoding profile youtube flag: " + str(self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(self.ticket.youtube_enable))
+                    "encoding profile youtube flag: " + str(
+                        self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(
+                        self.ticket.youtube_enable))
                 self._publish_to_youtube()
         else:
             logging.debug("no youtube :(")
@@ -168,12 +175,9 @@ class Worker:
         :return: a ticket object or None in case no ticket is available
         """
         logging.info('requesting ticket from tracker')
-        t = None
-
-        ticket_meta = None
-        if not ticket_meta:
-            ticket_meta = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'})
-
+        ticket_meta = self.c3tt.assign_next_unassigned_for_state(self.ticket_type,
+                                                                 self.to_state,
+                                                                 {'EncodingProfile.Slug': 'relive'})
         if ticket_meta:
             ticket_id = ticket_meta['id']
             logging.info("Ticket ID:" + str(ticket_id))
@@ -183,11 +187,16 @@ class Worker:
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
-            t = Ticket(ticket_meta, ticket_properties)
+            if self.ticket_type == 'encoding':
+                return PublishingTicket(ticket_meta, ticket_properties)
+            elif self.ticket_type == 'releasing':
+                return RecordingTicket
+            else:
+                logging.info('Unknown ticket type ' + self.ticket_type + ' aborting, please check config ')
+                raise PublisherException("Unknown ticket type " + self.ticket_type)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
-
-        return t
+            return None
 
     def _publish_to_voctoweb(self):
         """
@@ -234,7 +243,9 @@ class Worker:
                     # TODO write voctoweb event_id to ticket properties --Andi
                     logging.warning("event already exists => publishing")
                 else:
-                    raise PublisherException('Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(r.text))
+                    raise PublisherException(
+                        'Voctoweb returned an error while creating an event: ' + str(r.status_code) + ' - ' + str(
+                            r.text))
 
             # in case of a multi language release we create here the single language files
             if len(self.ticket.languages) > 1:
@@ -248,7 +259,7 @@ class Worker:
             hq = False
 
         # For multi language or slide recording we don't set the html5 flag
-        if len(self.ticket.languages) > 1 or 'slides' in self.ticket.profile_slug :
+        if len(self.ticket.languages) > 1 or 'slides' in self.ticket.profile_slug:
             html5 = False
         else:
             html5 = True
@@ -257,7 +268,8 @@ class Worker:
         # audio tracks of the master we need to reflect that in the target filename
         if self.ticket.language_index:
             index = int(self.ticket.language_index)
-            filename = self.ticket.language_template % self.ticket.languages[index] + '_' + self.ticket.profile_slug + '.' + self.ticket.profile_extension
+            filename = self.ticket.language_template % self.ticket.languages[
+                index] + '_' + self.ticket.profile_slug + '.' + self.ticket.profile_extension
             language = self.ticket.languages[index]
         else:
             filename = self.ticket.filename
@@ -284,9 +296,11 @@ class Worker:
         """
         logging.debug('Languages: ' + str(self.ticket.languages))
         for language in self.ticket.languages:
-            out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(language) + "." + self.ticket.profile_extension
+            out_filename = self.ticket.fahrplan_id + "-" + self.ticket.profile_slug + "-audio" + str(
+                language) + "." + self.ticket.profile_extension
             out_path = os.path.join(self.ticket.publishing_path, out_filename)
-            filename = self.ticket.language_template % self.ticket.languages[language] + '.' + self.ticket.profile_extension
+            filename = self.ticket.language_template % self.ticket.languages[
+                language] + '.' + self.ticket.profile_extension
 
             logging.info('remuxing ' + self.ticket.local_filename + ' to ' + out_path)
 
@@ -304,14 +318,17 @@ class Worker:
                 raise PublisherException('error uploading ' + out_path) from e_
 
             try:
-                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder, str(self.ticket.languages[language]), hq=True, html5=True, single_language=True)
+                recording_id = vw.create_recording(out_filename, filename, self.ticket.folder,
+                                                   str(self.ticket.languages[language]), hq=True, html5=True,
+                                                   single_language=True)
             except Exception as e_:
                 raise PublisherException('creating recording ' + out_path) from e_
 
             try:
                 # when the ticket was created, and not only updated: write recording_id to ticket
                 if recording_id:
-                    self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
+                    self.c3tt.set_ticket_properties(
+                        {'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
 
@@ -334,7 +351,8 @@ class Worker:
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
         # second YoutubeAPI instance for playlist management at youtube.com
-        if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube']['playlist_token']:
+        if 'playlist_token' in self.config['youtube'] and self.ticket.youtube_token != self.config['youtube'][
+            'playlist_token']:
             yt_voctoweb = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
             yt_voctoweb.setup(self.config['youtube']['playlist_token'])
         else:
@@ -403,7 +421,7 @@ class Worker:
         # TODO find a better integration in to the pipeline
         path = os.path.join(self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id)
         file = os.path.join(path, 'uncut.ts')
-        logging.info('Downloading input file from: ' + self.ticket.download_url + ' to ' + file )
+        logging.info('Downloading input file from: ' + self.ticket.download_url + ' to ' + file)
 
         if not os.path.exists(path):
             try:
@@ -422,7 +440,8 @@ class Worker:
             url = self.ticket.download_url
             url_decoded = urllib.parse.unquote(url)
             # if the unquoted URL has the same length as the input it was not url encoded
-            logging.debug("Test if url is encoded, len url: " + str(len(url)) + " len url decoded: " + str(len(url_decoded)) )
+            logging.debug(
+                "Test if url is encoded, len url: " + str(len(url)) + " len url decoded: " + str(len(url_decoded)))
             if len(url) != len(url_decoded):
                 # if it was encoded we decode it before passing it further
                 logging.debug("URL: " + url + " was url encoded, decoding it before processing")
