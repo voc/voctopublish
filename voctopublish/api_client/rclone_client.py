@@ -22,6 +22,7 @@ class RCloneClient:
             filename_full=self.ticket.filename,
             filename_guid=f"{self.ticket.guid}.{self.ticket.profile_extension}",
             filename_short=self.ticket.local_filename,
+            format=self.folder,
             month=date_time.strftime("%m"),
             year=date_time.strftime("%Y"),
         )
