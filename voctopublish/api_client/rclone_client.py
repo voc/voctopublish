@@ -17,12 +17,12 @@ class RCloneClient:
         date_time = datetime.strptime(t.date, "%Y-%m-%dT%H:%M:%S%z")
         self.destination = self.ticket.rclone_destination.format(
             day=date_time.strftime("%d"),
-            event=self.acronym,
+            event=self.ticket.acronym,
             fahrplan_day=self.ticket.day,
             filename_full=self.ticket.filename,
             filename_guid=f"{self.ticket.guid}.{self.ticket.profile_extension}",
             filename_short=self.ticket.local_filename,
-            format=self.folder,
+            format=self.ticket.folder,
             month=date_time.strftime("%m"),
             year=date_time.strftime("%Y"),
         )
