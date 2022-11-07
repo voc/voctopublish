@@ -165,7 +165,7 @@ class Worker:
                 ret = rclone.upload()
                 if ret not in (0, 9):
                     raise PublisherException(f"rclone failed with exit code {ret}")
-                self.c3tt.set_ticket_properties({
+                self.c3tt.set_ticket_properties(self.ticket_id, {
                     'Rclone.DestinationFileName': rclone.destination,
                     'Rclone.ReturnCode': str(ret),
                 })
@@ -256,7 +256,7 @@ class Worker:
                     logging.debug('response: ' + str(r.json()))
                     try:
                         # TODO only set recording id when new recording was created, and not when it was only updated
-                        self.c3tt.set_ticket_properties(self, {'Voctoweb.EventId': r.json()['id']})
+                        self.c3tt.set_ticket_properties(self.ticket_id, {'Voctoweb.EventId': r.json()['id']})
                     except Exception as e_:
                         raise PublisherException('failed to Voctoweb EventID to ticket') from e_
 
@@ -308,7 +308,7 @@ class Worker:
 
         # when the ticket was created, and not only updated: write recording_id to ticket
         if recording_id:
-            self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
+            self.c3tt.set_ticket_properties(self.ticket_id, {'Voctoweb.RecordingId.Master': recording_id})
 
     def _mux_to_single_language(self, vw):
         """
@@ -349,7 +349,7 @@ class Worker:
             try:
                 # when the ticket was created, and not only updated: write recording_id to ticket
                 if recording_id:
-                    self.c3tt.set_ticket_properties(
+                    self.c3tt.set_ticket_properties(self.ticket_id,
                         {'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
@@ -368,7 +368,7 @@ class Worker:
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
 
-        self.c3tt.set_ticket_properties(self.ticket, props)
+        self.c3tt.set_ticket_properties(self.ticket_id, props)
         self.ticket.youtube_urls = props
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
@@ -398,7 +398,7 @@ class Worker:
 
         # set recording language TODO multilang
         try:
-            self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+            self.c3tt.set_ticket_properties(self.ticket_id, {'Record.Language': self.ticket.language})
         except AttributeError as err_:
             self.c3tt.set_ticket_failed('unknown language, please set language in the recording ticket to proceed')
             logging.error('unknown language, please set language in the recording ticket to proceed')
