@@ -107,12 +107,12 @@ class Worker:
         except Exception as e_:
             raise PublisherException('Config parameter missing or empty, please check config') from e_
 
+        self.ticket = self._get_ticket_from_tracker()
+
     def publish(self):
         """
         Decide based on the information provided by the tracker where to publish.
         """
-        self.ticket = self._get_ticket_from_tracker()
-
         if not self.ticket:
             logging.debug('not ticket, returning')
             return
