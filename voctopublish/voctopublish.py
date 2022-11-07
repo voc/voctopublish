@@ -107,8 +107,6 @@ class Worker:
         except Exception as e_:
             raise PublisherException('Config parameter missing or empty, please check config') from e_
 
-        self.ticket = self._get_ticket_from_tracker()
-
     def publish(self):
         """
         Decide based on the information provided by the tracker where to publish.
@@ -192,7 +190,7 @@ class Worker:
         if self.ticket.googlechat_webhook_url and self.ticket.master:
             googlechat.send_chat_message(self.ticket, self.config)
 
-    def _get_ticket_from_tracker(self):
+    def get_ticket_from_tracker(self):
         """
         Request the next unassigned ticket for the configured states
         :return: a ticket object or None in case no ticket is available
@@ -211,15 +209,14 @@ class Worker:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             if self.ticket_type == 'encoding':
-                return PublishingTicket(ticket_properties, ticket_id)
+                self.ticket = PublishingTicket(ticket_properties, ticket_id)
             elif self.ticket_type == 'releasing':
-                return RecordingTicket(ticket_properties, ticket_id)
+                self.ticket = RecordingTicket(ticket_properties, ticket_id)
             else:
                 logging.info('Unknown ticket type ' + self.ticket_type + ' aborting, please check config ')
                 raise PublisherException("Unknown ticket type " + self.ticket_type)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
-            return None
 
     def _publish_to_voctoweb(self):
         """
@@ -491,6 +488,11 @@ if __name__ == '__main__':
         logging.error(e)
         logging.exception(e)
         sys.exit(-1)
+
+    try:
+        w.get_ticket_from_tracker()
+    except Exception as e:
+        w.c3tt.set_ticket_failed(w.ticket.id, '%s: %s' % (exc_type.__name__, e))
 
     if w.ticket:
         if w.worker_type == 'releasing':
