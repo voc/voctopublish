@@ -29,10 +29,10 @@ class Ticket:
         self.id = ticket_id
 
         # project properties
-        self.acronym = self._validate_('Project.Slug')
+        self.acronym = ticket['Project.Slug']
 
         # general publishing properties
-        self.publishing_path = self._validate_('Publishing.Path')
+        self.publishing_path = ticket['Publishing.Path']
 
     def _validate_(self, key, optional=False):
         value = None
@@ -243,23 +243,6 @@ class PublishingTicket(Ticket):
 
         # googlechat properties
         self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
-
-    def _validate_(self, key, optional=False):
-        value = None
-        if key in self.__tracker_ticket:
-            value = self.__tracker_ticket[key]
-            if not value and not optional:
-                logging.debug(key + ' is empty in ticket')
-                raise TicketException(key + ' is empty in ticket')
-            else:
-                value = str(value)
-        else:
-            if optional:
-                logging.debug("optional property was not in ticket: " + key)
-            else:
-                logging.debug(key + ' is missing in ticket')
-                raise TicketException(key + ' is missing in ticket')
-        return value
 
     def get_raw_property(self, key, optional=True):
         value = None
