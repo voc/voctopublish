@@ -25,7 +25,7 @@ class Ticket:
     def __init__(self, ticket, ticket_id):
         if not ticket:
             raise TicketException('Ticket was None type')
-        self.__tracker_ticket = ticket
+        self._tracker_ticket = ticket
         self.id = ticket_id
 
         # project properties
@@ -36,8 +36,8 @@ class Ticket:
 
     def _validate_(self, key, optional=False):
         value = None
-        if key in self.__tracker_ticket:
-            value = self.__tracker_ticket[key]
+        if key in self._tracker_ticket:
+            value = self._tracker_ticket[key]
             if not value:
                 logging.debug(key + ' is empty in ticket')
                 raise TicketException(key + ' is empty in ticket')
@@ -103,7 +103,7 @@ class PublishingTicket(Ticket):
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')
-        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys()
+        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self._tracker_ticket
                           if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
@@ -151,7 +151,7 @@ class PublishingTicket(Ticket):
             self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
         else:
             self.language = self._validate_('Record.Language')
-            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self.__tracker_ticket.keys() if k.startswith('Record.Language.')}
+            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self._tracker_ticket if k.startswith('Record.Language.')}
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
         # general publishing properties
@@ -182,7 +182,7 @@ class PublishingTicket(Ticket):
             self.youtube_translation_title_suffix = self._validate_('Publishing.YouTube.TranslationTitleSuffix', True)
             self.youtube_urls = {}
             # check if this event has already been published to youtube
-            if 'YouTube.Url0' in ticket and self._validate_('YouTube.Url0') is not None:
+            if 'YouTube.Url0' in self._tracker_ticket and self._validate_('YouTube.Url0') is not None:
                 self.has_youtube_url = True
 
                 for key in ticket:
@@ -246,8 +246,8 @@ class PublishingTicket(Ticket):
 
     def get_raw_property(self, key, optional=True):
         value = None
-        if key in self.__tracker_ticket:
-            value = self.__tracker_ticket[key]
+        if key in self._tracker_ticket:
+            value = self._tracker_ticket[key]
         else:
             if not optional:
                 logging.debug(key + ' is missing in ticket')
