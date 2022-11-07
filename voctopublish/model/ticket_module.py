@@ -81,7 +81,7 @@ class RecordingTicket(Ticket):
     '''
 
     def __init__(self, ticket, ticket_id):
-        Ticket.__init__(self, ticket, ticket_id)
+        super().__init__(ticket, ticket_id)
 
         # recording ticket properties
         self.download_url = self._validate_('Fahrplan.VideoDownloadURL')
@@ -99,7 +99,7 @@ class PublishingTicket(Ticket):
     '''
 
     def __init__(self, ticket, ticket_id):
-        Ticket.__init__(self, ticket, ticket_id)
+        super().__init__(ticket, ticket_id)
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')
