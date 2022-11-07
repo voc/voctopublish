@@ -48,10 +48,12 @@ class RCloneClient:
                 logging.warn(f"rclone reported no transferred files (return code 9)!")
             else:
                 logging.error(f"rclone exited {e.returncode}!")
-            for line in e.stdout.decode().splitlines():
-                logging.error(f"STDOUT: {line}")
-            for line in e.stderr.decode().splitlines():
-                logging.error(f"STDERR: {line}")
+            if e.stdout:
+                for line in e.stdout.decode().splitlines():
+                    logging.error(f"STDOUT: {line}")
+            if e.stderr:
+                for line in e.stderr.decode().splitlines():
+                    logging.error(f"STDERR: {line}")
             return e.returncode
         else:
             logging.info(f"uploaded to {self.destination}")
