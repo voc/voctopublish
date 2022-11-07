@@ -45,6 +45,7 @@ class Worker:
 
     def __init__(self):
         self.ticket = None
+        self.ticket_id = None
         self.thumbs = None
         # load config
         if not os.path.exists('client.conf'):
@@ -201,6 +202,7 @@ class Worker:
                                                                  {'EncodingProfile.Slug': 'relive'})
         if ticket_meta:
             ticket_id = ticket_meta['id']
+            self.ticket_id = ticket_id
             logging.info("Ticket ID:" + str(ticket_id))
             try:
                 ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
@@ -492,7 +494,7 @@ if __name__ == '__main__':
     try:
         w.get_ticket_from_tracker()
     except Exception as e:
-        w.c3tt.set_ticket_failed(w.ticket.id, '%s: %s' % (exc_type.__name__, e))
+        w.c3tt.set_ticket_failed(w.ticket_id, '%s: %s' % (exc_type.__name__, e))
 
     if w.ticket:
         if w.worker_type == 'releasing':
@@ -500,7 +502,7 @@ if __name__ == '__main__':
                 w.publish()
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
-                w.c3tt.set_ticket_failed(w.ticket.id, '%s: %s' % (exc_type.__name__, e))
+                w.c3tt.set_ticket_failed(w.ticket_id, '%s: %s' % (exc_type.__name__, e))
                 logging.exception(e)
                 sys.exit(-1)
         elif w.worker_type == 'recording':
@@ -508,12 +510,12 @@ if __name__ == '__main__':
                 w.download()
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
-                w.c3tt.set_ticket_failed(w.ticket.id, '%s: %s' % (exc_type.__name__, e))
+                w.c3tt.set_ticket_failed(w.ticket_id, '%s: %s' % (exc_type.__name__, e))
                 logging.exception(e)
                 sys.exit(-1)
         else:
-            logging.error('unknown ticket type')
-            w.c3tt.set_ticket_failed('unknown ticket type')
+            logging.error(f'unknown worker type {w.worker_type}')
+            w.c3tt.set_ticket_failed(w.ticket_id, f'unknown worker ticket type {w.worker_type}')
             sys.exit(-1)
     else:
         sys.exit(0)
