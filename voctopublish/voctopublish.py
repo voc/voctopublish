@@ -129,7 +129,7 @@ class Worker:
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
         self.thumbs = ThumbnailGenerator(self.ticket, self.config)
-        if not self.thumbs.exists():
+        if not self.thumbs.exists:
             self.thumbs.generate()
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
