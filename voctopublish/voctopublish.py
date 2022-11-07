@@ -494,6 +494,7 @@ if __name__ == '__main__':
     try:
         w.get_ticket_from_tracker()
     except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
         w.c3tt.set_ticket_failed(w.ticket_id, '%s: %s' % (exc_type.__name__, e))
 
     if w.ticket:
