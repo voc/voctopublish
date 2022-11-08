@@ -27,6 +27,7 @@ import shutil
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
+from api_client.rclone_client import RCloneClient
 import api_client.twitter_client as twitter
 import api_client.mastodon_client as mastodon
 import api_client.googlechat_client as googlechat
@@ -44,6 +45,7 @@ class Worker:
 
     def __init__(self):
         self.ticket = None
+        self.ticket_id = None
         self.thumbs = None
         # load config
         if not os.path.exists('client.conf'):
@@ -110,8 +112,6 @@ class Worker:
         """
         Decide based on the information provided by the tracker where to publish.
         """
-        self.ticket = self._get_ticket_from_tracker()
-
         if not self.ticket:
             logging.debug('not ticket, returning')
             return
@@ -129,7 +129,7 @@ class Worker:
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
         self.thumbs = ThumbnailGenerator(self.ticket, self.config)
-        if not self.thumbs.exists():
+        if not self.thumbs.exists:
             self.thumbs.generate()
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
@@ -158,6 +158,24 @@ class Worker:
         else:
             logging.debug("no youtube :(")
 
+        logging.debug(f"#rclone {self.ticket.rclone_enabled}")
+        if self.ticket.rclone_enabled:
+            if self.ticket.master or not self.ticket.rclone_only_master:
+                rclone = RCloneClient(self.ticket, self.config)
+                ret = rclone.upload()
+                if ret not in (0, 9):
+                    raise PublisherException(f"rclone failed with exit code {ret}")
+                self.c3tt.set_ticket_properties(self.ticket_id, {
+                    'Rclone.DestinationFileName': rclone.destination,
+                    'Rclone.ReturnCode': str(ret),
+                })
+            else:
+                logging.debug(
+                    "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
+                )
+        else:
+            logging.debug("no rclone :(")
+
         logging.debug('#done')
         self.c3tt.set_ticket_done(self.ticket)
 
@@ -173,7 +191,7 @@ class Worker:
         if self.ticket.googlechat_webhook_url and self.ticket.master:
             googlechat.send_chat_message(self.ticket, self.config)
 
-    def _get_ticket_from_tracker(self):
+    def get_ticket_from_tracker(self):
         """
         Request the next unassigned ticket for the configured states
         :return: a ticket object or None in case no ticket is available
@@ -184,6 +202,7 @@ class Worker:
                                                                  {'EncodingProfile.Slug': 'relive'})
         if ticket_meta:
             ticket_id = ticket_meta['id']
+            self.ticket_id = ticket_id
             logging.info("Ticket ID:" + str(ticket_id))
             try:
                 ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
@@ -192,15 +211,14 @@ class Worker:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             if self.ticket_type == 'encoding':
-                return PublishingTicket(ticket_meta, ticket_properties)
+                self.ticket = PublishingTicket(ticket_properties, ticket_id)
             elif self.ticket_type == 'releasing':
-                return RecordingTicket
+                self.ticket = RecordingTicket(ticket_properties, ticket_id)
             else:
                 logging.info('Unknown ticket type ' + self.ticket_type + ' aborting, please check config ')
                 raise PublisherException("Unknown ticket type " + self.ticket_type)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
-            return None
 
     def _publish_to_voctoweb(self):
         """
@@ -238,7 +256,7 @@ class Worker:
                     logging.debug('response: ' + str(r.json()))
                     try:
                         # TODO only set recording id when new recording was created, and not when it was only updated
-                        self.c3tt.set_ticket_properties(self, {'Voctoweb.EventId': r.json()['id']})
+                        self.c3tt.set_ticket_properties(self.ticket_id, {'Voctoweb.EventId': r.json()['id']})
                     except Exception as e_:
                         raise PublisherException('failed to Voctoweb EventID to ticket') from e_
 
@@ -290,7 +308,7 @@ class Worker:
 
         # when the ticket was created, and not only updated: write recording_id to ticket
         if recording_id:
-            self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
+            self.c3tt.set_ticket_properties(self.ticket_id, {'Voctoweb.RecordingId.Master': recording_id})
 
     def _mux_to_single_language(self, vw):
         """
@@ -331,7 +349,7 @@ class Worker:
             try:
                 # when the ticket was created, and not only updated: write recording_id to ticket
                 if recording_id:
-                    self.c3tt.set_ticket_properties(
+                    self.c3tt.set_ticket_properties(self.ticket_id,
                         {'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
@@ -350,7 +368,7 @@ class Worker:
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
 
-        self.c3tt.set_ticket_properties(self.ticket, props)
+        self.c3tt.set_ticket_properties(self.ticket_id, props)
         self.ticket.youtube_urls = props
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
@@ -380,7 +398,7 @@ class Worker:
 
         # set recording language TODO multilang
         try:
-            self.c3tt.set_ticket_properties({'Record.Language': self.ticket.language})
+            self.c3tt.set_ticket_properties(self.ticket_id, {'Record.Language': self.ticket.language})
         except AttributeError as err_:
             self.c3tt.set_ticket_failed('unknown language, please set language in the recording ticket to proceed')
             logging.error('unknown language, please set language in the recording ticket to proceed')
@@ -473,13 +491,19 @@ if __name__ == '__main__':
         logging.exception(e)
         sys.exit(-1)
 
+    try:
+        w.get_ticket_from_tracker()
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        w.c3tt.set_ticket_failed(w.ticket_id, '%s: %s' % (exc_type.__name__, e))
+
     if w.ticket:
         if w.worker_type == 'releasing':
             try:
                 w.publish()
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
-                w.c3tt.set_ticket_failed(w.ticket.id, '%s: %s' % (exc_type.__name__, e))
+                w.c3tt.set_ticket_failed(w.ticket_id, '%s: %s' % (exc_type.__name__, e))
                 logging.exception(e)
                 sys.exit(-1)
         elif w.worker_type == 'recording':
@@ -487,12 +511,12 @@ if __name__ == '__main__':
                 w.download()
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
-                w.c3tt.set_ticket_failed(w.ticket.id, '%s: %s' % (exc_type.__name__, e))
+                w.c3tt.set_ticket_failed(w.ticket_id, '%s: %s' % (exc_type.__name__, e))
                 logging.exception(e)
                 sys.exit(-1)
         else:
-            logging.error('unknown ticket type')
-            w.c3tt.set_ticket_failed('unknown ticket type')
+            logging.error(f'unknown worker type {w.worker_type}')
+            w.c3tt.set_ticket_failed(w.ticket_id, f'unknown worker ticket type {w.worker_type}')
             sys.exit(-1)
     else:
         sys.exit(0)

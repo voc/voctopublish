@@ -27,7 +27,6 @@ import requests
 import glob
 
 from model.ticket_module import Ticket
-from api_client.select_thumbnail import calc_score
 from tools.thumbnails import ThumbnailGenerator
 
 
