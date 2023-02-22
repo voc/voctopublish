@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: voctopublish
+  annotations:
+    github.com/project-slug: voc/voctopublish
+spec:
+  type: other
+  lifecycle: unknown
+  owner: voc
