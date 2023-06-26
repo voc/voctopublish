@@ -27,16 +27,12 @@ def send_chat_message(ticket, config):
     if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
         buttons.append(
             {
-                "textButton": {
-                    "text": config["voctoweb"]["instance_name"],
-                    "onClick": {
-                        "openLink": {
-                            "url": config["voctoweb"]["frontend_url"]
-                            + "/v/"
-                            + ticket.slug
-                        },
+                "text": config["voctoweb"]["instance_name"],
+                "onClick": {
+                    "openLink": {
+                        "url": config["voctoweb"]["frontend_url"] + "/v/" + ticket.slug
                     },
-                }
+                },
             }
         )
 
@@ -44,28 +40,24 @@ def send_chat_message(ticket, config):
         if len(ticket.youtube_urls) == 1:
             buttons.append(
                 {
-                    "textButton": {
-                        "text": "YouTube",
-                        "onClick": {
-                            "openLink": {
-                                "url": ticket.youtube_urls["YouTube.Url0"],
-                            },
+                    "text": "YouTube",
+                    "onClick": {
+                        "openLink": {
+                            "url": ticket.youtube_urls["YouTube.Url0"],
                         },
-                    }
+                    },
                 }
             )
         else:
             for count, url in enumerate(sorted(ticket.youtube_urls.values()), start=1):
                 buttons.append(
                     {
-                        "textButton": {
-                            "text": "YouTube " + str(count),
-                            "onClick": {
-                                "openLink": {
-                                    "url": url,
-                                },
+                        "text": "YouTube " + str(count),
+                        "onClick": {
+                            "openLink": {
+                                "url": url,
                             },
-                        }
+                        },
                     }
                 )
 
@@ -76,21 +68,21 @@ def send_chat_message(ticket, config):
     if ticket.url:
         buttons.append(
             {
-                "textButton": {
-                    "text": "Talk URL",
-                    "onClick": {
-                        "openLink": {
-                            "url": ticket.url,
-                        },
+                "text": "Talk URL",
+                "onClick": {
+                    "openLink": {
+                        "url": ticket.url,
                     },
-                }
+                },
             }
         )
 
     key_value = [
         {
-            "keyValue": {
-                "topLabel": "Room",
+            "decoratedText": {
+                "startIcon": {
+                    "knownIcon": "EVENT_SEAT",
+                },
                 "content": ticket.room,
             },
         }
@@ -99,8 +91,10 @@ def send_chat_message(ticket, config):
     if ticket.people:
         key_value.append(
             {
-                "keyValue": {
-                    "topLabel": "Speakers",
+                "decoratedText": {
+                    "startIcon": {
+                        "knownIcon": "MULTIPLE_PEOPLE",
+                    },
                     "content": ", ".join(ticket.people),
                 },
             }
@@ -109,8 +103,10 @@ def send_chat_message(ticket, config):
     if ticket.track:
         key_value.append(
             {
-                "keyValue": {
-                    "topLabel": "Track",
+                "decoratedText": {
+                    "startIcon": {
+                        "knownIcon": "MEMBERSHIP",
+                    },
                     "content": ticket.track,
                 },
             }
@@ -120,33 +116,38 @@ def send_chat_message(ticket, config):
         r = post(
             ticket.googlechat_webhook_url,
             json={
-                "cards": [
+                "cardsV2": [
                     {
-                        "header": {
-                            "title": ticket.title,
-                            "subtitle": ticket.acronym,
-                        },
-                        "sections": [
-                            {
-                                "widgets": [
-                                    {
-                                        "textParagraph": {
-                                            "text": ticket.abstract if ticket.abstract else '',
+                        "cardId": ticket.guid,
+                        "card": {
+                            "header": {
+                                "title": ticket.title,
+                                "subtitle": ticket.acronym,
+                            },
+                            "sections": [
+                                {
+                                    "header": "Infos",
+                                    "collapsible": False,
+                                    "widgets": [
+                                        {
+                                            "textParagraph": {
+                                                "text": ticket.abstract
+                                                if ticket.abstract
+                                                else "",
+                                            },
                                         },
-                                    },
-                                ],
-                            },
-                            {
-                                "widgets": key_value,
-                            },
-                            {
-                                "widgets": [
-                                    {
-                                        "buttons": buttons,
-                                    },
-                                ],
-                            },
-                        ],
+                                        *key_value,
+                                        {
+                                            "buttonList": [
+                                                {
+                                                    "buttons": buttons,
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
                     },
                 ],
             },
