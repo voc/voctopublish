@@ -126,8 +126,6 @@ class PublishingTicket(Ticket):
         self.fahrplan_id = self._validate_('Fahrplan.ID')
         self.title = self._validate_('Fahrplan.Title')
         self.subtitle = self._validate_('Fahrplan.Subtitle', True)
-        self.abstract = self._validate_('Fahrplan.Abstract', True)
-        self.description = self._validate_('Fahrplan.Description', True)
         self.date = self._validate_('Fahrplan.DateTime')
         self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
         self.local_filename_base = self.fahrplan_id + "-" + self.guid
@@ -142,6 +140,13 @@ class PublishingTicket(Ticket):
         self.track = self._validate_('Fahrplan.Track', True)
         self.day = self._validate_('Fahrplan.Day', True)
         self.url = self._validate_('Fahrplan.URL', True)
+
+        # get abstract and description, if they are equal, ignore abstract
+        self.abstract = self._validate_('Fahrplan.Abstract', True)
+        self.description = self._validate_('Fahrplan.Description', True)
+
+        if self.abstract == self.description:
+            self.abstract = None
 
         # recording ticket properties
 
