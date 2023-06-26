@@ -36,17 +36,14 @@ class Ticket:
 
     def _validate_(self, key, optional=False):
         value = None
-        if key in self._tracker_ticket:
+        if key in self._tracker_ticket and self._tracker_ticket[key]:
             value = str(self._tracker_ticket[key]).strip()
-            if not value:
-                logging.debug(key + ' is empty in ticket')
-                raise TicketException(key + ' is empty in ticket')
         else:
             if optional:
                 logging.warning("optional property was not in ticket: " + key)
             else:
-                logging.debug(key + ' is missing in ticket')
-                raise TicketException(key + ' is missing in ticket')
+                logging.debug(key + ' is missing or empty in ticket')
+                raise TicketException(key + ' is missing or empty in ticket')
         return value
 
     @staticmethod
