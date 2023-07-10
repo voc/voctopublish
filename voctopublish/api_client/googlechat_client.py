@@ -156,3 +156,4 @@ def send_chat_message(ticket, config):
         logging.debug("Google said: " + repr(r.json()))
     except Exception as e_:
         logging.error("GoogleChat failed: " + repr(e_))
+        logging.error(e_.response.text)
