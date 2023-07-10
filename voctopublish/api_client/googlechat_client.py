@@ -83,7 +83,7 @@ def send_chat_message(ticket, config):
                 "startIcon": {
                     "knownIcon": "EVENT_SEAT",
                 },
-                "content": ticket.room,
+                "text": ticket.room,
             },
         }
     ]
@@ -95,7 +95,7 @@ def send_chat_message(ticket, config):
                     "startIcon": {
                         "knownIcon": "MULTIPLE_PEOPLE",
                     },
-                    "content": ", ".join(ticket.people),
+                    "text": ", ".join(ticket.people),
                 },
             }
         )
@@ -107,7 +107,7 @@ def send_chat_message(ticket, config):
                     "startIcon": {
                         "knownIcon": "MEMBERSHIP",
                     },
-                    "content": ticket.track,
+                    "text": ticket.track,
                 },
             }
         )
