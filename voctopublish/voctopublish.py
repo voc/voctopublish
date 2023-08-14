@@ -142,7 +142,7 @@ class Publisher:
             logging.debug("no youtube :(")
 
         logging.debug('#done')
-        self.c3tt.set_ticket_done()
+        self.c3tt.set_ticket_done(self.ticket.ticket_id)
 
         # Twitter
         if self.ticket.twitter_enable and self.ticket.master:
@@ -170,10 +170,10 @@ class Publisher:
         if ticket_id:
             logging.info("Ticket ID:" + str(ticket_id))
             try:
-                tracker_ticket = self.c3tt.get_ticket_properties()
+                tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
                 logging.debug("Ticket: " + str(tracker_ticket))
             except Exception as e_:
-                self.c3tt.set_ticket_failed(e_)
+                self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             t = Ticket(tracker_ticket, ticket_id)
         else:
@@ -214,7 +214,7 @@ class Publisher:
                     logging.debug('response: ' + str(r.json()))
                 try:
                     # todo: only set recording id when new recording was created, and not when it was only updated
-                    self.c3tt.set_ticket_properties({'Voctoweb.EventId': r.json()['id']})
+                    self.c3tt.set_ticket_properties(self.ticket.ticket_id, {'Voctoweb.EventId': r.json()['id']})
                 except Exception as e_:
                     raise PublisherException('failed to Voctoweb EventID to ticket') from e_
 
@@ -263,7 +263,7 @@ class Publisher:
 
         # when the ticket was created, and not only updated: write recording_id to ticket
         if recording_id:
-            self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.Master': recording_id})
+            self.c3tt.set_ticket_properties(self.ticket.ticket_id, {'Voctoweb.RecordingId.Master': recording_id})
 
     def _mux_to_single_language(self, vw):
         """
@@ -300,7 +300,7 @@ class Publisher:
             try:
                 # when the ticket was created, and not only updated: write recording_id to ticket
                 if recording_id:
-                    self.c3tt.set_ticket_properties({'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
+                    self.c3tt.set_ticket_properties(self.ticket.ticket_id, {'Voctoweb.RecordingId.' + self.ticket.languages[language]: str(recording_id)})
             except Exception as e_:
                 raise PublisherException('failed to set RecordingId to ticket') from e_
 
@@ -318,7 +318,7 @@ class Publisher:
         for i, youtubeUrl in enumerate(youtube_urls):
             props['YouTube.Url' + str(i)] = youtubeUrl
 
-        self.c3tt.set_ticket_properties(props)
+        self.c3tt.set_ticket_properties(self.ticket.ticket_id, props)
         self.ticket.youtube_urls = props
 
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
@@ -352,6 +352,6 @@ if __name__ == '__main__':
         publisher.publish()
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
+        publisher.c3tt.set_ticket_failed(publisher.ticket.ticket_id, '%s: %s' % (exc_type.__name__, e))
         logging.exception(e)
         sys.exit(-1)
