@@ -30,7 +30,7 @@ class Ticket:
         self.ticket_id = ticket_id
 
         # project properties
-        self.acronym = self._validate_('Project.Slug')
+        self.acronym = self._validate_('Meta.Acronym', True) or self._validate_('Project.Slug')
 
         # encoding profile properties
         if self._validate_('EncodingProfile.IsMaster') == 'yes':
@@ -142,9 +142,9 @@ class Ticket:
             if self.track:
                 self.voctoweb_tags.append(self.track)
             if 'Publishing.Voctoweb.Tags' in ticket:
-                self.voctoweb_tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
+                self.voctoweb_tags += self._validate_('Publishing.Voctoweb.Tags', True).replace(' ', '').split(',')
             if 'Publishing.Tags' in ticket:
-                self.voctoweb_tags += self._validate_('Publishing.Tags').replace(' ', '').split(',')
+                self.voctoweb_tags += self._validate_('Publishing.Tags', True).replace(' ', '').split(',')
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
@@ -185,6 +185,9 @@ class Ticket:
                 logging.debug(key + ' is missing in ticket')
                 raise TicketException(key + ' is missing in ticket')
         return value
+
+    def has_property(self, key):
+        return key in self.__tracker_ticket
 
     def get_raw_property(self, key, optional=True):
         value = None
