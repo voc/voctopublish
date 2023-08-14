@@ -24,6 +24,7 @@ import json
 import mimetypes
 import langcodes
 import os
+import re
 
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
@@ -154,11 +155,12 @@ class YoutubeAPI:
         else:
             url = ''
 
-        topline = ["#" + x.replace(' ', '') for x in [self.t.acronym, self.t.track] if x]
+        topline = ["#" + re.sub('[^A-Za-z0-9]+', '', x) for x in [self.t.acronym, self.t.track] if x]
         if self.t.acronym and lang and lang != self.t.languages[0]:
-            topline.append(("#" + self.t.acronym + lang).replace(' ', ''))
+            topline.append(topline[0] + '_' + lang)
 
-        description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url, ' '.join(topline)])
+        description = '\n\n'.join([subtitle, abstract, description, '\n'.join(self.t.people), url, ' '.join(topline)])
+        #description = '\n\n'.join([subtitle, abstract, description, ' '.join(["#" + x.replace(' ', '').replace('.', '') for x in self.t.people]), url, ' '.join(topline)])
         description = self.strip_tags(description)
 
         if self.t.voctoweb_url:
@@ -180,7 +182,7 @@ class YoutubeAPI:
                 {
                     'title': title,
                     # YouTube does not allow <> in description -> escape them
-                    'description': description.replace('<', '&lt').replace('>', '&gt'),
+                    'description': description.replace('<', '&lt;').replace('>', '&gt;'),
                     'channelId': self.channelId,
                     'tags': self._select_tags(lang),
                     'defaultLanguage': langcodes.get(self.t.languages[0]).language,
@@ -227,6 +229,7 @@ class YoutubeAPI:
             },
             data=json.dumps(metadata)
         )
+        logging.info(json.dumps(metadata, indent=2))
 
         if 200 != r.status_code:
             if 400 == r.status_code:
@@ -283,6 +286,10 @@ class YoutubeAPI:
         title = self.t.title
         language = lang if lang else self.t.languages[0]
 
+        # if localized title exits, overwrite original title
+        if lang and self.t.has_property(f'Fahrplan.Title.{lang}'):
+            title = self.t.get_raw_property(f'Fahrplan.Title.{lang}')
+
         title_prefix = self.t.youtube_translation_title_prefix \
                 if lang and self.t.youtube_translation_title_prefix else self.t.youtube_title_prefix
         if title_prefix:
@@ -295,6 +302,7 @@ class YoutubeAPI:
         if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(self.t.youtube_title_prefix_speakers):
             title = (', '.join(self.t.people)) + ': ' + title
             logging.debug('adding speaker names as title prefix: ' + title)
+        # same as above, but at the end
         elif self.t.youtube_title_append_speakers and len(self.t.people) <= int(self.t.youtube_title_append_speakers):
             title += ' (' + (', '.join(self.t.people)) + ')'
             logging.debug('appending speaker names to title: ' + title)
