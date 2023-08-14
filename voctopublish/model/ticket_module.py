@@ -30,7 +30,9 @@ class Ticket:
         self.id = ticket_id
 
         # project properties
-        self.acronym = ticket['Project.Slug']
+        self.acronym = self._validate_('Meta.Acronym', True) or self._validate_(
+            'Project.Slug'
+        )
 
         # general publishing properties
         self.publishing_path = ticket['Publishing.Path']
@@ -266,13 +268,13 @@ class PublishingTicket(Ticket):
                 self.voctoweb_tags.append(self.track)
             if 'Publishing.Voctoweb.Tags' in ticket:
                 self.voctoweb_tags += (
-                    self._validate_('Publishing.Voctoweb.Tags')
+                    self._validate_('Publishing.Voctoweb.Tags', True)
                     .replace(' ', '')
                     .split(',')
                 )
             if 'Publishing.Tags' in ticket:
                 self.voctoweb_tags += (
-                    self._validate_('Publishing.Tags').replace(' ', '').split(',')
+                    self._validate_('Publishing.Tags', True).replace(' ', '').split(',')
                 )
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
@@ -311,6 +313,9 @@ class PublishingTicket(Ticket):
         self.googlechat_webhook_url = self._validate_(
             'Publishing.Googlechat.Webhook', True
         )
+
+    def has_property(self, key):
+        return key in self.__tracker_ticket
 
     def get_raw_property(self, key, optional=True):
         value = None
