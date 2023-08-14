@@ -20,6 +20,7 @@ import json
 import logging
 import mimetypes
 import os
+import re
 import subprocess
 from html.parser import HTMLParser
 
@@ -209,10 +210,12 @@ class YoutubeAPI:
             url = ''
 
         topline = [
-            "#" + x.replace(' ', '') for x in [self.t.acronym, self.t.track] if x
+            "#" + re.sub('[^A-Za-z0-9]+', '', x)
+            for x in [self.t.acronym, self.t.track]
+            if x
         ]
         if self.t.acronym and lang and lang != self.t.languages[0]:
-            topline.append(("#" + self.t.acronym + lang).replace(' ', ''))
+            topline.append(topline[0] + '_' + lang)
 
         description = '\n\n'.join(
             [
@@ -300,6 +303,7 @@ class YoutubeAPI:
             },
             data=json.dumps(metadata),
         )
+        logging.info(json.dumps(metadata, indent=2))
 
         if 200 != r.status_code:
             if 400 == r.status_code:
@@ -385,6 +389,10 @@ class YoutubeAPI:
             if lang and self.t.youtube_translation_title_prefix
             else self.t.youtube_title_prefix
         )
+        # if localized title exits, overwrite original title
+        if lang and self.t.has_property(f'Fahrplan.Title.{lang}'):
+            title = self.t.get_raw_property(f'Fahrplan.Title.{lang}')
+
         if title_prefix:
             title_prefix = self._replace_language_placeholders(title_prefix, language)
             title = title_prefix + ' ' + title
