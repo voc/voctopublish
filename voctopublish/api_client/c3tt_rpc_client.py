@@ -249,12 +249,15 @@ class C3TTClient:
         else:
             return ret
 
-    def set_ticket_done(self, ticket):
+    def set_ticket_done(self, ticket, message=None):
         """
         set Ticket status on done
         :return:
         """
-        ret = self._open_rpc("C3TT.setTicketDone", ticket)
+        if message is not None:
+            ret = self._open_rpc("C3TT.setTicketDone", ticket, [message])
+        else:
+            ret = self._open_rpc("C3TT.setTicketDone", ticket)
         logging.debug(str(ret))
 
     def set_ticket_failed(self, ticket, error):

@@ -20,11 +20,10 @@ import logging
 import os
 import socket
 import subprocess
-import sys
+import traceback
 
 from api_client.c3tt_rpc_client import C3TTClient
-
-# from api_client.voctoweb_client import VoctowebClient
+from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from model.ticket_module import Ticket
 
@@ -92,6 +91,7 @@ class Depublisher:
 
         # instance variables we need later
         self.ticket = None
+        self.ticket_id = None
 
         logging.debug('creating C3TTClient')
         try:
@@ -110,37 +110,85 @@ class Depublisher:
         """
         Decide based on the information provided by the tracker where to publish.
         """
-        self.ticket = self._get_ticket_from_tracker()
+
+        self.ticket_id, self.ticket = self._get_ticket_from_tracker()
 
         if not self.ticket:
             logging.debug('not ticket, returning')
             return
 
-        '''
+        errors = []
+
         # voctoweb
-        logging.debug(f"#voctoweb {self.ticket.voctoweb_enable}")
         if self.ticket.voctoweb_enable:
-            self._depublish_from_voctoweb()
+            logging.debug(
+                'encoding profile media flag: '
+                + str(self.ticket.profile_voctoweb_enable)
+                + " project media flag: "
+                + str(self.ticket.voctoweb_enable)
+            )
+            try:
+                self._depublish_from_voctoweb()
+            except:
+                errors.append(
+                    "Removal from voctoweb failed:\n" + traceback.format_exc()
+                )
         else:
             logging.debug("no voctoweb :(")
-        '''
+
+        logging.debug(
+            "#youtube {} {}".format(
+                self.ticket.profile_youtube_enable, self.ticket.youtube_enable
+            )
+        )
         # YouTube
         logging.debug(f"#youtube {self.ticket.youtube_enable}")
         urls = []
         if self.ticket.youtube_enable:
-            if not self.ticket.has_youtube_url:
-                raise DepublisherException(
-                    'No YouTube URLs in ticket, can not depublish'
-                )
-            else:
-                urls = self._depublish_from_youtube()
+            try:
+                if not self.ticket.has_youtube_url:
+                    logging.info(
+                        "Ticket has no YouTube URLs. Probably already depublished."
+                    )
+                else:
+                    urls = self._depublish_from_youtube()
+            except:
+                errors.append("Removal from youtube failed:\n" + traceback.format_exc())
         else:
             logging.debug("no youtube :(")
 
         logging.debug('#done')
-        self.c3tt.set_ticket_done(
-            f'set following YouTube videos to private: {str(urls)}'
+        if errors:
+            self.c3tt.set_ticket_failed(self.ticket_id, "\n".join(errors))
+        else:
+            self.c3tt.set_ticket_done(
+                self.ticket_id,
+                f'Video depublished. YouTube videos have been set to private: {str(urls)}',
+            )
+
+    def _depublish_from_voctoweb(self):
+        vw = VoctowebClient(
+            self.ticket,
+            self.config['voctoweb']['api_key'],
+            self.config['voctoweb']['api_url'],
+            self.config['voctoweb']['ssh_host'],
+            self.config['voctoweb']['ssh_port'],
+            self.config['voctoweb']['ssh_user'],
+            self.config['voctoweb']['frontend_url'],
         )
+
+        event = vw.get_event()
+        if "recordings" not in event:
+            logging.info(
+                "Can't find recordings for event. Event has probably been already deleted."
+            )
+            return
+
+        for recording in event["recordings"]:
+            path = recording["recording_url"].replace("https:/", "")
+            vw.delete_file(path)
+
+        vw.delete_event()
 
     def _get_ticket_from_tracker(self):
         """
@@ -150,15 +198,15 @@ class Depublisher:
         logging.info('requesting ticket from tracker')
         t = None
         ticket_id = self.c3tt.assign_next_unassigned_for_state(
-            self.ticket_type, self.to_state
+            self.ticket_type, self.to_state, {"EncodingProfile.IsMaster": "yes"}
         )
         if ticket_id:
             logging.info("Ticket ID:" + str(ticket_id))
             try:
-                tracker_ticket = self.c3tt.get_ticket_properties()
+                tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
                 logging.debug("Ticket: " + str(tracker_ticket))
             except Exception as e_:
-                self.c3tt.set_ticket_failed(e_)
+                self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             t = Ticket(tracker_ticket, ticket_id)
         else:
@@ -166,7 +214,7 @@ class Depublisher:
                 'No ticket of type ' + self.ticket_type + ' for state ' + self.to_state
             )
 
-        return t
+        return ticket_id, t
 
     def _depublish_from_youtube(self):
         """
@@ -188,7 +236,7 @@ class Depublisher:
             + ' '
         )
 
-        self.c3tt.set_ticket_properties(props)
+        self.c3tt.set_ticket_properties(self.ticket_id, props)
         return youtube_urls
 
 
@@ -208,6 +256,8 @@ if __name__ == '__main__':
         worker.depublish()
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        worker.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
+        worker.c3tt.set_ticket_failed(
+            worker.ticket_id, '%s: %s' % (exc_type.__name__, e)
+        )
         logging.exception(e)
         sys.exit(-1)

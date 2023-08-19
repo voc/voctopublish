@@ -41,6 +41,7 @@ class VoctowebClient:
         ssh_host,
         ssh_port,
         ssh_user,
+        frontend_url=None,
     ):
         """
         :param t:
@@ -60,6 +61,7 @@ class VoctowebClient:
         self.ssh_host = ssh_host
         self.ssh_port = ssh_port
         self.ssh_user = ssh_user
+        self.frontend_url = frontend_url
 
     def _connect_ssh(self):
         """
@@ -312,6 +314,87 @@ class VoctowebClient:
             ) from e
 
         logging.info("uploading " + remote_filename + " done")
+
+    def get_event(self):
+        """
+        Receive event details from voctoweb API host
+        """
+        logging.info('querying event info on ' + self.api_url)
+
+        headers = {'CONTENT-TYPE': 'application/json'}
+
+        url = self.api_url + 'events'
+        logging.debug(
+            "api url: "
+            + url
+            + ' header: '
+            + str(headers)
+            + ' slug: '
+            + str(self.t.slug)
+        )
+
+        # call voctoweb api
+        r = requests.get(
+            self.frontend_url + '/public/events/' + self.t.voctoweb_event_id,
+            headers=headers,
+        )
+        return r.json()
+
+    def delete_event(self):
+        """
+        Delete event from voctoweb API host
+        """
+        event = self.get_event()
+
+        print(event)
+        logging.info('removing event from ' + self.api_url)
+
+        # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
+        headers = {'CONTENT-TYPE': 'application/json'}
+        payload = {
+            'api_key': self.api_key,
+            'acronym': self.t.voctoweb_slug,
+            'event': {'id': self.t.voctoweb_event_id},
+        }
+
+        url = self.api_url + 'events/' + str(self.t.voctoweb_event_id)
+        logging.debug(
+            "api url: "
+            + url
+            + ' header: '
+            + str(headers)
+            + ' slug: '
+            + str(self.t.slug)
+            + ' payload: '
+            + str(payload)
+        )
+
+        # call voctoweb api
+        r = requests.delete(url, headers=headers, json=payload)
+
+    def delete_file(self, remote_path):
+        """
+        Deletes a file on the server
+        :param remote_path:
+        """
+        logging.info("deleting " + remote_path)
+
+        # Check if ssh connection is open.
+        if self.sftp is None:
+            self._connect_ssh()
+
+        # Check if the file already exists and remove it
+        try:
+            self.sftp.remove(remote_path)
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                logging.info("remote file does not exist " + remote_path)
+            else:
+                raise
+        except:
+            raise VoctowebException('Could not delete file from server ' + remote_path)
+
+        logging.info("deleting " + remote_path + " done")
 
     def create_or_update_event(self):
         """
