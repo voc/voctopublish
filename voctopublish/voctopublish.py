@@ -84,6 +84,7 @@ class Publisher:
 
         # instance variables we need later
         self.ticket = None
+        self.ticket_id = None
 
         logging.debug('creating C3TTClient')
         try:
@@ -166,16 +167,16 @@ class Publisher:
         """
         logging.info('requesting ticket from tracker')
         t = None
-        ticket_id = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state)
-        if ticket_id:
-            logging.info("Ticket ID:" + str(ticket_id))
+        self.ticket_id = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state)
+        if self.ticket_id:
+            logging.info("Ticket ID:" + str(self.ticket_id))
             try:
-                tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
+                tracker_ticket = self.c3tt.get_ticket_properties(self.ticket_id)
                 logging.debug("Ticket: " + str(tracker_ticket))
             except Exception as e_:
-                self.c3tt.set_ticket_failed(ticket_id, e_)
+                self.c3tt.set_ticket_failed(self.ticket_id, e_)
                 raise e_
-            t = Ticket(tracker_ticket, ticket_id)
+            t = Ticket(tracker_ticket, self.ticket_id)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
 
@@ -352,6 +353,6 @@ if __name__ == '__main__':
         publisher.publish()
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        publisher.c3tt.set_ticket_failed(publisher.ticket.ticket_id, '%s: %s' % (exc_type.__name__, e))
+        publisher.c3tt.set_ticket_failed(publisher.ticket_id, '%s: %s' % (exc_type.__name__, e))
         logging.exception(e)
         sys.exit(-1)
