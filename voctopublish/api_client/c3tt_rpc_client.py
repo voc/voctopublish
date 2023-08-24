@@ -14,13 +14,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import xmlrpc.client
 import hashlib
 import hmac
+import logging
 import socket
 import urllib
 import xml
-import logging
+import xmlrpc.client
 
 
 class C3TTClient:

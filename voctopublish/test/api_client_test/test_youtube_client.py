@@ -1,9 +1,9 @@
-import unittest
 import json
-
-from model.ticket_module import Ticket
-from api_client.youtube_client import YoutubeAPI
+import unittest
 from unittest import mock
+
+from api_client.youtube_client import YoutubeAPI
+from model.ticket_module import Ticket
 
 
 class TestYouTubeClient(unittest.TestCase):

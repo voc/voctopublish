@@ -15,20 +15,18 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
 import configparser
-import socket
-import sys
 import logging
 import os
+import socket
 import subprocess
-import argparse 
-
+import sys
 
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
 from model.ticket_module import Ticket
 
- 
 
 class RelivePublisher:
     """

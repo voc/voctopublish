@@ -16,11 +16,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import configparser
-import socket
-import sys
 import logging
 import os
+import socket
 import subprocess
+import sys
 
 from api_client.c3tt_rpc_client import C3TTClient
 #from api_client.voctoweb_client import VoctowebClient

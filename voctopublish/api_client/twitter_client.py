@@ -15,8 +15,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from twitter import Twitter, OAuth
 import logging
+
+from twitter import OAuth, Twitter
+
 logging = logging.getLogger()
 
 

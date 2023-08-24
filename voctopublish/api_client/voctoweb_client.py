@@ -15,16 +15,17 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import errno
+import glob
 import json
 import logging
+import operator
 import os
 import subprocess
-import time
 import tempfile
-import operator
+import time
+
 import paramiko
 import requests
-import glob
 
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator

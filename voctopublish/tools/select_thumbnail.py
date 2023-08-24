@@ -16,12 +16,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import math
 import operator
+import sys
 
 from PIL import Image, ImageStat
-
 
 # see http://dx.doi.org/10.1109/ICMT.2011.6002001 for algorithms
 

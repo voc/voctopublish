@@ -16,24 +16,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import configparser
-import socket
-import sys
 import logging
 import os
-import subprocess
-import urllib.request
 import shutil
+import socket
+import subprocess
+import sys
+import urllib.request
 
+import api_client.googlechat_client as googlechat
+import api_client.mastodon_client as mastodon
+import api_client.twitter_client as twitter
 from api_client.c3tt_rpc_client import C3TTClient
+from api_client.rclone_client import RCloneClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
-from api_client.rclone_client import RCloneClient
-import api_client.twitter_client as twitter
-import api_client.mastodon_client as mastodon
-import api_client.googlechat_client as googlechat
-from model.ticket_module import Ticket
-from model.ticket_module import RecordingTicket
-from model.ticket_module import PublishingTicket
+from model.ticket_module import PublishingTicket, RecordingTicket, Ticket
 from tools.thumbnails import ThumbnailGenerator
 
 

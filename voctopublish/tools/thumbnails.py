@@ -23,8 +23,8 @@ from shutil import move
 from subprocess import CalledProcessError, check_output
 from tempfile import TemporaryDirectory
 
-from tools.select_thumbnail import calc_score
 from model.ticket_module import Ticket
+from tools.select_thumbnail import calc_score
 
 
 class ThumbnailGenerator:

@@ -16,14 +16,15 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from html.parser import HTMLParser
-import subprocess
-import logging
-import requests
 import json
+import logging
 import mimetypes
-import langcodes
 import os
+import subprocess
+from html.parser import HTMLParser
+
+import langcodes
+import requests
 
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
