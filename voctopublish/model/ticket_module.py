@@ -242,6 +242,12 @@ class PublishingTicket(Ticket):
         else:
             self.mastodon_enable = False
 
+        # mastodon properties
+        if self._validate_('Publishing.Bluesky.Enable') == 'yes':
+            self.bluesky_enable = True
+        else:
+            self.bluesky_enable = False
+
         # googlechat properties
         self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
 

@@ -24,6 +24,7 @@ import subprocess
 import sys
 import urllib.request
 
+import api_client.bluesky_client as bluesky
 import api_client.googlechat_client as googlechat
 import api_client.mastodon_client as mastodon
 import api_client.twitter_client as twitter
@@ -184,6 +185,9 @@ class Worker:
         # Mastodon
         if self.ticket.mastodon_enable and self.ticket.master:
             mastodon.send_toot(self.ticket, self.config)
+
+        if self.ticket.bluesky_enable and self.ticket.master:
+            bluesky.send_post(self.ticket, self.config)
 
         # Google Chat (former Hangouts Chat)
         if self.ticket.googlechat_webhook_url and self.ticket.master:
