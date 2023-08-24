@@ -28,6 +28,7 @@ from api_client.youtube_client import YoutubeAPI
 import api_client.twitter_client as twitter
 import api_client.mastodon_client as mastodon
 import api_client.googlechat_client as googlechat
+import api_client.bluesky_client as bluesky
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
 
@@ -150,6 +151,9 @@ class Publisher:
         # Mastodon
         if self.ticket.mastodon_enable and self.ticket.master:
             mastodon.send_toot(self.ticket, self.config)
+
+        if self.ticket.bluesky_enable and self.ticket.master:
+            bluesky.send_post(self.ticket, self.config)
 
         # Google Chat (former Hangouts Chat)
         if self.ticket.googlechat_webhook_url and self.ticket.master:

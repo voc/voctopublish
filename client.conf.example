@@ -40,3 +40,7 @@ consumer_secret = <consumer secret>
 api_base_url = <https://mastodon.social>
 email = <loginemail>
 password = <password>
+
+[bluesky]
+username = <username>
+app_password = <app password
