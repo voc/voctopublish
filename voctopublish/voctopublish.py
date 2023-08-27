@@ -213,9 +213,9 @@ class Worker:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             if self.ticket_type == 'encoding':
-                self.ticket = PublishingTicket(ticket_properties, ticket_id)
+                self.ticket = PublishingTicket(ticket_properties, ticket_id, self.config)
             elif self.ticket_type == 'releasing':
-                self.ticket = RecordingTicket(ticket_properties, ticket_id)
+                self.ticket = RecordingTicket(ticket_properties, ticket_id, self.config)
             else:
                 logging.info('Unknown ticket type ' + self.ticket_type + ' aborting, please check config ')
                 raise PublisherException("Unknown ticket type " + self.ticket_type)
