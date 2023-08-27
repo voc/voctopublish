@@ -75,7 +75,7 @@ class RecordingTicket(Ticket):
     This is ticket we use for the download worker. This ticket has less information than an encoding ticket.
     '''
 
-    def __init__(self, ticket, ticket_id):
+    def __init__(self, ticket, ticket_id, config):
         super().__init__(ticket, ticket_id)
 
         # recording ticket properties
