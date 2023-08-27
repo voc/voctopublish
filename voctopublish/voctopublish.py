@@ -176,7 +176,7 @@ class Publisher:
             except Exception as e_:
                 self.c3tt.set_ticket_failed(self.ticket_id, e_)
                 raise e_
-            t = Ticket(tracker_ticket, self.ticket_id)
+            t = Ticket(tracker_ticket, self.ticket_id, self.config)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
 

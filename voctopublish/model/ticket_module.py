@@ -23,7 +23,7 @@ class Ticket:
     and adds some additional information.
     """
 
-    def __init__(self, ticket, ticket_id):
+    def __init__(self, ticket, ticket_id, config):
         if not ticket:
             raise TicketException('Ticket was None type')
         self.__tracker_ticket = ticket
@@ -149,22 +149,19 @@ class Ticket:
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
         # twitter properties
-        if self._validate_('Publishing.Twitter.Enable') == 'yes':
-            self.twitter_enable = True
-        else:
-            self.twitter_enable = False
+        self.twitter_enable = self._validate_('Publishing.Twitter.Enable', True) == 'yes'
+        if self.twitter_enable is None:
+            self.twitter_enable = config['twitter']['enable_default'] == 'yes'
 
         # mastodon properties
-        if self._validate_('Publishing.Mastodon.Enable') == 'yes':
-            self.mastodon_enable = True
-        else:
-            self.mastodon_enable = False
+        self.mastodon_enable = self._validate_('Publishing.Mastodon.Enable', True) == 'yes'
+        if self.mastodon_enable is None:
+            self.mastodon_enable = config['mastodon']['enable_default'] == 'yes'
 
-        # mastodon properties
-        if self._validate_('Publishing.Bluesky.Enable') == 'yes':
-            self.bluesky_enable = True
-        else:
-            self.bluesky_enable = False
+        # bluesky properties
+        self.bluesky_enable = self._validate_('Publishing.Bluesky.Enable', True) == 'yes'
+        if self.bluesky_enable is None:
+            self.bluesky_enable = config['bluesky']['enable_default'] == 'yes'
 
         # googlechat properties
         self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
