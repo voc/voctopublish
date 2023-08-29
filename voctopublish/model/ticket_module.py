@@ -225,27 +225,32 @@ class PublishingTicket(Ticket):
 
         # rclone properties
         # this is a not-very-often-used property, so we add a default for it
-        self.rclone_enabled = self._validate_('Publishing.Rclone.Enable', True) == 'yes'
-        if self.rclone_enabled is None:
-            self.rclone_enabled = config['rclone']['enable_default'] == 'yes'
+        rclone_enabled = self._validate_('Publishing.Rclone.Enable', True)
+        if rclone_enabled is None:
+            rclone_enabled = config['rclone']['enable_default']
+        self.rclone_enabled = rclone_enabled == 'yes'
+
         if self.rclone_enabled:
             self.rclone_destination = self._validate_('Publishing.Rclone.Destination')
             self.rclone_only_master = self._validate_('Publishing.Rclone.OnlyMaster') == 'yes'
 
         # twitter properties
-        self.twitter_enable = self._validate_('Publishing.Twitter.Enable', True) == 'yes'
-        if self.twitter_enable is None:
-            self.twitter_enable = config['twitter']['enable_default'] == 'yes'
+        twitter_enable = self._validate_('Publishing.Twitter.Enable', True)
+        if twitter_enable is None:
+            twitter_enable = config['twitter']['enable_default']
+        self.twitter_enable = twitter_enable == 'yes'
 
         # mastodon properties
-        self.mastodon_enable = self._validate_('Publishing.Mastodon.Enable', True) == 'yes'
-        if self.mastodon_enable is None:
-            self.mastodon_enable = config['mastodon']['enable_default'] == 'yes'
+        mastodon_enable = self._validate_('Publishing.Mastodon.Enable', True)
+        if mastodon_enable is None:
+            mastodon_enable = config['mastodon']['enable_default']
+        self.mastodon_enable = mastodon_enable == 'yes'
 
         # bluesky properties
-        self.bluesky_enable = self._validate_('Publishing.Bluesky.Enable', True) == 'yes'
-        if self.bluesky_enable is None:
-            self.bluesky_enable = config['bluesky']['enable_default'] == 'yes'
+        bluesky_enable = self._validate_('Publishing.Bluesky.Enable', True)
+        if bluesky_enable is None:
+            bluesky_enable = config['bluesky']['enable_default']
+        self.bluesky_enable = bluesky_enable == 'yes'
 
         # googlechat properties
         self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
