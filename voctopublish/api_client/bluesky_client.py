@@ -41,7 +41,7 @@ def send_post(ticket, config):
 
     msg = ' has been released on {}'.format(' and '.join(targets))
 
-    lenght_for_title = POST_MAX_LENGTH - len(msg)
+    length_for_title = POST_MAX_LENGTH - len(msg)
 
     title = ticket.title
     if len(title) >= length_for_title:
