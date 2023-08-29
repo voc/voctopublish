@@ -149,19 +149,22 @@ class Ticket:
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
         # twitter properties
-        self.twitter_enable = self._validate_('Publishing.Twitter.Enable', True) == 'yes'
-        if self.twitter_enable is None:
-            self.twitter_enable = config['twitter']['enable_default'] == 'yes'
+        twitter_enable = self._validate_('Publishing.Twitter.Enable', True)
+        if twitter_enable is None:
+            twitter_enable = config['twitter']['enable_default']
+        self.twitter_enable = twitter_enable == 'yes'
 
         # mastodon properties
-        self.mastodon_enable = self._validate_('Publishing.Mastodon.Enable', True) == 'yes'
-        if self.mastodon_enable is None:
-            self.mastodon_enable = config['mastodon']['enable_default'] == 'yes'
+        mastodon_enable = self._validate_('Publishing.Mastodon.Enable', True)
+        if mastodon_enable is None:
+            mastodon_enable = config['mastodon']['enable_default']
+        self.mastodon_enable = mastodon_enable == 'yes'
 
         # bluesky properties
-        self.bluesky_enable = self._validate_('Publishing.Bluesky.Enable', True) == 'yes'
-        if self.bluesky_enable is None:
-            self.bluesky_enable = config['bluesky']['enable_default'] == 'yes'
+        bluesky_enable = self._validate_('Publishing.Bluesky.Enable', True) == 'yes'
+        if bluesky_enable is None:
+            bluesky_enable = config['bluesky']['enable_default'] == 'yes'
+        self.bluesky_enable = bluesky_enable == 'yes'
 
         # googlechat properties
         self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
