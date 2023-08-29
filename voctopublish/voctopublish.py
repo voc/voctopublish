@@ -175,7 +175,6 @@ class Worker:
         else:
             logging.debug("no rclone :(")
 
-        logging.debug('#done')
         self.c3tt.set_ticket_done(self.ticket)
 
         # Twitter
@@ -192,6 +191,8 @@ class Worker:
         # Google Chat (former Hangouts Chat)
         if self.ticket.googlechat_webhook_url and self.ticket.master:
             googlechat.send_chat_message(self.ticket, self.config)
+
+        logging.debug('#done')
 
     def get_ticket_from_tracker(self):
         """
