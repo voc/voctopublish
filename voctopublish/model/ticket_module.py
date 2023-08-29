@@ -161,9 +161,9 @@ class Ticket:
         self.mastodon_enable = mastodon_enable == 'yes'
 
         # bluesky properties
-        bluesky_enable = self._validate_('Publishing.Bluesky.Enable', True) == 'yes'
+        bluesky_enable = self._validate_('Publishing.Bluesky.Enable', True)
         if bluesky_enable is None:
-            bluesky_enable = config['bluesky']['enable_default'] == 'yes'
+            bluesky_enable = config['bluesky']['enable_default']
         self.bluesky_enable = bluesky_enable == 'yes'
 
         # googlechat properties
