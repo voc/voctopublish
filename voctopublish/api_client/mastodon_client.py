@@ -32,6 +32,10 @@ def send_toot(ticket, config):
             target += ' and '
         target += 'YouTube'
 
+    if not target:
+        logging.warning("no targets, abort")
+        return
+
     msg = ' has been released on ' + target
     title = ticket.title
     if len(title) >= (500 - len(msg)):

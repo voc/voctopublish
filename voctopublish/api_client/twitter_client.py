@@ -32,6 +32,10 @@ def send_tweet(ticket, config):
             target += ' and '
         target += 'YouTube'
 
+    if not target:
+        logging.warning("no targets, aborting")
+        return
+
     msg = ' has been released on ' + target
     title = ticket.title
     if len(title) >= (280 - len(msg)):

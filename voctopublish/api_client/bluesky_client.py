@@ -39,6 +39,10 @@ def send_post(ticket, config):
         targets.append('YouTube')
         LOG.debug(f'youtube url is {youtube_url}')
 
+    if not targets:
+        LOG.warning("Notification requested, but we don't have any links to show - aborting")
+        return
+
     msg = ' has been released on {}'.format(' and '.join(targets))
 
     length_for_title = POST_MAX_LENGTH - len(msg)
