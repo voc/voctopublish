@@ -364,7 +364,7 @@ class Worker:
         """
         logging.debug("publishing to youtube")
 
-        yt = YoutubeAPI(self.ticket, self.thumbs, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        yt = YoutubeAPI(self.ticket, self.thumbs, self.config, self.config['youtube']['client_id'], self.config['youtube']['secret'])
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls = yt.publish()

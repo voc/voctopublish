@@ -38,11 +38,12 @@ class YoutubeAPI:
     https://developers.google.com/youtube/v3/docs
     """
 
-    def __init__(self, t: Ticket, thumb: ThumbnailGenerator, client_id: str, secret: str):
+    def __init__(self, t: Ticket, thumb: ThumbnailGenerator, config, client_id: str, secret: str):
         self.t = t
         self.thumbnail = thumb
         self.client_id = client_id
         self.secret = secret
+        self.config = config
 
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
                          'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi', 'chi': 'Chinese', 'ara': 'Arabic',
@@ -162,8 +163,8 @@ class YoutubeAPI:
         description = '\n\n'.join([subtitle, abstract, description, ' '.join(self.t.people), url, ' '.join(topline)])
         description = self.strip_tags(description)
 
-        if self.t.voctoweb_url:
-            description = os.path.join(self.t.voctoweb_url, self.t.slug) + '\n\n' + description
+        if self.t.voctoweb_enable:
+            description = self.config['voctoweb']['frontend_url'] + '/v/' + ticket.slug + '\n\n' + description
 
         if self.t.youtube_privacy:
             privacy = self.t.youtube_privacy
