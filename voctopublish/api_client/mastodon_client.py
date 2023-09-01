@@ -25,9 +25,11 @@ def send_toot(ticket, config):
     logging.info("toot the release")
 
     target = ''
+    youtube = False
     if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
         target = config['voctoweb']['instance_name']
-    if ticket.youtube_enable and ticket.profile_youtube_enable:
+    if ticket.youtube_enable and ticket.profile_youtube_enable and ticket.youtube_privacy == 'public':
+        youtube = True
         if len(target) > 1:
             target += ' and '
         target += 'YouTube'
@@ -46,7 +48,7 @@ def send_toot(ticket, config):
         voctoweb_url = ' ' + config['voctoweb']['frontend_url'] + '/v/' + ticket.slug
         if len(voctoweb_url) <= (500 - len(message)):
             message = message + voctoweb_url
-    if ticket.youtube_enable and ticket.profile_youtube_enable and len(ticket.youtube_urls['YouTube.Url0']) <= (500 - len(message)):
+    if youtube and len(ticket.youtube_urls['YouTube.Url0']) <= (500 - len(message)):
         message = message + ' ' + ticket.youtube_urls['YouTube.Url0']
 
     try:

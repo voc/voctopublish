@@ -25,9 +25,11 @@ logging = logging.getLogger()
 def send_tweet(ticket, config):
     logging.info("tweeting the release")
     target = ''
+    youtube = False
     if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
         target = config['voctoweb']['instance_name']
-    if ticket.youtube_enable and ticket.profile_youtube_enable:
+    if ticket.youtube_enable and ticket.profile_youtube_enable and ticket.youtube_privacy == 'public':
+        youtube = True
         if len(target) > 1:
             target += ' and '
         target += 'YouTube'
@@ -45,7 +47,7 @@ def send_tweet(ticket, config):
     # URLs on twitter are always 23 characters and we need a space as separator. If we have still enough space we add voctoweb and / or youtube url
     if ticket.voctoweb_enable and ticket.profile_voctoweb_enable and len(message) <= (280 - 24):
         message = message + ' ' + config['voctoweb']['frontend_url'] + '/v/' + ticket.slug
-    if ticket.youtube_enable and ticket.profile_youtube_enable and len(message) <= (280 - 24):
+    if youtube and len(message) <= (280 - 24):
         message = message + ' ' + ticket.youtube_urls['YouTube.Url0']
 
     try:

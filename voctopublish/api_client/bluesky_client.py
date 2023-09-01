@@ -29,12 +29,14 @@ def send_post(ticket, config):
     LOG.info("post the release to bluesky")
 
     targets = []
+    youtube = False
     if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
         voctoweb_url = config['voctoweb']['frontend_url'] + '/v/' + ticket.slug
         targets.append(config['voctoweb']['instance_name'])
         LOG.debug(f'voctoweb url is {voctoweb_url}')
 
-    if ticket.youtube_enable and ticket.profile_youtube_enable:
+    if ticket.youtube_enable and ticket.profile_youtube_enable and ticket.youtube_privacy == 'public':
+        youtube = True
         youtube_url = ticket.youtube_urls['YouTube.Url0']
         targets.append('YouTube')
         LOG.debug(f'youtube url is {youtube_url}')
@@ -61,8 +63,7 @@ def send_post(ticket, config):
         message = message + ' ' + voctoweb_url
 
     if (
-        ticket.youtube_enable
-        and ticket.profile_youtube_enable
+        youtube
         and len(youtube_url) <= (POST_MAX_LENGTH - len(message))
     ):
         message = message + ' ' + youtube_url
