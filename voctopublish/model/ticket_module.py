@@ -131,7 +131,6 @@ class Ticket:
         else:
             self.voctoweb_enable = False
 
-        self.voctoweb_url = self._validate_('Publishing.Voctoweb.Url', True)
         # we will fill the following variables only if voctoweb is enabled
         if self.profile_voctoweb_enable and self.voctoweb_enable:
             self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
