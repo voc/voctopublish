@@ -21,104 +21,67 @@ from re import finditer
 
 import requests
 
-POST_MAX_LENGTH = 295  # actually 300, but allow room for some whitespace
+from tools.announcements import EmptyAnnouncementMessage, make_message
 
 
 def send_post(ticket, config):
-    LOG = logging.getLogger('Bluesky')
+    LOG = logging.getLogger("Bluesky")
     LOG.info("post the release to bluesky")
 
-    targets = []
-    youtube = False
-    if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
-        voctoweb_url = config['voctoweb']['frontend_url'] + '/v/' + ticket.slug
-        targets.append(config['voctoweb']['instance_name'])
-        LOG.debug(f'voctoweb url is {voctoweb_url}')
-
-    if ticket.youtube_enable and ticket.profile_youtube_enable and ticket.youtube_privacy == 'public':
-        youtube = True
-        youtube_url = ticket.youtube_urls['YouTube.Url0']
-        targets.append('YouTube')
-        LOG.debug(f'youtube url is {youtube_url}')
-
-    if not targets:
-        LOG.warning("Notification requested, but we don't have any links to show - aborting")
+    try:
+        message = make_message(ticket, 280, 24)
+    except EmptyAnnouncementMessage:
         return
-
-    msg = ' has been released on {}'.format(' and '.join(targets))
-
-    length_for_title = POST_MAX_LENGTH - len(msg)
-
-    title = ticket.title
-    if len(title) >= length_for_title:
-        title = title[0:length_for_title]
-
-    message = title + msg
-
-    if (
-        ticket.voctoweb_enable
-        and ticket.profile_voctoweb_enable
-        and len(voctoweb_url) <= (POST_MAX_LENGTH - len(message))
-    ):
-        message = message + ' ' + voctoweb_url
-
-    if (
-        youtube
-        and len(youtube_url) <= (POST_MAX_LENGTH - len(message))
-    ):
-        message = message + ' ' + youtube_url
-
-    LOG.info(f'post text: {message}')
 
     try:
         LOG.info(_send_bluesky_post(message, config))
     except Exception as e_:
-        LOG.exception('Posting failed')
+        LOG.exception("Posting failed")
 
 
 def _send_bluesky_post(message, config):
     post = {
-        '$type': 'app.bsky.feed.post',
-        'createdAt': datetime.utcnow().isoformat().replace('+00:00', 'Z'),
-        'facets': [],
-        'text': message,
+        "$type": "app.bsky.feed.post",
+        "createdAt": datetime.utcnow().isoformat().replace("+00:00", "Z"),
+        "facets": [],
+        "text": message,
     }
 
     for url in _parse_urls(message):
-        post['facets'].append(
+        post["facets"].append(
             {
-                'features': [
+                "features": [
                     {
-                        '$type': 'app.bsky.richtext.facet#link',
-                        'uri': url['url'],
+                        "$type": "app.bsky.richtext.facet#link",
+                        "uri": url["url"],
                     }
                 ],
-                'index': {
-                    'byteEnd': url['end'],
-                    'byteStart': url['start'],
+                "index": {
+                    "byteEnd": url["end"],
+                    "byteStart": url["start"],
                 },
             }
         )
 
     r = requests.post(
-        'https://bsky.social/xrpc/com.atproto.server.createSession',
+        "https://bsky.social/xrpc/com.atproto.server.createSession",
         json={
-            'identifier': config['bluesky']['username'],
-            'password': config['bluesky']['app_password'],
+            "identifier": config["bluesky"]["username"],
+            "password": config["bluesky"]["app_password"],
         },
     )
     r.raise_for_status()
     session = r.json()
 
     r = requests.post(
-        'https://bsky.social/xrpc/com.atproto.repo.createRecord',
+        "https://bsky.social/xrpc/com.atproto.repo.createRecord",
         headers={
-            'Authorization': f'Bearer {session["accessJwt"]}',
+            "Authorization": f'Bearer {session["accessJwt"]}',
         },
         json={
-            'collection': 'app.bsky.feed.post',
-            'record': post,
-            'repo': session['did'],
+            "collection": "app.bsky.feed.post",
+            "record": post,
+            "repo": session["did"],
         },
     )
     r.raise_for_status()
