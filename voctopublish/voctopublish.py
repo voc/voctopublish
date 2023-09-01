@@ -185,6 +185,7 @@ class Worker:
         if self.ticket.mastodon_enable and self.ticket.master:
             mastodon.send_toot(self.ticket, self.config)
 
+        # Bluesky
         if self.ticket.bluesky_enable and self.ticket.master:
             bluesky.send_post(self.ticket, self.config)
 
