@@ -164,7 +164,7 @@ class YoutubeAPI:
         description = self.strip_tags(description)
 
         if self.t.voctoweb_enable:
-            description = self.config['voctoweb']['frontend_url'] + '/v/' + ticket.slug + '\n\n' + description
+            description = self.config['voctoweb']['frontend_url'] + '/v/' + self.t.slug + '\n\n' + description
 
         if self.t.youtube_privacy:
             privacy = self.t.youtube_privacy
