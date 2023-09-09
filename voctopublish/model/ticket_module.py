@@ -164,10 +164,15 @@ class PublishingTicket(Ticket):
             self.profile_youtube_enable = True
         else:
             self.profile_youtube_enable = False
-        if self._validate_('Publishing.YouTube.Enable') == 'yes':
+
+        youtube = self._validate_('Publishing.YouTube.Enable', True)
+        if youtube is None:
+            youtube = config['youtube']['enable_default']
+        if youtube == 'yes':
             self.youtube_enable = True
         else:
             self.youtube_enable = False
+
         # we will fill the following variables only if youtube is enabled
         if self.profile_youtube_enable and self.youtube_enable:
             self.youtube_update = self._validate_('Publishing.YouTube.Update', optional=True)
@@ -201,7 +206,11 @@ class PublishingTicket(Ticket):
             self.profile_voctoweb_enable = True
         else:
             self.profile_voctoweb_enable = False
-        if self._validate_('Publishing.Voctoweb.Enable') == 'yes':
+
+        voctoweb = self._validate_('Publishing.Voctoweb.Enable', True)
+        if voctoweb is None:
+            voctoweb = config['voctoweb']['enable_default']
+        if voctoweb == 'yes':
             self.voctoweb_enable = True
         else:
             self.voctoweb_enable = False
