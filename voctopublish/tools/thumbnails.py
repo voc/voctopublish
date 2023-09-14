@@ -63,12 +63,11 @@ class ThumbnailGenerator:
                 + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
                 shell=True,
             )
+            length = int(r.decode())
         except Exception as e_:
             raise ThumbnailException(
                 "ERROR: could not get duration " + r.decode("utf-8")
             ) from e_
-
-        length = int(r.decode())
 
         with TemporaryDirectory() as tmpdir:
             logging.debug("TemporaryDirectory is " + str(tmpdir))
