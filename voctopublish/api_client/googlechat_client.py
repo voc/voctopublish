@@ -21,7 +21,8 @@ from requests import post
 
 
 def send_chat_message(ticket, config):
-    logging.info("posting message to google chat")
+    LOG = logging.getLogger('GoogleChat')
+    LOG.info("posting message to google chat")
 
     buttons = []
     if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
@@ -62,7 +63,7 @@ def send_chat_message(ticket, config):
                 )
 
     if not buttons:
-        logging.warning("GoogleChat: No buttons for videos :(")
+        LOG.warning("GoogleChat: No buttons for videos, not sending message")
         return
 
     if ticket.url:
@@ -113,47 +114,49 @@ def send_chat_message(ticket, config):
         )
 
     try:
+        payload = {
+            "cardsV2": [
+                {
+                    "cardId": ticket.slug,
+                    "card": {
+                        "header": {
+                            "title": ticket.title,
+                            "subtitle": ticket.acronym,
+                        },
+                        "sections": [
+                            {
+                                "header": "Infos",
+                                "collapsible": False,
+                                "widgets": [
+                                    {
+                                        "textParagraph": {
+                                            "text": ticket.abstract
+                                            if ticket.abstract
+                                            else "",
+                                        },
+                                    },
+                                    *key_value,
+                                    {
+                                        "buttonList": [
+                                            {
+                                                "buttons": buttons,
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            ],
+        }
         r = post(
             ticket.googlechat_webhook_url,
-            json={
-                "cardsV2": [
-                    {
-                        "cardId": ticket.slug,
-                        "card": {
-                            "header": {
-                                "title": ticket.title,
-                                "subtitle": ticket.acronym,
-                            },
-                            "sections": [
-                                {
-                                    "header": "Infos",
-                                    "collapsible": False,
-                                    "widgets": [
-                                        {
-                                            "textParagraph": {
-                                                "text": ticket.abstract
-                                                if ticket.abstract
-                                                else "",
-                                            },
-                                        },
-                                        *key_value,
-                                        {
-                                            "buttonList": [
-                                                {
-                                                    "buttons": buttons,
-                                                },
-                                            ],
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    },
-                ],
-            },
+            json=payload
         )
         r.raise_for_status()
-        logging.debug("Google said: " + repr(r.json()))
+        LOG.debug(repr(r.json()))
     except Exception as e_:
-        logging.error("GoogleChat failed: " + repr(e_))
-        logging.error(e_.response.text)
+        LOG.error("failed: " + repr(e_))
+        LOG.error(e_.response.text)
+        LOG.debug(payload)
