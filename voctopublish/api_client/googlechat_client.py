@@ -137,11 +137,9 @@ def send_chat_message(ticket, config):
                                     },
                                     *key_value,
                                     {
-                                        "buttonList": [
-                                            {
-                                                "buttons": buttons,
-                                            },
-                                        ],
+                                        "buttonList": {
+                                            "buttons": buttons,
+                                        },
                                     },
                                 ],
                             },
