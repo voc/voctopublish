@@ -25,7 +25,7 @@ def send_chat_message(ticket, config):
     LOG.info("posting message to google chat")
 
     buttons = []
-    if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
+    if ticket.voctoweb_enable:
         buttons.append(
             {
                 "text": config["voctoweb"]["instance_name"],
@@ -37,7 +37,7 @@ def send_chat_message(ticket, config):
             }
         )
 
-    if ticket.youtube_enable and ticket.profile_youtube_enable:
+    if ticket.youtube_enable:
         if len(ticket.youtube_urls) == 1:
             buttons.append(
                 {

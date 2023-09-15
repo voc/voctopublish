@@ -100,19 +100,17 @@ class Depublisher:
             return
 
         '''
-        logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
-        if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
-            logging.debug(
-                'encoding profile media flag: ' + str(self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
+        logging.debug(f"#voctoweb {self.ticket.voctoweb_enable}")
+        if self.ticket.voctoweb_enable:
             self._depublish_from_voctoweb()
         else:
             logging.debug("no voctoweb :(")
         '''
-        logging.debug("#youtube {} {}".format(self.ticket.profile_youtube_enable, self.ticket.youtube_enable))
         # YouTube
+        logging.debug(f"#youtube {self.ticket.youtube_enable}")
         urls = []
-        if self.ticket.profile_youtube_enable and self.ticket.youtube_enable:
+        if self.ticket.youtube_enable:
             if not self.ticket.has_youtube_url:
                 raise DepublisherException('No YouTube URLs in ticket, can not depublish')
             else:

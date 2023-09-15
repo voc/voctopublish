@@ -132,43 +132,34 @@ class Worker:
             not self.thumbs.exists
             and (
                 (
-                    self.ticket.profile_voctoweb_enable
-                    and self.ticket.voctoweb_enable
+                    self.ticket.voctoweb_enable
                     and self.ticket.mime_type.startswith('video')
                 )
                 or (
-                    self.ticket.profile_youtube_enable
+                    self.ticket.youtube_enable
                     and self.ticket.youtube_enable
                 )
             )
         ):
             self.thumbs.generate()
 
-        logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
         # voctoweb
-        if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
-            logging.debug(
-                'encoding profile media flag: ' + str(
-                    self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
+        logging.debug(f"#voctoweb {self.ticket.voctoweb_enable}")
+        if self.ticket.voctoweb_enable:
             self._publish_to_voctoweb()
-        else:
-            logging.debug("no voctoweb :(")
 
-        logging.debug("#youtube {} {}".format(self.ticket.profile_youtube_enable, self.ticket.youtube_enable))
         # YouTube
-        if self.ticket.profile_youtube_enable and self.ticket.youtube_enable:
-            if self.ticket.has_youtube_url and self.ticket.youtube_update != 'force' and len(
-                    self.ticket.languages) <= 1:
+        logging.debug(f"#youtube {self.ticket.youtube_enable}")
+        if self.ticket.youtube_enable:
+            if (
+                self.ticket.has_youtube_url
+                and self.ticket.youtube_update != 'force'
+                and len(self.ticket.languages) <= 1
+            ):
                 if not self.ticket.youtube_update != 'ignore':
                     raise PublisherException('YouTube URLs already exist in ticket, wont publish to youtube')
             else:
-                logging.debug(
-                    "encoding profile youtube flag: " + str(
-                        self.ticket.profile_youtube_enable) + ' project youtube flag: ' + str(
-                        self.ticket.youtube_enable))
                 self._publish_to_youtube()
-        else:
-            logging.debug("no youtube :(")
 
         logging.debug(f"#rclone {self.ticket.rclone_enabled}")
         if self.ticket.rclone_enabled:
@@ -185,8 +176,6 @@ class Worker:
                 logging.debug(
                     "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
                 )
-        else:
-            logging.debug("no rclone :(")
 
         self.c3tt.set_ticket_done(self.ticket)
 

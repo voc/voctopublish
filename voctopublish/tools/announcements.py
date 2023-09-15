@@ -13,14 +13,13 @@ def make_message(ticket, max_length=200, override_url_length=None):
 
     targets = []
     urls = []
-    if ticket.voctoweb_enable and ticket.profile_voctoweb_enable:
+    if ticket.voctoweb_enable:
         targets.append(config["voctoweb"]["instance_name"])
         urls.append(config["voctoweb"]["frontend_url"] + "/v/" + ticket.slug)
         LOG.debug("voctoweb is enabled")
 
     if (
         ticket.youtube_enable
-        and ticket.profile_youtube_enable
         and ticket.youtube_privacy == "public"
     ):
         targets.append("YouTube")

@@ -101,9 +101,7 @@ class RelivePublisher:
             return
 
         # voctoweb
-        if self.ticket.profile_voctoweb_enable and self.ticket.voctoweb_enable:
-            logging.debug(
-                'encoding profile media flag: ' + str(self.ticket.profile_voctoweb_enable) + " project media flag: " + str(self.ticket.voctoweb_enable))
+        if self.ticket.voctoweb_enable:
             self._publish_to_voctoweb()
 
 

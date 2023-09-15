@@ -37,6 +37,8 @@ class Worker:
     It is meant to be used with the c3tt ticket tracker
     """
     def __init__(self):
+        raise Exception('download worker uses a bunch of no-longer-existing options, please fix and remove this exception')
+
         # load config
         if not os.path.exists('client.conf'):
             raise IOError("Error: config file not found")

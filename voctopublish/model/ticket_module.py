@@ -159,20 +159,19 @@ class PublishingTicket(Ticket):
 
         # youtube properties
         if self._validate_('Publishing.YouTube.EnableProfile') == 'yes':
-            self.profile_youtube_enable = True
+            profile_youtube = True
         else:
-            self.profile_youtube_enable = False
-
+            profile_youtube = False
         youtube = self._validate_('Publishing.YouTube.Enable', True)
         if youtube is None:
             youtube = config['youtube']['enable_default']
         if youtube == 'yes':
-            self.youtube_enable = True
+            self.youtube_enable = profile_youtube
         else:
             self.youtube_enable = False
 
         # we will fill the following variables only if youtube is enabled
-        if self.profile_youtube_enable and self.youtube_enable:
+        if self.youtube_enable:
             self.youtube_update = self._validate_('Publishing.YouTube.Update', optional=True)
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
@@ -201,20 +200,19 @@ class PublishingTicket(Ticket):
 
         # voctoweb properties
         if self._validate_('Publishing.Voctoweb.EnableProfile') == 'yes':
-            self.profile_voctoweb_enable = True
+            profile_voctoweb = True
         else:
-            self.profile_voctoweb_enable = False
-
+            profile_voctoweb = False
         voctoweb = self._validate_('Publishing.Voctoweb.Enable', True)
         if voctoweb is None:
             voctoweb = config['voctoweb']['enable_default']
         if voctoweb == 'yes':
-            self.voctoweb_enable = True
+            self.voctoweb_enable = profile_voctoweb
         else:
             self.voctoweb_enable = False
 
         # we will fill the following variables only if voctoweb is enabled
-        if self.profile_voctoweb_enable and self.voctoweb_enable:
+        if self.voctoweb_enable:
             self.guid = self._validate_('Fahrplan.GUID')
             self.voctoweb_filename_base = self.fahrplan_id + "-" + self.guid
 
@@ -233,7 +231,6 @@ class PublishingTicket(Ticket):
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
         # rclone properties
-        # this is a not-very-often-used property, so we add a default for it
         rclone_enabled = self._validate_('Publishing.Rclone.Enable', True)
         if rclone_enabled is None:
             rclone_enabled = config['rclone']['enable_default']
