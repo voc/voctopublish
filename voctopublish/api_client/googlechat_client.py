@@ -148,10 +148,7 @@ def send_chat_message(ticket, config):
                 },
             ],
         }
-        r = post(
-            ticket.googlechat_webhook_url,
-            json=payload
-        )
+        r = post(ticket.googlechat_webhook_url, json=payload)
         r.raise_for_status()
         LOG.debug(repr(r.json()))
     except Exception as e_:

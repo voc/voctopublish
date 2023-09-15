@@ -26,12 +26,16 @@ class C3TTAdmin:
 
         print('creating C3TTClient')
         try:
-            self.c3tt = C3TTClient(self.config['C3Tracker']['url'],
-                                   self.config['C3Tracker']['group'],
-                                   self.host,
-                                   self.config['C3Tracker']['secret'])
+            self.c3tt = C3TTClient(
+                self.config['C3Tracker']['url'],
+                self.config['C3Tracker']['group'],
+                self.host,
+                self.config['C3Tracker']['secret'],
+            )
         except Exception as e_:
-            raise Exception('Config parameter missing or empty, please check config') from e_
+            raise Exception(
+                'Config parameter missing or empty, please check config'
+            ) from e_
 
     def add_encoding_profile(self, ticket, profile, properties=None):
         if properties is None:
@@ -64,17 +68,29 @@ class C3TTAdmin:
 
 parser = argparse.ArgumentParser(description="Modify tickets in the ticket tracker")
 
-parser.add_argument("task", help="task to perform: add-profile, get-properties, set-done")
+parser.add_argument(
+    "task", help="task to perform: add-profile, get-properties, set-done"
+)
 parser.add_argument("--ticket", type=int)
 parser.add_argument("--profile", type=int)
 parser.add_argument("--title", type=str)
 parser.add_argument('--fahrplan_id', type=int)
 parser.add_argument('--project', type=int)
 # from https://gist.github.com/vadimkantorov/37518ff88808af840884355c845049ea
-parser.add_argument('--prop', help="each property needs to be added as an touple like: --prop foo=bar",
-                    action=type('', (argparse.Action,),
-                                dict(__call__=lambda a, p, n, v, o: getattr(n, a.dest).update(dict([v.split('=')])))),
-                    default={})  # anonymously subclassing argparse.Action
+parser.add_argument(
+    '--prop',
+    help="each property needs to be added as an touple like: --prop foo=bar",
+    action=type(
+        '',
+        (argparse.Action,),
+        dict(
+            __call__=lambda a, p, n, v, o: getattr(n, a.dest).update(
+                dict([v.split('=')])
+            )
+        ),
+    ),
+    default={},
+)  # anonymously subclassing argparse.Action
 args = parser.parse_args()
 
 admin = C3TTAdmin()

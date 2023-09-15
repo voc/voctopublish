@@ -32,7 +32,16 @@ from tools.thumbnails import ThumbnailGenerator
 
 
 class VoctowebClient:
-    def __init__(self, t: Ticket, thumb: ThumbnailGenerator, api_key, api_url, ssh_host, ssh_port, ssh_user):
+    def __init__(
+        self,
+        t: Ticket,
+        thumb: ThumbnailGenerator,
+        api_key,
+        api_url,
+        ssh_host,
+        ssh_port,
+        ssh_user,
+    ):
         """
         :param t:
         :param thumb:
@@ -64,9 +73,15 @@ class VoctowebClient:
         self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.ssh.connect(self.ssh_host, port=self.ssh_port, username=self.ssh_user, )
+            self.ssh.connect(
+                self.ssh_host,
+                port=self.ssh_port,
+                username=self.ssh_user,
+            )
         except paramiko.AuthenticationException as e:
-            raise VoctowebException('Authentication failed. Please check credentials ' + str(e)) from e
+            raise VoctowebException(
+                'Authentication failed. Please check credentials ' + str(e)
+            ) from e
         except paramiko.BadHostKeyException:
             raise VoctowebException('Bad host key. Check your known_hosts file')
         except paramiko.SSHException as e:
@@ -80,24 +95,38 @@ class VoctowebClient:
         This function generates thumbnails to be used on voctoweb
         :return:
         """
-        outjpg = os.path.join(self.t.publishing_path, self.t.fahrplan_id + '_voctoweb.jpg')
-        outjpg_preview = os.path.join(self.t.publishing_path, self.t.fahrplan_id + '_voctoweb_preview.jpg')
+        outjpg = os.path.join(
+            self.t.publishing_path, self.t.fahrplan_id + '_voctoweb.jpg'
+        )
+        outjpg_preview = os.path.join(
+            self.t.publishing_path, self.t.fahrplan_id + '_voctoweb_preview.jpg'
+        )
 
         # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
         # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
         try:
             r = subprocess.check_output(
-                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg,
-                shell=True)
+                'ffmpeg -loglevel error -i '
+                + self.thumbnail.path
+                + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y '
+                + outjpg,
+                shell=True,
+            )
         except subprocess.CalledProcessError as e_:
             raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
 
         try:
             r = subprocess.check_output(
-                'ffmpeg -loglevel error -i ' + self.thumbnail.path + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y ' + outjpg_preview,
-                shell=True)
+                'ffmpeg -loglevel error -i '
+                + self.thumbnail.path
+                + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y '
+                + outjpg_preview,
+                shell=True,
+            )
         except Exception as e_:
-            raise VoctowebException("Could not scale outjpg_preview: " + r.decode('utf-8')) from e_
+            raise VoctowebException(
+                "Could not scale outjpg_preview: " + r.decode('utf-8')
+            ) from e_
 
         logging.info("thumbnails reformatted for voctoweb")
 
@@ -118,16 +147,26 @@ class VoctowebClient:
         for ext_local, ext_vw in thumbs_ext.items():
             file = os.path.join(self.t.publishing_path, self.t.fahrplan_id + ext_local)
             if not os.path.isfile(file):
-                raise VoctowebException('could not upload thumb because file ' + file + ' does not exist')
-            target = os.path.join(self.t.voctoweb_thump_path, self.t.voctoweb_filename_base + ext_vw)
+                raise VoctowebException(
+                    'could not upload thumb because file ' + file + ' does not exist'
+                )
+            target = os.path.join(
+                self.t.voctoweb_thump_path, self.t.voctoweb_filename_base + ext_vw
+            )
             try:
-                logging.debug(
-                    'Uploading ' + file + " to " + target)
+                logging.debug('Uploading ' + file + " to " + target)
                 self.sftp.put(file, target)
             except paramiko.SSHException as e:
-                raise VoctowebException('could not upload thumb because of SSH problem: ' + str(e)) from e
+                raise VoctowebException(
+                    'could not upload thumb because of SSH problem: ' + str(e)
+                ) from e
             except IOError as e:
-                raise VoctowebException('could not upload thumb to ' + target + ' because an remote error occured: ' + str(e)) from e
+                raise VoctowebException(
+                    'could not upload thumb to '
+                    + target
+                    + ' because an remote error occured: '
+                    + str(e)
+                ) from e
 
         logging.info('uploading thumbs done')
 
@@ -138,11 +177,28 @@ class VoctowebClient:
         source = os.path.join(self.t.publishing_path, self.t.local_filename)
         logging.info("running timelens for " + source)
 
-        outtimeline = os.path.join(self.t.publishing_path, self.t.voctoweb_filename_base + '.timeline.jpg')
-        outthumbnails = os.path.join(self.t.publishing_path, self.t.voctoweb_filename_base + '.thumbnails.vtt')
+        outtimeline = os.path.join(
+            self.t.publishing_path, self.t.voctoweb_filename_base + '.timeline.jpg'
+        )
+        outthumbnails = os.path.join(
+            self.t.publishing_path, self.t.voctoweb_filename_base + '.thumbnails.vtt'
+        )
 
         try:
-            r = subprocess.check_output(['timelens', source, '-w', '1000', '-h', '90', '--timeline', outtimeline, '--thumbnails', outthumbnails])
+            r = subprocess.check_output(
+                [
+                    'timelens',
+                    source,
+                    '-w',
+                    '1000',
+                    '-h',
+                    '90',
+                    '--timeline',
+                    outtimeline,
+                    '--thumbnails',
+                    outthumbnails,
+                ]
+            )
         except subprocess.CalledProcessError as e_:
             raise VoctowebException("Could not run timelens: " + str(e_)) from e_
 
@@ -160,17 +216,22 @@ class VoctowebClient:
 
         basepath = os.path.join(self.t.publishing_path, self.t.voctoweb_filename_base)
 
-        files = [basepath + ".timeline.jpg", basepath + ".thumbnails.vtt"] + glob.glob(basepath + ".thumbnails-*.jpg")
+        files = [basepath + ".timeline.jpg", basepath + ".thumbnails.vtt"] + glob.glob(
+            basepath + ".thumbnails-*.jpg"
+        )
         for file in files:
             target = os.path.join(self.t.voctoweb_thump_path, os.path.basename(file))
             try:
-                logging.debug(
-                    'Uploading ' + file + " to " + target)
+                logging.debug('Uploading ' + file + " to " + target)
                 self.sftp.put(file, target)
             except paramiko.SSHException as e:
-                raise VoctowebException('could not upload thumb because of SSH problem ' + str(e)) from e
+                raise VoctowebException(
+                    'could not upload thumb because of SSH problem ' + str(e)
+                ) from e
             except IOError as e:
-                raise VoctowebException('could not upload thumb because of ' + str(e)) from e
+                raise VoctowebException(
+                    'could not upload thumb because of ' + str(e)
+                ) from e
 
         logging.info('uploading timelens files done')
 
@@ -182,7 +243,9 @@ class VoctowebClient:
         :param remote_filename:
         :param remote_folder:
         """
-        logging.info("uploading " + os.path.join(self.t.publishing_path, local_filename))
+        logging.info(
+            "uploading " + os.path.join(self.t.publishing_path, local_filename)
+        )
 
         # Check if ssh connection is open.
         if self.sftp is None:
@@ -205,11 +268,21 @@ class VoctowebClient:
                             try:
                                 self.sftp.mkdir(self.t.voctoweb_path)
                             except IOError as e:
-                                raise VoctowebException('Could not create parent subdir ' + self.t.voctoweb_path + ' : ' + str(e)) from e
+                                raise VoctowebException(
+                                    'Could not create parent subdir '
+                                    + self.t.voctoweb_path
+                                    + ' : '
+                                    + str(e)
+                                ) from e
                     # Finally create format folder
                     self.sftp.mkdir(format_folder)
                 except IOError as e:
-                    raise VoctowebException('Could not create format subdir ' + format_folder + ' : ' + str(e)) from e
+                    raise VoctowebException(
+                        'Could not create format subdir '
+                        + format_folder
+                        + ' : '
+                        + str(e)
+                    ) from e
 
         upload_target = os.path.join(format_folder, remote_filename)
 
@@ -226,11 +299,17 @@ class VoctowebClient:
 
         # Upload the file
         try:
-            self.sftp.put(os.path.join(self.t.publishing_path, local_filename), upload_target)
+            self.sftp.put(
+                os.path.join(self.t.publishing_path, local_filename), upload_target
+            )
         except paramiko.SSHException as e:
-            raise VoctowebException('Could not upload recording because of SSH problem ' + str(e)) from e
+            raise VoctowebException(
+                'Could not upload recording because of SSH problem ' + str(e)
+            ) from e
         except IOError as e:
-            raise VoctowebException('Could not create file in upload directory ' + str(e)) from e
+            raise VoctowebException(
+                'Could not create file in upload directory ' + str(e)
+            ) from e
 
         logging.info("uploading " + remote_filename + " done")
 
@@ -239,7 +318,12 @@ class VoctowebClient:
         Create a new event on the voctoweb API host
         :return:
         """
-        logging.info('creating event on ' + self.api_url + ' in conference ' + self.t.voctoweb_slug)
+        logging.info(
+            'creating event on '
+            + self.api_url
+            + ' in conference '
+            + self.t.voctoweb_slug
+        )
 
         # prepare some variables for the api call
         if self.t.url:
@@ -255,64 +339,102 @@ class VoctowebClient:
                 description = '\n\n'.join([self.t.abstract, self.t.description])
             else:
                 description = self.t.description
-        else: 
+        else:
             description = self.t.abstract
 
         if self.t.links:
             for link in self.t.links:
-                description = '\n\n'.join([description, '<a href="' + link + '">' + link + '</a>'])
+                description = '\n\n'.join(
+                    [description, '<a href="' + link + '">' + link + '</a>']
+                )
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {'CONTENT-TYPE': 'application/json'}
-        payload = {'api_key': self.api_key,
-                   'acronym': self.t.voctoweb_slug,
-                   'event': {
-                       'guid': self.t.guid,
-                       #'slug': self.t.slug,
-                       'title': self.t.title,
-                       'subtitle': self.t.subtitle,
-                       'link': event_url,
-                       'original_language': self.t.languages[0],
-                       'thumb_filename': self.t.voctoweb_filename_base + ".jpg",
-                       'poster_filename': self.t.voctoweb_filename_base + "_preview.jpg",
-                       'timeline_filename': self.t.voctoweb_filename_base + ".timeline.jpg",
-                       'thumbnails_filename': self.t.voctoweb_filename_base + ".thumbnails.vtt",
-                       'description': description,
-                       'date': self.t.date,
-                       'persons': self.t.people,
-                       'tags': self.t.voctoweb_tags,
-                       'promoted': False,
-                       'release_date': str(time.strftime("%Y-%m-%d"))
-                      }
-                    }
+        payload = {
+            'api_key': self.api_key,
+            'acronym': self.t.voctoweb_slug,
+            'event': {
+                'guid': self.t.guid,
+                #'slug': self.t.slug,
+                'title': self.t.title,
+                'subtitle': self.t.subtitle,
+                'link': event_url,
+                'original_language': self.t.languages[0],
+                'thumb_filename': self.t.voctoweb_filename_base + ".jpg",
+                'poster_filename': self.t.voctoweb_filename_base + "_preview.jpg",
+                'timeline_filename': self.t.voctoweb_filename_base + ".timeline.jpg",
+                'thumbnails_filename': self.t.voctoweb_filename_base
+                + ".thumbnails.vtt",
+                'description': description,
+                'date': self.t.date,
+                'persons': self.t.people,
+                'tags': self.t.voctoweb_tags,
+                'promoted': False,
+                'release_date': str(time.strftime("%Y-%m-%d")),
+            },
+        }
 
         url = self.api_url + 'events'
-        logging.debug("api url: " + url + ' header: ' + str(headers) + ' slug: ' + str(self.t.slug) + ' payload: ' + str(payload))
+        logging.debug(
+            "api url: "
+            + url
+            + ' header: '
+            + str(headers)
+            + ' slug: '
+            + str(self.t.slug)
+            + ' payload: '
+            + str(payload)
+        )
 
         # call voctoweb api
         try:
             # TODO make ssl verify a config option
             # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
             if self.t.voctoweb_event_id:
-                r = requests.patch(url + '/' + self.t.guid, headers=headers, json=payload)
+                r = requests.patch(
+                    url + '/' + self.t.guid, headers=headers, json=payload
+                )
                 if r.status_code == 422:
                     # event does not exist, create new one
-                    r = requests.post(url, headers=headers, json={**payload, 'event': { 'slug': self.t.slug, **payload['event'] } })
+                    r = requests.post(
+                        url,
+                        headers=headers,
+                        json={
+                            **payload,
+                            'event': {'slug': self.t.slug, **payload['event']},
+                        },
+                    )
 
             else:
-                r = requests.post(url, headers=headers, json={**payload, 'event': { 'slug': self.t.slug, **payload['event'] } })
+                r = requests.post(
+                    url,
+                    headers=headers,
+                    json={
+                        **payload,
+                        'event': {'slug': self.t.slug, **payload['event']},
+                    },
+                )
                 logging.debug("got response with code %d: %r" % (r.status_code, r.text))
                 # event already exists so update metadata
                 if r.status_code == 422:
-                    r = requests.patch(url + '/' + self.t.guid, headers=headers, json=payload)
-
-
+                    r = requests.patch(
+                        url + '/' + self.t.guid, headers=headers, json=payload
+                    )
 
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
         return r
 
-    def create_recording(self, local_filename, filename, folder, language, hq, html5, single_language=False):
+    def create_recording(
+        self,
+        local_filename,
+        filename,
+        folder,
+        language,
+        hq,
+        html5,
+        single_language=False,
+    ):
         """
         create_recording a file on the voctoweb API host
         :param local_filename: this is not necessarily the value from the ticket
@@ -329,7 +451,6 @@ class VoctowebClient:
         if single_language:
             recording_id = self.t.get_raw_property('Voctoweb.RecordingId.' + language)
 
-
         # make sure we have the file size and length
         ret = []
         if not self._get_file_details(local_filename, ret):
@@ -337,27 +458,31 @@ class VoctowebClient:
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
         url = self.api_url + 'recordings'
-        if recording_id: 
+        if recording_id:
             url += '/' + recording_id
 
         headers = {'CONTENT-TYPE': 'application/json'}
-        payload = {'api_key': self.api_key,
-                   'guid': self.t.guid,
-                   'acronym': self.t.slug,
-                   'recording': {'folder': folder,
-                                 'filename': filename,
-                                 'mime_type': self.t.mime_type,
-                                 'language': language,
-                                 'high_quality': hq,
-                                 'html5': html5,
-                                 'size': str(ret[0]),
-                                 'width': str(ret[2]),
-                                 'height': str(ret[3]),
-                                 'length': str(ret[1])
-                                 }
-                   }
+        payload = {
+            'api_key': self.api_key,
+            'guid': self.t.guid,
+            'acronym': self.t.slug,
+            'recording': {
+                'folder': folder,
+                'filename': filename,
+                'mime_type': self.t.mime_type,
+                'language': language,
+                'high_quality': hq,
+                'html5': html5,
+                'size': str(ret[0]),
+                'width': str(ret[2]),
+                'height': str(ret[3]),
+                'length': str(ret[1]),
+            },
+        }
 
-        logging.debug("api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload))
+        logging.debug(
+            "api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload)
+        )
 
         try:
             # todo ssl verify by config
@@ -372,7 +497,14 @@ class VoctowebClient:
         # except requests.packages.urllib3.exceptions.MaxRetryError as e:
         #    raise VoctowebException("Error during creating of event: " + str(e)) from e
         if r.status_code != 200 and r.status_code != 201:
-            raise VoctowebException(("ERROR: Could not create_recording talk: " + str(r.status_code) + " " + r.text))
+            raise VoctowebException(
+                (
+                    "ERROR: Could not create_recording talk: "
+                    + str(r.status_code)
+                    + " "
+                    + r.text
+                )
+            )
 
         logging.info(("publishing " + filename + " done"))
 
@@ -400,8 +532,11 @@ class VoctowebClient:
 
         try:
             r = subprocess.check_output(
-                'ffprobe -print_format flat -show_format -loglevel quiet ' + file + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
-                shell=True)
+                'ffprobe -print_format flat -show_format -loglevel quiet '
+                + file
+                + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
+                shell=True,
+            )
         except Exception as e_:
             raise VoctowebException("ERROR: could not get duration " + str(e_))
 
@@ -410,8 +545,11 @@ class VoctowebClient:
         if self.t.mime_type.startswith('video'):
             try:
                 r = subprocess.check_output(
-                    'ffmpeg -i ' + file + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
-                    shell=True)
+                    'ffmpeg -i '
+                    + file
+                    + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
+                    shell=True,
+                )
             except Exception as e_:
                 raise VoctowebException("ERROR: could not get resolution " + str(e_))
 

@@ -24,6 +24,7 @@ from PIL import Image, ImageStat
 
 # see http://dx.doi.org/10.1109/ICMT.2011.6002001 for algorithms
 
+
 def luminance_score(hist):
     i1 = int(len(hist) / 5)
     i2 = int(len(hist) * 4 / 5)
@@ -52,9 +53,7 @@ def luminance_diversity(hist):
     if max_num == 0:
         return -1.0
 
-    return -1.0 + 1.0 * math.sqrt(
-        sum(map(lambda x: (x - avg) ** 2, hist))
-    ) / max_num
+    return -1.0 + 1.0 * math.sqrt(sum(map(lambda x: (x - avg) ** 2, hist))) / max_num
 
 
 def luminance_variance(stat):
@@ -63,7 +62,7 @@ def luminance_variance(stat):
     sum_ = stat.sum[0]
     avg = sum_ / n
 
-    return -1 + math.sqrt(sum2 + n * avg ** 2 - 2 * avg * sum_) / 255.0
+    return -1 + math.sqrt(sum2 + n * avg**2 - 2 * avg * sum_) / 255.0
 
 
 def calc_score(path):

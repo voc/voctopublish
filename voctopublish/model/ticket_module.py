@@ -22,6 +22,7 @@ class Ticket:
     This class is inspired by the c3tt ticket system. It handles all information we got from the tracker
     and adds some additional information.
     """
+
     def __init__(self, ticket, ticket_id):
         if not ticket:
             raise TicketException('Ticket was None type')
@@ -58,7 +59,7 @@ class Ticket:
             'es': 'spa',
             'fr': 'fra',
             'gsw': 'gsw',
-            'zh': 'chi'
+            'zh': 'chi',
         }
 
         out = []
@@ -80,12 +81,16 @@ class RecordingTicket(Ticket):
 
         # recording ticket properties
         self.download_url = self._validate_('Fahrplan.VideoDownloadURL')
-        self.fuse_path = self._validate_('Processing.Path.Raw') + self._validate_('Project.Slug')
+        self.fuse_path = self._validate_('Processing.Path.Raw') + self._validate_(
+            'Project.Slug'
+        )
 
         # fahrplan properties
         self.room = self._validate_('Fahrplan.Room')
         self.fahrplan_id = self._validate_('Fahrplan.ID')
-        self.language = self._get_language_from_string_(self._validate_('Fahrplan.Language'))
+        self.language = self._get_language_from_string_(
+            self._validate_('Fahrplan.Language')
+        )
 
 
 class PublishingTicket(Ticket):
@@ -98,8 +103,11 @@ class PublishingTicket(Ticket):
 
         # recording ticket properties
         self.language = self._validate_('Record.Language')
-        self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self._tracker_ticket
-                          if k.startswith('Record.Language.')}
+        self.languages = {
+            int(k.split('.')[-1]): self._validate_(k)
+            for k in self._tracker_ticket
+            if k.startswith('Record.Language.')
+        }
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
         # encoding profile properties
@@ -109,7 +117,9 @@ class PublishingTicket(Ticket):
             self.master = False
         self.profile_extension = self._validate_('EncodingProfile.Extension')
         self.profile_slug = self._validate_('EncodingProfile.Slug')
-        self.filename = self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
+        self.filename = (
+            self._validate_('EncodingProfile.Basename') + "." + self.profile_extension
+        )
         self.folder = self._validate_('EncodingProfile.MirrorFolder')
 
         # encoding properties
@@ -121,7 +131,9 @@ class PublishingTicket(Ticket):
         self.title = self._validate_('Fahrplan.Title')
         self.subtitle = self._validate_('Fahrplan.Subtitle', True)
         self.date = self._validate_('Fahrplan.DateTime')
-        self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
+        self.local_filename = (
+            self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
+        )
         self.room = self._validate_('Fahrplan.Room')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
@@ -146,10 +158,16 @@ class PublishingTicket(Ticket):
         # special case languages: if Encoding.Language is present, it overrides Record.Language:
         if 'Encoding.Language' in ticket:
             self.language = self._validate_('Encoding.Language')
-            self.languages = dict(enumerate(self._validate_('Encoding.Language').split('-')))
+            self.languages = dict(
+                enumerate(self._validate_('Encoding.Language').split('-'))
+            )
         else:
             self.language = self._validate_('Record.Language')
-            self.languages = {int(k.split('.')[-1]): self._validate_(k) for k in self._tracker_ticket if k.startswith('Record.Language.')}
+            self.languages = {
+                int(k.split('.')[-1]): self._validate_(k)
+                for k in self._tracker_ticket
+                if k.startswith('Record.Language.')
+            }
         self.language_template = self._validate_('Encoding.LanguageTemplate')
 
         # general publishing properties
@@ -172,20 +190,37 @@ class PublishingTicket(Ticket):
 
         # we will fill the following variables only if youtube is enabled
         if self.youtube_enable:
-            self.youtube_update = self._validate_('Publishing.YouTube.Update', optional=True)
+            self.youtube_update = self._validate_(
+                'Publishing.YouTube.Update', optional=True
+            )
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
             self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
             self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
-            self.youtube_title_prefix = self._validate_('Publishing.YouTube.TitlePrefix', True)
-            self.youtube_translation_title_prefix = self._validate_('Publishing.YouTube.TranslationTitlePrefix', True)
-            self.youtube_title_prefix_speakers = self._validate_('Publishing.YouTube.TitlePrefixSpeakers', True)
-            self.youtube_title_append_speakers = self._validate_('Publishing.YouTube.TitleAppendSpeakers', True)
-            self.youtube_title_suffix = self._validate_('Publishing.YouTube.TitleSuffix', True)
-            self.youtube_translation_title_suffix = self._validate_('Publishing.YouTube.TranslationTitleSuffix', True)
+            self.youtube_title_prefix = self._validate_(
+                'Publishing.YouTube.TitlePrefix', True
+            )
+            self.youtube_translation_title_prefix = self._validate_(
+                'Publishing.YouTube.TranslationTitlePrefix', True
+            )
+            self.youtube_title_prefix_speakers = self._validate_(
+                'Publishing.YouTube.TitlePrefixSpeakers', True
+            )
+            self.youtube_title_append_speakers = self._validate_(
+                'Publishing.YouTube.TitleAppendSpeakers', True
+            )
+            self.youtube_title_suffix = self._validate_(
+                'Publishing.YouTube.TitleSuffix', True
+            )
+            self.youtube_translation_title_suffix = self._validate_(
+                'Publishing.YouTube.TranslationTitleSuffix', True
+            )
             self.youtube_urls = {}
             # check if this event has already been published to youtube
-            if 'YouTube.Url0' in self._tracker_ticket and self._validate_('YouTube.Url0') is not None:
+            if (
+                'YouTube.Url0' in self._tracker_ticket
+                and self._validate_('YouTube.Url0') is not None
+            ):
                 self.has_youtube_url = True
 
                 for key in ticket:
@@ -194,7 +229,9 @@ class PublishingTicket(Ticket):
             else:
                 self.has_youtube_url = False
             if self._validate_('Publishing.YouTube.Playlists', True) is not None:
-                self.youtube_playlists = self._validate_('Publishing.YouTube.Playlists', True).split(',')
+                self.youtube_playlists = self._validate_(
+                    'Publishing.YouTube.Playlists', True
+                ).split(',')
             else:
                 self.youtube_playlists = []
 
@@ -220,13 +257,23 @@ class PublishingTicket(Ticket):
             self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
             self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')
             self.voctoweb_slug = self._validate_('Publishing.Voctoweb.Slug')
-            self.voctoweb_tags = [self.acronym, self.fahrplan_id, self.date.split('-')[0]]
+            self.voctoweb_tags = [
+                self.acronym,
+                self.fahrplan_id,
+                self.date.split('-')[0],
+            ]
             if self.track:
                 self.voctoweb_tags.append(self.track)
             if 'Publishing.Voctoweb.Tags' in ticket:
-                self.voctoweb_tags += self._validate_('Publishing.Voctoweb.Tags').replace(' ', '').split(',')
+                self.voctoweb_tags += (
+                    self._validate_('Publishing.Voctoweb.Tags')
+                    .replace(' ', '')
+                    .split(',')
+                )
             if 'Publishing.Tags' in ticket:
-                self.voctoweb_tags += self._validate_('Publishing.Tags').replace(' ', '').split(',')
+                self.voctoweb_tags += (
+                    self._validate_('Publishing.Tags').replace(' ', '').split(',')
+                )
             self.recording_id = self._validate_('Voctoweb.RecordingId.Master', True)
             self.voctoweb_event_id = self._validate_('Voctoweb.EventId', True)
 
@@ -238,7 +285,9 @@ class PublishingTicket(Ticket):
 
         if self.rclone_enabled:
             self.rclone_destination = self._validate_('Publishing.Rclone.Destination')
-            self.rclone_only_master = self._validate_('Publishing.Rclone.OnlyMaster') == 'yes'
+            self.rclone_only_master = (
+                self._validate_('Publishing.Rclone.OnlyMaster') == 'yes'
+            )
 
         # twitter properties
         twitter_enable = self._validate_('Publishing.Twitter.Enable', True)
@@ -259,7 +308,9 @@ class PublishingTicket(Ticket):
         self.bluesky_enable = bluesky_enable == 'yes'
 
         # googlechat properties
-        self.googlechat_webhook_url = self._validate_('Publishing.Googlechat.Webhook', True)
+        self.googlechat_webhook_url = self._validate_(
+            'Publishing.Googlechat.Webhook', True
+        )
 
     def get_raw_property(self, key, optional=True):
         value = None
@@ -270,6 +321,7 @@ class PublishingTicket(Ticket):
                 logging.debug(key + ' is missing in ticket')
                 raise TicketException(key + ' is missing in ticket')
         return value
+
 
 class TicketException(Exception):
     pass

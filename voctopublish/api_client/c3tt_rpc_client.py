@@ -46,7 +46,9 @@ class C3TTClient:
         :param args:
         :return: hmac signature
         """
-        sig_args = urllib.parse.quote(self.url + "&" + method + "&" + self.group + "&" + self.host + "&", "~")
+        sig_args = urllib.parse.quote(
+            self.url + "&" + method + "&" + self.group + "&" + self.host + "&", "~"
+        )
 
         # add method args
         if len(args) > 0:
@@ -58,7 +60,11 @@ class C3TTClient:
                 if isinstance(arg, dict):
                     kvs = []
                     for k, v in args[i].items():
-                        kvs.append(urllib.parse.quote('[' + str(k) + ']', '~') + '=' + urllib.parse.quote(str(v), '~'))
+                        kvs.append(
+                            urllib.parse.quote('[' + str(k) + ']', '~')
+                            + '='
+                            + urllib.parse.quote(str(v), '~')
+                        )
                     arg = '&'.join(kvs)
                 else:
                     arg = urllib.parse.quote(str(arg), '~')
@@ -69,7 +75,9 @@ class C3TTClient:
                 i += 1
 
         # generate the hmac hash with the key
-        hash_ = hmac.new(bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256)
+        hash_ = hmac.new(
+            bytes(self.secret, 'utf-8'), bytes(sig_args, 'utf-8'), hashlib.sha256
+        )
         return hash_.hexdigest()
 
     def _open_rpc(self, method, ticket=None, args=None):
@@ -80,7 +88,14 @@ class C3TTClient:
         :param args:
         :return: attributes of the answer
         """
-        logging.debug('creating XML RPC proxy: ' + self.url + "?group=" + self.group + "&hostname=" + self.host)
+        logging.debug(
+            'creating XML RPC proxy: '
+            + self.url
+            + "?group="
+            + self.group
+            + "&hostname="
+            + self.host
+        )
         if args is None:
             args = []
         if ticket is not None:
@@ -91,7 +106,9 @@ class C3TTClient:
                 args.insert(0, ticket.id)
 
         try:
-            proxy = xmlrpc.client.ServerProxy(self.url + "?group=" + self.group + "&hostname=" + self.host)
+            proxy = xmlrpc.client.ServerProxy(
+                self.url + "?group=" + self.group + "&hostname=" + self.host
+            )
         except xmlrpc.client.Fault as err:
             msg = "A fault occurred\n"
             msg += "Fault code: %d \n" % err.faultCode
@@ -146,7 +163,9 @@ class C3TTClient:
         """
         return str(self._open_rpc("C3TT.getVersion"))
 
-    def assign_next_unassigned_for_state(self, ticket_type, to_state, property_filters = []):
+    def assign_next_unassigned_for_state(
+        self, ticket_type, to_state, property_filters=[]
+    ):
         """
         check for new ticket on tracker and get assignment
         this also sets the ticket id in the c3tt client instance and has therefore be called before any ticket related
@@ -156,15 +175,17 @@ class C3TTClient:
         :parm property_filters:  return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
-        ret = self._open_rpc("C3TT.assignNextUnassignedForState", args=[ticket_type, to_state, property_filters])
+        ret = self._open_rpc(
+            "C3TT.assignNextUnassignedForState",
+            args=[ticket_type, to_state, property_filters],
+        )
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
         else:
-
             return ret
 
-    def get_assigned_for_state(self, ticket_type, state, property_filters = []):
+    def get_assigned_for_state(self, ticket_type, state, property_filters=[]):
         """
         Get first assigned ticket in state $state
         function
@@ -173,7 +194,9 @@ class C3TTClient:
         :parm property_filters: return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
-        ret = self._open_rpc("C3TT.getAssignedForState", args=[ticket_type, state, property_filters])
+        ret = self._open_rpc(
+            "C3TT.getAssignedForState", args=[ticket_type, state, property_filters]
+        )
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
@@ -182,7 +205,7 @@ class C3TTClient:
                 logging.warn("multiple tickets assined, fetching first one")
             return ret[0]
 
-    def get_tickets_for_state(self, ticket_type, to_state, property_filters = []):
+    def get_tickets_for_state(self, ticket_type, to_state, property_filters=[]):
         """
         Get all tickets in state $state from projects assigned to the workerGroup, unless workerGroup is halted
         function
@@ -191,7 +214,9 @@ class C3TTClient:
         :parm property_filters: return only tickets matching given properties
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
-        ret = self._open_rpc("C3TT.getTicketsForState", args=[ticket_type, to_state, property_filters])
+        ret = self._open_rpc(
+            "C3TT.getTicketsForState", args=[ticket_type, to_state, property_filters]
+        )
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
@@ -238,7 +263,9 @@ class C3TTClient:
         :param ticket: id of ticket
         :param error:
         """
-        self._open_rpc("C3TT.setTicketFailed", ticket, [error.encode('ascii', 'xmlcharrefreplace')])
+        self._open_rpc(
+            "C3TT.setTicketFailed", ticket, [error.encode('ascii', 'xmlcharrefreplace')]
+        )
 
     def create_encoding_ticket(self, ticket, profile):
         """
@@ -250,7 +277,9 @@ class C3TTClient:
         ret = self._open_rpc("C3TT.createEncodingTicket", ticket, args=[profile])
         return ret
 
-    def create_meta_ticket(self, project: int, title: str, fahrplan_id: int, properties=None):
+    def create_meta_ticket(
+        self, project: int, title: str, fahrplan_id: int, properties=None
+    ):
         """
         create a new meta ticket in a project
         :param project: id of the project

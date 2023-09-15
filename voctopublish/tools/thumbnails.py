@@ -38,7 +38,8 @@ class ThumbnailGenerator:
             return self.ticket.thumbnail_file
         else:
             return join(
-                self.ticket.publishing_path, str(self.ticket.fahrplan_id) + "-thumbnail.png"
+                self.ticket.publishing_path,
+                str(self.ticket.fahrplan_id) + "-thumbnail.png",
             )
 
     @property
@@ -118,9 +119,7 @@ class ThumbnailGenerator:
                         "Could not extract candidates: " + str(r)
                     ) from e_
 
-                sorted_scores = sorted(
-                    scores.items(), key=itemgetter(1), reverse=True
-                )
+                sorted_scores = sorted(scores.items(), key=itemgetter(1), reverse=True)
                 winner = sorted_scores[0][0]
                 logging.debug("Winner: " + winner)
 

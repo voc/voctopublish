@@ -18,10 +18,7 @@ def make_message(ticket, max_length=200, override_url_length=None):
         urls.append(config["voctoweb"]["frontend_url"] + "/v/" + ticket.slug)
         LOG.debug("voctoweb is enabled")
 
-    if (
-        ticket.youtube_enable
-        and ticket.youtube_privacy == "public"
-    ):
+    if ticket.youtube_enable and ticket.youtube_privacy == "public":
         targets.append("YouTube")
         urls.append(ticket.youtube_urls["YouTube.Url0"])
         LOG.debug(f"youtube is enabled")

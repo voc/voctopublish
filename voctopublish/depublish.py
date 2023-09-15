@@ -23,7 +23,8 @@ import subprocess
 import sys
 
 from api_client.c3tt_rpc_client import C3TTClient
-#from api_client.voctoweb_client import VoctowebClient
+
+# from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from model.ticket_module import Ticket
 
@@ -33,6 +34,7 @@ class Depublisher:
     This is the main class for the Voctopublish application
     It is meant to be used with the c3tt ticket tracker
     """
+
     def __init__(self):
         # load config
         if not os.path.exists('client.conf'):
@@ -42,16 +44,27 @@ class Depublisher:
         self.config.read('client.conf')
 
         # set up logging
-        logging.addLevelName(logging.WARNING, "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
-        logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
-        logging.addLevelName(logging.INFO, "\033[1;32m%s\033[1;0m" % logging.getLevelName(logging.INFO))
-        logging.addLevelName(logging.DEBUG, "\033[1;85m%s\033[1;0m" % logging.getLevelName(logging.DEBUG))
+        logging.addLevelName(
+            logging.WARNING,
+            "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.WARNING),
+        )
+        logging.addLevelName(
+            logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR)
+        )
+        logging.addLevelName(
+            logging.INFO, "\033[1;32m%s\033[1;0m" % logging.getLevelName(logging.INFO)
+        )
+        logging.addLevelName(
+            logging.DEBUG, "\033[1;85m%s\033[1;0m" % logging.getLevelName(logging.DEBUG)
+        )
 
         self.logger = logging.getLogger()
 
         sh = logging.StreamHandler(sys.stdout)
         if self.config['general']['debug']:
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s')
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s'
+            )
         else:
             formatter = logging.Formatter('%(asctime)s - %(message)s')
 
@@ -82,12 +95,16 @@ class Depublisher:
 
         logging.debug('creating C3TTClient')
         try:
-            self.c3tt = C3TTClient(self.config['C3Tracker']['url'],
-                                   self.config['C3Tracker']['group'],
-                                   self.host,
-                                   self.config['C3Tracker']['secret'])
+            self.c3tt = C3TTClient(
+                self.config['C3Tracker']['url'],
+                self.config['C3Tracker']['group'],
+                self.host,
+                self.config['C3Tracker']['secret'],
+            )
         except Exception as e_:
-            raise PublisherException('Config parameter missing or empty, please check config') from e_
+            raise PublisherException(
+                'Config parameter missing or empty, please check config'
+            ) from e_
 
     def depublish(self):
         """
@@ -112,15 +129,18 @@ class Depublisher:
         urls = []
         if self.ticket.youtube_enable:
             if not self.ticket.has_youtube_url:
-                raise DepublisherException('No YouTube URLs in ticket, can not depublish')
+                raise DepublisherException(
+                    'No YouTube URLs in ticket, can not depublish'
+                )
             else:
                 urls = self._depublish_from_youtube()
         else:
             logging.debug("no youtube :(")
 
         logging.debug('#done')
-        self.c3tt.set_ticket_done(f'set following YouTube videos to private: {str(urls)}')
-
+        self.c3tt.set_ticket_done(
+            f'set following YouTube videos to private: {str(urls)}'
+        )
 
     def _get_ticket_from_tracker(self):
         """
@@ -129,7 +149,9 @@ class Depublisher:
         """
         logging.info('requesting ticket from tracker')
         t = None
-        ticket_id = self.c3tt.assign_next_unassigned_for_state(self.ticket_type, self.to_state)
+        ticket_id = self.c3tt.assign_next_unassigned_for_state(
+            self.ticket_type, self.to_state
+        )
         if ticket_id:
             logging.info("Ticket ID:" + str(ticket_id))
             try:
@@ -140,7 +162,9 @@ class Depublisher:
                 raise e_
             t = Ticket(tracker_ticket, ticket_id)
         else:
-            logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
+            logging.info(
+                'No ticket of type ' + self.ticket_type + ' for state ' + self.to_state
+            )
 
         return t
 
@@ -150,11 +174,19 @@ class Depublisher:
         """
         logging.debug("depublishing to youtube")
 
-        yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        yt = YoutubeAPI(
+            self.ticket,
+            self.config['youtube']['client_id'],
+            self.config['youtube']['secret'],
+        )
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls, props = yt.depublish()
-        props['Publishing.YouTube.UrlHistory'] = (self.ticket.get_raw_property('Publishing.YouTube.UrlHistory') or '') + ' '.join(youtube_urls) + ' '
+        props['Publishing.YouTube.UrlHistory'] = (
+            (self.ticket.get_raw_property('Publishing.YouTube.UrlHistory') or '')
+            + ' '.join(youtube_urls)
+            + ' '
+        )
 
         self.c3tt.set_ticket_properties(props)
         return youtube_urls
