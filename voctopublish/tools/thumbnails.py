@@ -111,7 +111,7 @@ class ThumbnailGenerator:
                 except CalledProcessError as e_:
                     raise ThumbnailException(
                         "ffmpeg exited with the following error, while extracting candidates for thumbnails. "
-                        + e_.output
+                        + e_.output.decode('utf-8')
                     ) from e_
                 except Exception as e_:
                     raise ThumbnailException(
