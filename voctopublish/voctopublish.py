@@ -117,7 +117,20 @@ class Publisher:
             if not os.access(self.ticket.publishing_path, os.W_OK):
                 raise IOError("Output path is not writable (%s)" % self.ticket.publishing_path)
 
-        if not self.thumbs.exists:
+        if (
+            not self.thumbs.exists
+            and (
+                (
+                    self.ticket.profile_voctoweb_enable
+                    and self.ticket.voctoweb_enable
+                    and self.ticket.mime_type.startswith('video')
+                )
+                or (
+                    self.ticket.profile_youtube_enable
+                    and self.ticket.youtube_enable
+                )
+            )
+        ):
             self.thumbs.generate()
 
         logging.debug("#voctoweb {} {}  ".format(self.ticket.profile_voctoweb_enable, self.ticket.voctoweb_enable))
