@@ -113,9 +113,9 @@ class VoctowebClient:
 
         thumbs = {
             "_voctoweb.jpg": ".jpg",
-            "_voctoweb_preview.jpg": "_preview.jpg".
+            "_voctoweb_preview.jpg": "_preview.jpg",
         }
-        for ext_local, ext_vw in thumbs_ext:
+        for ext_local, ext_vw in thumbs_ext.items():
             file = os.path.join(self.t.publishing_path, self.t.fahrplan_id + ext_local)
             if not os.path.isfile(file):
                 raise VoctowebException('could not upload thumb because file ' + file + ' does not exist')
