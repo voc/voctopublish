@@ -118,7 +118,7 @@ def send_chat_message(ticket, config):
             json={
                 "cardsV2": [
                     {
-                        "cardId": ticket.guid,
+                        "cardId": ticket.slug,
                         "card": {
                             "header": {
                                 "title": ticket.title,

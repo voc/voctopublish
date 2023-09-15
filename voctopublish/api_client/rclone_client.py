@@ -20,7 +20,6 @@ class RCloneClient:
             event=self.ticket.acronym,
             fahrplan_day=self.ticket.day,
             filename_full=self.ticket.filename,
-            filename_guid=f"{self.ticket.guid}.{self.ticket.profile_extension}",
             filename_short=self.ticket.local_filename,
             format=self.ticket.folder,
             month=date_time.strftime("%m"),

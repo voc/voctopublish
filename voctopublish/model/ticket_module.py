@@ -117,13 +117,11 @@ class PublishingTicket(Ticket):
 
         # fahrplan properties
         self.slug = self._validate_('Fahrplan.Slug')
-        self.guid = self._validate_('Fahrplan.GUID')
         self.fahrplan_id = self._validate_('Fahrplan.ID')
         self.title = self._validate_('Fahrplan.Title')
         self.subtitle = self._validate_('Fahrplan.Subtitle', True)
         self.date = self._validate_('Fahrplan.DateTime')
         self.local_filename = self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
-        self.local_filename_base = self.fahrplan_id + "-" + self.guid
         self.room = self._validate_('Fahrplan.Room')
         self.people = []
         if 'Fahrplan.Person_list' in ticket:
@@ -217,6 +215,9 @@ class PublishingTicket(Ticket):
 
         # we will fill the following variables only if voctoweb is enabled
         if self.profile_voctoweb_enable and self.voctoweb_enable:
+            self.guid = self._validate_('Fahrplan.GUID')
+            self.voctoweb_filename_base = self.fahrplan_id + "-" + self.guid
+
             self.mime_type = self._validate_('Publishing.Voctoweb.MimeType')
             self.voctoweb_thump_path = self._validate_('Publishing.Voctoweb.Thumbpath')
             self.voctoweb_path = self._validate_('Publishing.Voctoweb.Path')

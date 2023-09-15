@@ -258,7 +258,7 @@ class YoutubeAPI:
 
         video = upload.json()
 
-        outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_youtube.jpg')
+        outjpg = os.path.join(self.t.publishing_path, self.t.fahrplan_id + '_youtube.jpg')
 
         try:
             r = subprocess.check_output(

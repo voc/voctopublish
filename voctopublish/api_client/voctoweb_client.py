@@ -80,8 +80,8 @@ class VoctowebClient:
         This function generates thumbnails to be used on voctoweb
         :return:
         """
-        outjpg = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.jpg')
-        outjpg_preview = os.path.join(self.t.publishing_path, self.t.local_filename_base + '_preview.jpg')
+        outjpg = os.path.join(self.t.publishing_path, self.t.fahrplan_id + '_voctoweb.jpg')
+        outjpg_preview = os.path.join(self.t.publishing_path, self.t.fahrplan_id + '_voctoweb_preview.jpg')
 
         # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
         # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
@@ -111,12 +111,15 @@ class VoctowebClient:
         if self.ssh is None:
             self._connect_ssh()
 
-        thumbs_ext = {".jpg", "_preview.jpg"}
-        for ext in thumbs_ext:
-            file = os.path.join(self.t.publishing_path, self.t.local_filename_base + ext)
+        thumbs = {
+            "_voctoweb.jpg": ".jpg",
+            "_voctoweb_preview.jpg": "_preview.jpg".
+        }
+        for ext_local, ext_vw in thumbs_ext:
+            file = os.path.join(self.t.publishing_path, self.t.fahrplan_id + ext_local)
             if not os.path.isfile(file):
                 raise VoctowebException('could not upload thumb because file ' + file + ' does not exist')
-            target = os.path.join(self.t.voctoweb_thump_path, self.t.local_filename_base + ext)
+            target = os.path.join(self.t.voctoweb_thump_path, self.t.voctoweb_filename_base + ext_vw)
             try:
                 logging.debug(
                     'Uploading ' + file + " to " + target)
@@ -135,8 +138,8 @@ class VoctowebClient:
         source = os.path.join(self.t.publishing_path, self.t.local_filename)
         logging.info("running timelens for " + source)
 
-        outtimeline = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.timeline.jpg')
-        outthumbnails = os.path.join(self.t.publishing_path, self.t.local_filename_base + '.thumbnails.vtt')
+        outtimeline = os.path.join(self.t.publishing_path, self.t.voctoweb_filename_base + '.timeline.jpg')
+        outthumbnails = os.path.join(self.t.publishing_path, self.t.voctoweb_filename_base + '.thumbnails.vtt')
 
         try:
             r = subprocess.check_output(['timelens', source, '-w', '1000', '-h', '90', '--timeline', outtimeline, '--thumbnails', outthumbnails])
@@ -155,7 +158,7 @@ class VoctowebClient:
         if self.ssh is None:
             self._connect_ssh()
 
-        basepath = os.path.join(self.t.publishing_path, self.t.local_filename_base)
+        basepath = os.path.join(self.t.publishing_path, self.t.voctoweb_filename_base)
 
         files = [basepath + ".timeline.jpg", basepath + ".thumbnails.vtt"] + glob.glob(basepath + ".thumbnails-*.jpg")
         for file in files:
@@ -270,10 +273,10 @@ class VoctowebClient:
                        'subtitle': self.t.subtitle,
                        'link': event_url,
                        'original_language': self.t.languages[0],
-                       'thumb_filename': self.t.local_filename_base + ".jpg",
-                       'poster_filename': self.t.local_filename_base + "_preview.jpg",
-                       'timeline_filename': self.t.local_filename_base + ".timeline.jpg",
-                       'thumbnails_filename': self.t.local_filename_base + ".thumbnails.vtt",
+                       'thumb_filename': self.t.voctoweb_filename_base + ".jpg",
+                       'poster_filename': self.t.voctoweb_filename_base + "_preview.jpg",
+                       'timeline_filename': self.t.voctoweb_filename_base + ".timeline.jpg",
+                       'thumbnails_filename': self.t.voctoweb_filename_base + ".thumbnails.vtt",
                        'description': description,
                        'date': self.t.date,
                        'persons': self.t.people,
