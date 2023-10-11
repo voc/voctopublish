@@ -137,6 +137,7 @@ class Depublisher:
 
     def _depublish_from_voctoweb(self):
         vw = VoctowebClient(self.ticket,
+                            None,
                             self.config['voctoweb']['api_key'],
                             self.config['voctoweb']['api_url'],
                             self.config['voctoweb']['ssh_host'],
@@ -171,7 +172,7 @@ class Depublisher:
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
-            t = Ticket(tracker_ticket, ticket_id)
+            t = Ticket(tracker_ticket, ticket_id, self.config)
         else:
             logging.info('No ticket of type ' + self.ticket_type + ' for state ' + self.to_state)
 
@@ -183,7 +184,7 @@ class Depublisher:
         """
         logging.debug("depublishing to youtube")
 
-        yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
+        yt = YoutubeAPI(self.ticket, None, self.config, self.config['youtube']['client_id'], self.config['youtube']['secret'])
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls, props = yt.depublish()
