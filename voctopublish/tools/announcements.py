@@ -36,6 +36,9 @@ def make_message(ticket, max_length=200, override_url_length=None):
 
     message = title + msg
 
+    if len(message) < (max_length - 2 - len(ticket.acronym)):
+        message += ' #' + ticket.acronym
+
     for url in urls:
         if override_url_length:
             url_len = override_url_length
