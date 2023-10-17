@@ -46,3 +46,4 @@ def make_message(ticket, max_length=200, override_url_length=None):
             message = message + " " + url
 
     LOG.info(f"{len(message)} chars: {message}")
+    return message
