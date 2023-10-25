@@ -35,6 +35,14 @@ from api_client.youtube_client import YoutubeAPI
 from model.ticket_module import PublishingTicket, RecordingTicket, Ticket
 from tools.thumbnails import ThumbnailGenerator
 
+MY_PATH = abspath(dirname(__file__))
+POSSIBLE_CONFIG_PATHS = [
+    os.getenv('VOCTOPUBLISH_CONFIG'),
+    os.path.expanduser('~/voctopublish.conf'),
+    os.path.join(MY_PATH, 'voctopublish.conf'),
+    os.path.join(MY_PATH, 'client.conf'),
+]
+
 
 class Worker:
     """
@@ -46,12 +54,17 @@ class Worker:
         self.ticket = None
         self.ticket_id = None
         self.thumbs = None
-        # load config
-        if not os.path.exists('client.conf'):
-            raise IOError("Error: config file not found")
+
+        for path in POSSIBLE_CONFIG_PATHS:
+            if path is not None:
+                if isfile(path):
+                    my_config_path = path
+                    break
+        else:
+            raise FileNotFoundError(f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}')
 
         self.config = configparser.ConfigParser()
-        self.config.read('client.conf')
+        self.config.read(my_config_path)
 
         # set up logging
         logging.addLevelName(
