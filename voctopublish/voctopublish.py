@@ -61,7 +61,9 @@ class Worker:
                     my_config_path = path
                     break
         else:
-            raise FileNotFoundError(f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}')
+            raise FileNotFoundError(
+                f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
+            )
 
         self.config = configparser.ConfigParser()
         self.config.read(my_config_path)
