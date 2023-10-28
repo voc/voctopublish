@@ -24,11 +24,12 @@ import subprocess
 import sys
 import urllib.request
 
+from c3tt_rpc_client import C3TTClient
+
 import api_client.bluesky_client as bluesky
 import api_client.googlechat_client as googlechat
 import api_client.mastodon_client as mastodon
 import api_client.twitter_client as twitter
-from api_client.c3tt_rpc_client import C3TTClient
 from api_client.rclone_client import RCloneClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI

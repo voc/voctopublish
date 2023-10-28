@@ -5,3 +5,4 @@ requests
 mastodon.py
 pillow
 langcodes
+git+https://github.com/voc/c3tt_rpc_client.git@main
