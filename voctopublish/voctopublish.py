@@ -35,7 +35,7 @@ from api_client.youtube_client import YoutubeAPI
 from model.ticket_module import PublishingTicket, RecordingTicket, Ticket
 from tools.thumbnails import ThumbnailGenerator
 
-MY_PATH = abspath(dirname(__file__))
+MY_PATH = os.path.abspath(os.path.dirname(__file__))
 POSSIBLE_CONFIG_PATHS = [
     os.getenv('VOCTOPUBLISH_CONFIG'),
     os.path.expanduser('~/voctopublish.conf'),
