@@ -18,7 +18,7 @@ import hashlib
 import hmac
 import logging
 import socket
-import urllib
+import urllib.parse
 import xml
 import xmlrpc.client
 
@@ -31,10 +31,10 @@ class C3TTClient:
     url: tracker url (without the rpc)
     """
 
-    def __init__(self, url, group, host, secret):
-        self.url = url + "rpc"
-        self.group = group
-        self.host = host
+    def __init__(self, url, token, own_hostname, secret):
+        self.url = url.rstrip("/") + "/rpc"
+        self.token = token
+        self.own_hostname = own_hostname
         self.secret = secret
 
     def _gen_signature(self, method, args):
@@ -47,7 +47,8 @@ class C3TTClient:
         :return: hmac signature
         """
         sig_args = urllib.parse.quote(
-            self.url + "&" + method + "&" + self.group + "&" + self.host + "&", "~"
+            self.url + "&" + method + "&" + self.token + "&" + self.own_hostname + "&",
+            "~",
         )
 
         # add method args
@@ -71,7 +72,7 @@ class C3TTClient:
 
                 sig_args = str(sig_args) + str(arg)
                 if i < (len(args) - 1):
-                    sig_args = sig_args + urllib.parse.quote('&')
+                    sig_args = sig_args + str(urllib.parse.quote('&'))
                 i += 1
 
         # generate the hmac hash with the key
@@ -80,7 +81,7 @@ class C3TTClient:
         )
         return hash_.hexdigest()
 
-    def _open_rpc(self, method, ticket=None, args=None):
+    def _open_rpc(self, method, ticket=None, args=None):  # noqa: C901
         """
         create xmlrpc client
         :param method:
@@ -92,9 +93,9 @@ class C3TTClient:
             'creating XML RPC proxy: '
             + self.url
             + "?group="
-            + self.group
+            + self.token
             + "&hostname="
-            + self.host
+            + self.own_hostname
         )
         if args is None:
             args = []
@@ -103,11 +104,14 @@ class C3TTClient:
             if isinstance(ticket, int) or isinstance(ticket, str):
                 args.insert(0, ticket)
             else:
-                args.insert(0, ticket.id)
+                args.insert(0, ticket['id'])
 
         try:
             proxy = xmlrpc.client.ServerProxy(
-                self.url + "?group=" + self.group + "&hostname=" + self.host
+                self.url + "?group=" + self.token + "&hostname=" + self.own_hostname
+            )
+            proxy._ServerProxy__handler = (
+                "/rpc?group=" + self.token + "&hostname=" + self.own_hostname
             )
         except xmlrpc.client.Fault as err:
             msg = "A fault occurred\n"
@@ -164,7 +168,7 @@ class C3TTClient:
         return str(self._open_rpc("C3TT.getVersion"))
 
     def assign_next_unassigned_for_state(
-        self, ticket_type, to_state, property_filters=[]
+        self, ticket_type, to_state, property_filters=None
     ):
         """
         check for new ticket on tracker and get assignment
@@ -177,7 +181,7 @@ class C3TTClient:
         """
         ret = self._open_rpc(
             "C3TT.assignNextUnassignedForState",
-            args=[ticket_type, to_state, property_filters],
+            args=[ticket_type, to_state, property_filters or {}],
         )
         # if we get no xml here there is no ticket for this job
         if not ret:
@@ -185,7 +189,7 @@ class C3TTClient:
         else:
             return ret
 
-    def get_assigned_for_state(self, ticket_type, state, property_filters=[]):
+    def get_assigned_for_state(self, ticket_type, state, property_filters=None):
         """
         Get first assigned ticket in state $state
         function
@@ -195,17 +199,18 @@ class C3TTClient:
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
         ret = self._open_rpc(
-            "C3TT.getAssignedForState", args=[ticket_type, state, property_filters]
+            "C3TT.getAssignedForState",
+            args=[ticket_type, state, property_filters or {}],
         )
         # if we get no xml here there is no ticket for this job
         if not ret:
             return None
         else:
             if len(ret) > 1:
-                logging.warn("multiple tickets assined, fetching first one")
+                logging.warning("multiple tickets assined, fetching first one")
             return ret[0]
 
-    def get_tickets_for_state(self, ticket_type, to_state, property_filters=[]):
+    def get_tickets_for_state(self, ticket_type, to_state, property_filters=None):
         """
         Get all tickets in state $state from projects assigned to the workerGroup, unless workerGroup is halted
         function
@@ -215,7 +220,8 @@ class C3TTClient:
         :return: ticket id or None in case no ticket is available for the type and state in the request
         """
         ret = self._open_rpc(
-            "C3TT.getTicketsForState", args=[ticket_type, to_state, property_filters]
+            "C3TT.getTicketsForState",
+            args=[ticket_type, to_state, property_filters or {}],
         )
         # if we get no xml here there is no ticket for this job
         if not ret:
