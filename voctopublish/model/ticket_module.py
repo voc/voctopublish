@@ -15,6 +15,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from os.path import join
 
 
 class Ticket:
@@ -81,11 +82,13 @@ class RecordingTicket(Ticket):
     def __init__(self, ticket, ticket_id, config):
         super().__init__(ticket, ticket_id)
 
+        fuse_path = self._validate_('Processing.Path.Raw', True)
+        if not fuse_path:
+            fuse_path = join(self._validate_('Processing.BasePath'), 'fuse')
+
         # recording ticket properties
         self.download_url = self._validate_('Fahrplan.VideoDownloadURL')
-        self.fuse_path = self._validate_('Processing.Path.Raw') + self._validate_(
-            'Project.Slug'
-        )
+        self.fuse_path = join(fuse_path, self._validate_('Project.Slug'))
 
         # fahrplan properties
         self.room = self._validate_('Fahrplan.Room')
