@@ -219,7 +219,7 @@ class Worker:
                     "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
                 )
 
-        self.c3tt.set_ticket_done(self.ticket)
+        self.c3tt.set_ticket_done(self.ticket_id)
 
         # Twitter
         if self.ticket.twitter_enable and self.ticket.master:
