@@ -58,7 +58,7 @@ class Worker:
 
         for path in POSSIBLE_CONFIG_PATHS:
             if path is not None:
-                if isfile(path):
+                if os.path.isfile(path):
                     my_config_path = path
                     break
         else:
