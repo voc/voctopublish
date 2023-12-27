@@ -16,16 +16,17 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from re import finditer
 
 import requests
 
 from tools.announcements import EmptyAnnouncementMessage, make_message
 
+LOG = logging.getLogger("Bluesky")
+
 
 def send_post(ticket, config):
-    LOG = logging.getLogger("Bluesky")
     LOG.info("post the release to bluesky")
 
     try:
@@ -42,7 +43,7 @@ def send_post(ticket, config):
 def _send_bluesky_post(message, config):
     post = {
         "$type": "app.bsky.feed.post",
-        "createdAt": datetime.utcnow().isoformat().replace("+00:00", "Z"),
+        "createdAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "facets": [],
         "text": message,
     }
@@ -73,6 +74,8 @@ def _send_bluesky_post(message, config):
     r.raise_for_status()
     session = r.json()
 
+    LOG.debug(post)
+
     r = requests.post(
         "https://bsky.social/xrpc/com.atproto.repo.createRecord",
         headers={
@@ -84,6 +87,7 @@ def _send_bluesky_post(message, config):
             "repo": session["did"],
         },
     )
+    LOG.debug(r.text)
     r.raise_for_status()
     return r.json()
 
