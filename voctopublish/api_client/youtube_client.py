@@ -46,7 +46,7 @@ class YoutubeAPI:
         self.lang_map = {'deu': 'German', 'eng': 'English', 'spa': 'Spanish', 'gsw': 'Schweizerdeutsch',
                          'fra': 'French', 'rus': 'Russian', 'fas': 'Farsi', 'chi': 'Chinese', 'ara': 'Arabic',
                          'hrv': 'Croatian', 'pol': 'Polish', 'por': 'Portuguese', 'ind': 'Bahasa Indonesia', 'ben': 'Bengali',
-                         'ita': 'Italian',
+                         'ita': 'Italian', "swe": "Swedish"
                          }
 
         self.translation_strings = {'deu': 'deutsche Übersetzung', 'eng': 'english translation',
@@ -56,6 +56,7 @@ class YoutubeAPI:
                                     'hrv': 'Hrvatski prijevod', 'pol': 'Prijevod s poljskog',
                                     'por': 'Tradução portuguesa', 'ind': 'Terjemahan bahasa Indonesia',
                                     'ben': 'Bengali translation', 'ita': 'Traduzione italiana',
+                                    'swe': 'Svensk översättning',
                                     }
 
         self.youtube_urls = []
