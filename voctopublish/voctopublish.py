@@ -534,7 +534,8 @@ class Worker:
             )
         except AttributeError as err_:
             self.c3tt.set_ticket_failed(
-                'unknown language, please set language in the recording ticket to proceed'
+                self.ticket_id,
+                'unknown language, please set language in the recording ticket to proceed',
             )
             logging.error(
                 'unknown language, please set language in the recording ticket to proceed'
