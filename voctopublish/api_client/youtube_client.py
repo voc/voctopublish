@@ -22,6 +22,7 @@ import mimetypes
 import os
 import re
 import subprocess
+from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 
 import langcodes
@@ -238,11 +239,6 @@ class YoutubeAPI:
                 + description
             )
 
-        if self.t.youtube_privacy:
-            privacy = self.t.youtube_privacy
-        else:
-            privacy = 'private'
-
         license = self.t.get_raw_property('Meta.License')
         if license and 'https://creativecommons.org/licenses/by' in license:
             license = 'creativeCommon'
@@ -262,7 +258,7 @@ class YoutubeAPI:
                 ).language,
             },
             'status': {
-                'privacyStatus': privacy,
+                'privacyStatus': self.t.youtube_privacy,
                 'embeddable': True,
                 'publicStatsViewable': True,
                 'license': license,
@@ -271,6 +267,30 @@ class YoutubeAPI:
                 'recordingDate': self.t.date,
             },
         }
+
+        if self.t.youtube_publish_at:
+            try:
+                publish_at = datetime.strptime(
+                    self.t.youtube_publish_at, '%Y-%m-%d %H:%M'
+                )
+            except ValueError:
+                result = re.findall(r'(\d+[wdh])', self.t.youtube_publish_at)
+                if not result:
+                    raise YouTubeException(
+                        "Invalid value for Publishing.YouTube.PublishAt, either use 'YYYY-MM-DD HH:MM' or relative values like '7d 2h' (*w*eeks, *d*ays and *h*ours supported)"
+                    )
+                else:
+                    kwargs = {}
+                    for k, keyword in {
+                        'w': 'weeks',
+                        'd': 'days',
+                        'h': 'hours',
+                    }:
+                        for v in result:
+                            if v.endswith(k):
+                                kwargs[keyword] = int(v[:-1])
+                    publish_at = datetime.now(timezone.utc) + timedelta(**kwargs)
+            metadata['status']['publishAt'] = publish_at.isoformat(timespec='seconds')
 
         # limit title length to 100 (YouTube api conformity)
         metadata['snippet']['title'] = metadata['snippet']['title'][:100]

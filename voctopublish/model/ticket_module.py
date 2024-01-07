@@ -200,7 +200,9 @@ class PublishingTicket(Ticket):
             )
             self.youtube_token = self._validate_('Publishing.YouTube.Token')
             self.youtube_category = self._validate_('Publishing.YouTube.Category', True)
-            self.youtube_privacy = self._validate_('Publishing.YouTube.Privacy', True)
+            self.youtube_privacy = (
+                self._validate_('Publishing.YouTube.Privacy', True) or 'private'
+            )
             self.youtube_tags = self._validate_('Publishing.YouTube.Tags', True)
             self.youtube_title_prefix = self._validate_(
                 'Publishing.YouTube.TitlePrefix', True
@@ -219,6 +221,9 @@ class PublishingTicket(Ticket):
             )
             self.youtube_translation_title_suffix = self._validate_(
                 'Publishing.YouTube.TranslationTitleSuffix', True
+            )
+            self.youtube_publish_at = self._validate_(
+                'Publishing.YouTube.PublishAt', True
             )
             self.youtube_urls = {}
             # check if this event has already been published to youtube
@@ -239,6 +244,11 @@ class PublishingTicket(Ticket):
                 ).split(',')
             else:
                 self.youtube_playlists = []
+
+            if self.youtube_publish_at and self.youtube_privacy != 'private':
+                raise TicketException(
+                    "Cannot use Publishing.YouTube.PublishAt when privacy is not 'private'!"
+                )
 
         # voctoweb properties
         if self._validate_('Publishing.Voctoweb.EnableProfile') == 'yes':
