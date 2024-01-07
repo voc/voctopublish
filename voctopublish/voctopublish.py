@@ -262,7 +262,7 @@ class Worker:
                 self.ticket = PublishingTicket(
                     ticket_properties, ticket_id, self.config
                 )
-            elif self.ticket_type == 'releasing':
+            elif self.ticket_type == 'recording':
                 self.ticket = RecordingTicket(ticket_properties, ticket_id, self.config)
             else:
                 logging.info(
