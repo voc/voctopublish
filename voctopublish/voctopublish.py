@@ -348,10 +348,10 @@ class Worker:
             hq = False
 
         # For multi language or slide recording we don't set the html5 flag
-        if len(self.ticket.languages) > 1 or 'slides' in self.ticket.profile_slug:
-            html5 = False
-        else:
+        if len(self.ticket.languages) == 1 and 'slides' not in self.ticket.profile_slug:
             html5 = True
+        else:
+            html5 = False
 
         # if we have the language index the tracker wants to tell us about an encoding that does not contain all
         # audio tracks of the master we need to reflect that in the target filename

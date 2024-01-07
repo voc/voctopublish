@@ -534,15 +534,30 @@ class VoctowebClient:
         if single_language:
             recording_id = self.t.get_raw_property('Voctoweb.RecordingId.' + language)
 
-        # make sure we have the file size and length
-        ret = []
-        if not self._get_file_details(local_filename, ret):
-            raise VoctowebException('could not get file details')
-
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
         url = self.api_url + 'recordings'
         if recording_id:
             url += '/' + recording_id
+
+        if self.t.mime_type.startswith('application/'):
+            # this is probably a subtitle or something like that
+            recording = {
+                'state': 'completed',
+            }
+        else:
+            # make sure we have the file size and length
+            ret = []
+            if not self._get_file_details(local_filename, ret):
+                raise VoctowebException('could not get file details')
+
+            recording = {
+                'high_quality': hq,
+                'html5': html5,
+                'size': str(ret[0]),
+                'width': str(ret[2]),
+                'height': str(ret[3]),
+                'length': str(ret[1]),
+            }
 
         headers = {'CONTENT-TYPE': 'application/json'}
         payload = {
@@ -554,18 +569,13 @@ class VoctowebClient:
                 'filename': filename,
                 'mime_type': self.t.mime_type,
                 'language': language,
-                'high_quality': hq,
-                'html5': html5,
-                'size': str(ret[0]),
-                'width': str(ret[2]),
-                'height': str(ret[3]),
-                'length': str(ret[1]),
+                **recording,
             },
         }
 
-        logging.debug(
-            "api url: " + url + ' header: ' + str(headers) + ' payload: ' + str(payload)
-        )
+        logging.debug(f"api url: {url}")
+        logging.debug(f"header: {repr(headers)}")
+        logging.debug(f"payload: {repr(payload)}")
 
         try:
             # todo ssl verify by config
