@@ -542,7 +542,7 @@ class Worker:
             )
 
         # tell the tracker that we finished the import
-        self.c3tt.set_ticket_done()
+        self.c3tt.set_ticket_done(self.ticket_id)
 
     def _copy_file(self):
         """
