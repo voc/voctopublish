@@ -384,7 +384,7 @@ class YoutubeAPI:
             )
             logging.info("thumbnails reformatted for youtube")
         except Exception as e_:
-            raise YoutubeException(
+            raise YouTubeException(
                 "Could not scale thumbnail: " + r.decode('utf-8')
             ) from e_
 
