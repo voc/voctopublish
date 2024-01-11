@@ -187,7 +187,7 @@ class PublishingTicket(Ticket):
             profile_youtube = False
         youtube = self._validate_('Publishing.YouTube.Enable', True)
         if youtube is None:
-            youtube = config['youtube']['enable_default']
+            youtube = config['youtube']['enable_default'] and profile_youtube
         if youtube == 'yes':
             self.youtube_enable = profile_youtube
         else:
@@ -257,7 +257,7 @@ class PublishingTicket(Ticket):
             profile_voctoweb = False
         voctoweb = self._validate_('Publishing.Voctoweb.Enable', True)
         if voctoweb is None:
-            voctoweb = config['voctoweb']['enable_default']
+            voctoweb = config['voctoweb']['enable_default'] and profile_voctoweb
         if voctoweb == 'yes':
             self.voctoweb_enable = profile_voctoweb
         else:
