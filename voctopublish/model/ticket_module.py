@@ -17,11 +17,6 @@
 import logging
 from os.path import join
 
-DOWNLOAD_HELPERS = {
-    "python": None,  # special handling
-    "wget": ["wget", "-q", "-O", "--TARGETPATH--", "--", "--DOWNLOADURL--"],
-}
-
 
 class Ticket:
     """
@@ -99,11 +94,11 @@ class RecordingTicket(Ticket):
         download_tool = self._validate_("Record.DownloadHelper", True)
         if download_tool is None:
             download_tool = "python"
-        if download_tool not in DOWNLOAD_HELPERS:
+        if download_tool not in config["download"]["workers"]:
             raise TicketException(
-                f'Record.DownloadHelper uses invalid value {download_tool}, must be one of {", ".join(sorted(DOWNLOAD_HELPERS.keys()))}'
+                f'Record.DownloadHelper uses invalid value {download_tool}, must be one of {", ".join(sorted(config["download"]["workers"].keys()))}'
             )
-        self.download_command = DOWNLOAD_HELPERS[download_tool]
+        self.download_command = config["download"]["workers"][download_tool]
 
         # fahrplan properties
         self.room = self._validate_("Fahrplan.Room")

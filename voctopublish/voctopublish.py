@@ -618,7 +618,7 @@ class Worker:
             url = url_decoded
 
         logging.info("Downloading file from: " + url)
-        if self.ticket.download_command is None:
+        if not self.ticket.download_command:
             with open(file, "wb") as fh:
                 with urllib.request.urlopen(urllib.parse.quote(url, safe=":/")) as df:
                     # original version tried to write whole file to ram and ran out of memory
