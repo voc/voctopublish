@@ -523,68 +523,6 @@ class Worker:
         download or copy a file for processing
         :return:
         """
-        # if its an URL it probably will start with http ....
-        if self.ticket.download_url.startswith(
-            "http"
-        ) or self.ticket.download_url.startswith("ftp"):
-            self._download_file()
-        else:
-            self._copy_file()
-
-        # set recording language TODO multilang
-        try:
-            self.c3tt.set_ticket_properties(
-                self.ticket_id, {"Record.Language": self.ticket.language}
-            )
-        except AttributeError as err_:
-            self.c3tt.set_ticket_failed(
-                self.ticket_id,
-                "unknown language, please set language in the recording ticket to proceed",
-            )
-            logging.error(
-                "unknown language, please set language in the recording ticket to proceed"
-            )
-
-        # tell the tracker that we finished the import
-        self.c3tt.set_ticket_done(self.ticket_id)
-
-    def _copy_file(self):
-        """
-        copy a file from a local folder to the fake fuse and name it uncut.ts
-        this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
-        :return:
-        """
-        path = os.path.join(
-            self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id
-        )
-        file = os.path.join(path, "uncut.ts")
-        logging.info(
-            "Copying input file from: " + self.ticket.download_url + " to " + file
-        )
-        if not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except Exception as e:
-                logging.error(e)
-                logging.exception(e)
-                raise PublisherException(e)
-
-        if os.path.exists(file):
-            # TODO think about rereleasing here
-            logging.warning("video file already exists, please remove file")
-            raise PublisherException("video file already exists, please remove file")
-
-        try:
-            shutil.copyfile(self.ticket.download_url, file)
-        except IOError as e_:
-            raise PublisherException(e_)
-
-    def _download_file(self):
-        """
-        download a file from an http / https / ftp URL an place it as a uncut.ts in the fuse folder.
-        this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
-        :return:
-        """
         # we name our input video file uncut ts so tracker will find it. This is not the nicest way to go
         # TODO find a better integration in to the pipeline
         path = os.path.join(
@@ -617,10 +555,52 @@ class Worker:
             )
             url = url_decoded
 
-        logging.info("Downloading file from: " + url)
+        # if its an URL it probably will start with http ....
+        if self.ticket.download_url.startswith(
+            "http"
+        ) or self.ticket.download_url.startswith("ftp"):
+            self._download_file(url, file)
+        else:
+            self._copy_file(url, file)
+
+        # set recording language TODO multilang
+        try:
+            self.c3tt.set_ticket_properties(
+                self.ticket_id, {"Record.Language": self.ticket.language}
+            )
+        except AttributeError as err_:
+            self.c3tt.set_ticket_failed(
+                self.ticket_id,
+                "unknown language, please set language in the recording ticket to proceed",
+            )
+            logging.error(
+                "unknown language, please set language in the recording ticket to proceed"
+            )
+
+        # tell the tracker that we finished the import
+        self.c3tt.set_ticket_done(self.ticket_id)
+
+    def _copy_file(self, source, target):
+        """
+        copy a file from a local folder to the fake fuse and name it uncut.ts
+        this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
+        :return:
+        """
+        try:
+            shutil.copyfile(source, target)
+        except IOError as e_:
+            raise PublisherException(e_)
+
+    def _download_file(self, source, target):
+        """
+        download a file from an http / https / ftp URL an place it as a uncut.ts in the fuse folder.
+        this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
+        :return:
+        """
+        logging.info("Downloading file from: " + source)
         if not self.ticket.download_command:
-            with open(file, "wb") as fh:
-                with urllib.request.urlopen(urllib.parse.quote(url, safe=":/")) as df:
+            with open(target, "wb") as fh:
+                with urllib.request.urlopen(urllib.parse.quote(source, safe=":/")) as df:
                     # original version tried to write whole file to ram and ran out of memory
                     # read in 16 kB chunks instead
                     while True:
@@ -632,9 +612,9 @@ class Worker:
             command = []
             for part in self.ticket.download_command:
                 if part == "--TARGETPATH--":
-                    command.append(file)
+                    command.append(source)
                 elif part == "--DOWNLOADURL--":
-                    command.append(url)
+                    command.append(target)
                 else:
                     command.append(part)
             logging.debug(f"download command is: {command}")
