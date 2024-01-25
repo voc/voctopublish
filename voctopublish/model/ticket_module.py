@@ -202,7 +202,7 @@ class PublishingTicket(Ticket):
             profile_youtube = False
         youtube = self._validate_("Publishing.YouTube.Enable", True)
         if youtube is None:
-            youtube = config["youtube"]["enable_default"] and profile_youtube
+            youtube = config["youtube"]["enable_default"]
         if youtube == "yes":
             self.youtube_enable = profile_youtube
         else:
@@ -272,7 +272,7 @@ class PublishingTicket(Ticket):
             profile_voctoweb = False
         voctoweb = self._validate_("Publishing.Voctoweb.Enable", True)
         if voctoweb is None:
-            voctoweb = config["voctoweb"]["enable_default"] and profile_voctoweb
+            voctoweb = config["voctoweb"]["enable_default"]
         if voctoweb == "yes":
             self.voctoweb_enable = profile_voctoweb
         else:
@@ -308,10 +308,10 @@ class PublishingTicket(Ticket):
             self.voctoweb_event_id = self._validate_("Voctoweb.EventId", True)
 
         # rclone properties
-        rclone_enabled = self._validate_("Publishing.Rclone.Enable", True)
+        rclone_enabled = self._validate_("Publishing.Rclone.Enable", True) == "yes"
         if rclone_enabled is None:
             rclone_enabled = config["rclone"]["enable_default"]
-        self.rclone_enabled = rclone_enabled == "yes"
+        self.rclone_enabled = rclone_enabled
 
         if self.rclone_enabled:
             self.rclone_destination = self._validate_("Publishing.Rclone.Destination")
@@ -320,22 +320,22 @@ class PublishingTicket(Ticket):
             )
 
         # twitter properties
-        twitter_enable = self._validate_("Publishing.Twitter.Enable", True)
+        twitter_enable = self._validate_("Publishing.Twitter.Enable", True) == "yes"
         if twitter_enable is None:
             twitter_enable = config["twitter"]["enable_default"]
-        self.twitter_enable = twitter_enable == "yes"
+        self.twitter_enable = twitter_enable
 
         # mastodon properties
-        mastodon_enable = self._validate_("Publishing.Mastodon.Enable", True)
+        mastodon_enable = self._validate_("Publishing.Mastodon.Enable", True) == "yes"
         if mastodon_enable is None:
             mastodon_enable = config["mastodon"]["enable_default"]
-        self.mastodon_enable = mastodon_enable == "yes"
+        self.mastodon_enable = mastodon_enable
 
         # bluesky properties
-        bluesky_enable = self._validate_("Publishing.Bluesky.Enable", True)
+        bluesky_enable = self._validate_("Publishing.Bluesky.Enable", True) == "yes"
         if bluesky_enable is None:
             bluesky_enable = config["bluesky"]["enable_default"]
-        self.bluesky_enable = bluesky_enable == "yes"
+        self.bluesky_enable = bluesky_enable
 
         # googlechat properties
         self.googlechat_webhook_url = self._validate_(

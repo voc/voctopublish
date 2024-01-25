@@ -15,7 +15,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import configparser
 import logging
 import os
 import shutil
@@ -23,6 +22,12 @@ import socket
 import subprocess
 import sys
 import urllib.request
+
+try:
+    # python 3.11
+    from tomllib import loads as toml_load
+except ImportError:
+    from rtoml import load as toml_load
 
 from c3tt_rpc_client import C3TTClient
 
@@ -66,8 +71,7 @@ class Worker:
                 f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
             )
 
-        self.config = configparser.ConfigParser()
-        self.config.read(my_config_path)
+        self.config = toml_load(my_config_path)
 
         # set up logging
         logging.addLevelName(
