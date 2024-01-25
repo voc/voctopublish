@@ -17,6 +17,11 @@
 import logging
 from os.path import join
 
+DOWNLOAD_HELPERS = {
+    "python": None,  # special handling
+    "wget": ["wget", "-q", "-O", "--TARGETPATH--", "--", "--DOWNLOADURL--"],
+}
+
 
 class Ticket:
     """
@@ -87,8 +92,18 @@ class RecordingTicket(Ticket):
             fuse_path = join(self._validate_('Processing.BasePath'), 'fuse')
 
         # recording ticket properties
-        self.download_url = self._validate_('Fahrplan.VideoDownloadURL')
-        self.fuse_path = join(fuse_path, self._validate_('Project.Slug'))
+        self.download_url = self._validate_("Fahrplan.VideoDownloadURL")
+        self.fuse_path = join(fuse_path, self._validate_("Project.Slug"))
+        self.redownload_enabled = self._validate_("Record.Redownload", True) == "yes"
+
+        download_tool = self._validate_("Record.DownloadHelper", True)
+        if download_tool is None:
+            download_tool = "python"
+        if download_tool not in DOWNLOAD_HELPERS:
+            raise TicketException(
+                f'Record.DownloadHelper uses invalid value {download_tool}, must be one of {", ".join(sorted(DOWNLOAD_HELPERS.keys()))}'
+            )
+        self.download_command = DOWNLOAD_HELPERS[download_tool]
 
         # fahrplan properties
         self.room = self._validate_('Fahrplan.Room')

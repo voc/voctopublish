@@ -599,38 +599,50 @@ class Worker:
                 logging.exception(e)
                 raise PublisherException(e)
 
-        if os.path.exists(file):
-            # TODO think about rereleasing here
-            logging.warning(
+        if os.path.exists(file) and not self.ticket.redownload_enabled:
+            logging.error(
                 'video file "' + path + '" already exists, please remove file'
             )
-            raise PublisherException('video file already exists, please remove file')
+            raise PublisherException("video file already exists, please remove file")
 
-        with open(file, 'wb') as fh:
-            url = self.ticket.download_url
-            url_decoded = urllib.parse.unquote(url)
-            # if the unquoted URL has the same length as the input it was not url encoded
-            logging.debug(
-                "Test if url is encoded, len url: "
-                + str(len(url))
-                + " len url decoded: "
-                + str(len(url_decoded))
+        url = self.ticket.download_url
+        url_decoded = urllib.parse.unquote(url)
+        if len(url) > len(url_decoded):
+            logging.warning(
+                f"Download URL {url} was urlencoded, using {url_decoded} instead"
             )
-            if len(url) != len(url_decoded):
-                # if it was encoded we decode it before passing it further
-                logging.debug(
-                    "URL: " + url + " was url encoded, decoding it before processing"
-                )
-                url = url_decoded
-            logging.debug("Downloading file from: " + url)
-            with urllib.request.urlopen(urllib.parse.quote(url, safe=':/')) as df:
-                # original version tried to write whole file to ram and ran out of memory
-                # read in 16 kB chunks instead
-                while True:
-                    chunk = df.read(16384)
-                    if not chunk:
-                        break
-                    fh.write(chunk)
+            url = url_decoded
+
+        logging.info("Downloading file from: " + url)
+        if self.ticket.download_command is None:
+            with open(file, "wb") as fh:
+                with urllib.request.urlopen(urllib.parse.quote(url, safe=":/")) as df:
+                    # original version tried to write whole file to ram and ran out of memory
+                    # read in 16 kB chunks instead
+                    while True:
+                        chunk = df.read(16384)
+                        if not chunk:
+                            break
+                        fh.write(chunk)
+        else:
+            command = []
+            for part in self.ticket.download_command:
+                if part == "--TARGETPATH--":
+                    command.append(file)
+                elif part == "--DOWNLOADURL--":
+                    command.append(url)
+                else:
+                    command.append(part)
+            logging.debug(f"download command is: {command}")
+            out = None
+            try:
+                out = subprocess.check_output(command)
+            except subprocess.CalledProcessError as e:
+                logging.exception("could not download file")
+                logging.error(out)
+                raise PublisherException from e
+            else:
+                logging.debug(out)
 
 
 class PublisherException(Exception):
