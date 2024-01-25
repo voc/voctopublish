@@ -21,7 +21,7 @@ from requests import post
 
 
 def send_chat_message(ticket, config):
-    LOG = logging.getLogger('GoogleChat')
+    LOG = logging.getLogger("GoogleChat")
     LOG.info("posting message to google chat")
 
     buttons = []

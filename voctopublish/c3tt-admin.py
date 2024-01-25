@@ -13,28 +13,28 @@ class C3TTAdmin:
     """
 
     def __init__(self):
-        if not os.path.exists('../client.conf'):
+        if not os.path.exists("../client.conf"):
             raise IOError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
-        self.config.read('../client.conf')
+        self.config.read("../client.conf")
 
-        if self.config['C3Tracker']['host'] == "None":
+        if self.config["C3Tracker"]["host"] == "None":
             self.host = socket.getfqdn()
         else:
-            self.host = self.config['C3Tracker']['host']
+            self.host = self.config["C3Tracker"]["host"]
 
-        print('creating C3TTClient')
+        print("creating C3TTClient")
         try:
             self.c3tt = C3TTClient(
-                self.config['C3Tracker']['url'],
-                self.config['C3Tracker']['group'],
+                self.config["C3Tracker"]["url"],
+                self.config["C3Tracker"]["group"],
                 self.host,
-                self.config['C3Tracker']['secret'],
+                self.config["C3Tracker"]["secret"],
             )
         except Exception as e_:
             raise Exception(
-                'Config parameter missing or empty, please check config'
+                "Config parameter missing or empty, please check config"
             ) from e_
 
     def add_encoding_profile(self, ticket, profile, properties=None):
@@ -74,18 +74,18 @@ parser.add_argument(
 parser.add_argument("--ticket", type=int)
 parser.add_argument("--profile", type=int)
 parser.add_argument("--title", type=str)
-parser.add_argument('--fahrplan_id', type=int)
-parser.add_argument('--project', type=int)
+parser.add_argument("--fahrplan_id", type=int)
+parser.add_argument("--project", type=int)
 # from https://gist.github.com/vadimkantorov/37518ff88808af840884355c845049ea
 parser.add_argument(
-    '--prop',
+    "--prop",
     help="each property needs to be added as an touple like: --prop foo=bar",
     action=type(
-        '',
+        "",
         (argparse.Action,),
         dict(
             __call__=lambda a, p, n, v, o: getattr(n, a.dest).update(
-                dict([v.split('=')])
+                dict([v.split("=")])
             )
         ),
     ),
@@ -104,7 +104,7 @@ elif args.task == "task=set-properties":
     admin.set_ticket_properties(args.ticket, args.prop)
 elif args.task == "task=set-done":
     admin.set_ticket_done(args.ticket)
-elif args.task == 'task=add-ticket':
+elif args.task == "task=add-ticket":
     if args.prop:
         admin.add_meta_ticket(args.project, args.title, args.fahrplan_id, args.prop)
     else:

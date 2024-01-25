@@ -36,11 +36,11 @@ class RelivePublisher:
 
     def __init__(self, args={}):
         # load config
-        if not os.path.exists('client.conf'):
+        if not os.path.exists("client.conf"):
             raise IOError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
-        self.config.read('client.conf')
+        self.config.read("client.conf")
 
         self.debug = args.debug
 
@@ -62,49 +62,49 @@ class RelivePublisher:
         self.logger = logging.getLogger()
 
         sh = logging.StreamHandler(sys.stdout)
-        if self.config['general']['debug']:
+        if self.config["general"]["debug"]:
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s"
             )
         else:
-            formatter = logging.Formatter('%(asctime)s - %(message)s')
+            formatter = logging.Formatter("%(asctime)s - %(message)s")
 
         sh.setFormatter(formatter)
         self.logger.addHandler(sh)
         self.logger.setLevel(logging.DEBUG)
 
-        level = self.config['general']['debug']
-        if level == 'info':
+        level = self.config["general"]["debug"]
+        if level == "info":
             self.logger.setLevel(logging.INFO)
-        elif level == 'warning':
+        elif level == "warning":
             self.logger.setLevel(logging.WARNING)
-        elif level == 'error':
+        elif level == "error":
             self.logger.setLevel(logging.ERROR)
-        elif level == 'debug':
+        elif level == "debug":
             self.logger.setLevel(logging.DEBUG)
 
-        if self.config['C3Tracker']['host'] == "None":
+        if self.config["C3Tracker"]["host"] == "None":
             self.host = socket.getfqdn()
         else:
-            self.host = self.config['C3Tracker']['host']
+            self.host = self.config["C3Tracker"]["host"]
 
-        self.ticket_type = 'encoding'
-        self.to_state = 'releasing'
+        self.ticket_type = "encoding"
+        self.to_state = "releasing"
 
         # instance variables we need later
         self.ticket = None
 
-        logging.debug('creating C3TTClient')
+        logging.debug("creating C3TTClient")
         try:
             self.c3tt = C3TTClient(
-                self.config['C3Tracker']['url'],
-                self.config['C3Tracker']['group'],
+                self.config["C3Tracker"]["url"],
+                self.config["C3Tracker"]["group"],
                 self.host,
-                self.config['C3Tracker']['secret'],
+                self.config["C3Tracker"]["secret"],
             )
         except Exception as e_:
             raise PublisherException(
-                'Config parameter missing or empty, please check config'
+                "Config parameter missing or empty, please check config"
             ) from e_
 
     def create_event(self):
@@ -125,23 +125,23 @@ class RelivePublisher:
         Request the next unassigned ticket for the configured states
         :return: a ticket object or None in case no ticket is available
         """
-        logging.info('requesting ticket from tracker')
+        logging.info("requesting ticket from tracker")
         t = None
 
         ticket_meta = None
         # when we are in debug mode, we first check if we are already assigned to a ticket from previous run
         if self.debug:
             ticket_meta = self.c3tt.get_assigned_for_state(
-                self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'}
+                self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
             )
         # otherwhise, or if that was not successful get the next unassigned one
         if not ticket_meta:
             ticket_meta = self.c3tt.assign_next_unassigned_for_state(
-                self.ticket_type, self.to_state, {'EncodingProfile.Slug': 'relive'}
+                self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
             )
 
         if ticket_meta:
-            ticket_id = ticket_meta['id']
+            ticket_id = ticket_meta["id"]
             logging.info("Ticket ID:" + str(ticket_id))
             try:
                 ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
@@ -153,7 +153,7 @@ class RelivePublisher:
             t = Ticket(ticket_meta, ticket_properties)
         else:
             logging.info(
-                'No ticket of type ' + self.ticket_type + ' for state ' + self.to_state
+                "No ticket of type " + self.ticket_type + " for state " + self.to_state
             )
 
         return t
@@ -166,20 +166,20 @@ class RelivePublisher:
         try:
             vw = VoctowebClient(
                 self.ticket,
-                self.config['voctoweb']['api_key'],
-                self.config['voctoweb']['api_url'],
-                self.config['voctoweb']['ssh_host'],
-                self.config['voctoweb']['ssh_port'],
-                self.config['voctoweb']['ssh_user'],
+                self.config["voctoweb"]["api_key"],
+                self.config["voctoweb"]["api_url"],
+                self.config["voctoweb"]["ssh_host"],
+                self.config["voctoweb"]["ssh_port"],
+                self.config["voctoweb"]["ssh_user"],
             )
         except Exception as e_:
             raise PublisherException(
-                'Error initializing voctoweb client. Config parameter missing'
+                "Error initializing voctoweb client. Config parameter missing"
             ) from e_
 
         if self.ticket.master:
             # if this is master ticket we need to check if we need to create an event on voctoweb
-            logging.debug('this is a master ticket')
+            logging.debug("this is a master ticket")
             r = vw.create_or_update_event()
             if r.status_code in [200, 201]:
                 logging.info("new event created or existing updated")
@@ -188,11 +188,11 @@ class RelivePublisher:
                     # we need to write the Event ID onto the parent ticket, so the other (master) encoding tickets
                     # also have acccess to the Voctoweb Event ID
                     self.c3tt.set_ticket_properties(
-                        self.ticket.parent_id, {'Voctoweb.EventId': r.json()['id']}
+                        self.ticket.parent_id, {"Voctoweb.EventId": r.json()["id"]}
                     )
                 except Exception as e_:
                     raise PublisherException(
-                        'failed to Voctoweb EventID to parent ticket'
+                        "failed to Voctoweb EventID to parent ticket"
                     ) from e_
 
             elif r.status_code == 422:
@@ -201,9 +201,9 @@ class RelivePublisher:
                 logging.warning("event already exists => please sync event manually")
             else:
                 raise PublisherException(
-                    'Voctoweb returned an error while creating an event: '
+                    "Voctoweb returned an error while creating an event: "
                     + str(r.status_code)
-                    + ' - '
+                    + " - "
                     + str(r.content)
                 )
 
@@ -214,20 +214,20 @@ class PublisherException(Exception):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='generate events on voctoweb for relive '
+        description="generate events on voctoweb for relive "
     )
-    parser.add_argument('--verbose', '-v', action='store_true', default=False)
+    parser.add_argument("--verbose", "-v", action="store_true", default=False)
     parser.add_argument(
-        '--debug',
-        action='store_true',
+        "--debug",
+        action="store_true",
         default=False,
-        help='do not mark ticket as failed in tracker when something goes wrong',
+        help="do not mark ticket as failed in tracker when something goes wrong",
     )
 
     args = parser.parse_args()
-    print('debug', args.debug)
+    print("debug", args.debug)
 
     try:
         publisher = RelivePublisher(args)
@@ -241,6 +241,6 @@ if __name__ == '__main__':
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         if not args.debug:
-            publisher.c3tt.set_ticket_failed('%s: %s' % (exc_type.__name__, e))
+            publisher.c3tt.set_ticket_failed("%s: %s" % (exc_type.__name__, e))
         logging.exception(e)
         sys.exit(-1)

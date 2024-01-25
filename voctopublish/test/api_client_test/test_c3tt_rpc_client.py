@@ -1,8 +1,8 @@
-'''
+"""
 Created on Dec 15, 2016
 
 @author: n-te
-'''
+"""
 import unittest
 
 from api_client.c3tt_rpc_client import C3TTClient

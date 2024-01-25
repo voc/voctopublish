@@ -36,11 +36,11 @@ class Depublisher:
 
     def __init__(self):
         # load config
-        if not os.path.exists('client.conf'):
+        if not os.path.exists("client.conf"):
             raise IOError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
-        self.config.read('client.conf')
+        self.config.read("client.conf")
 
         # set up logging
         logging.addLevelName(
@@ -60,50 +60,50 @@ class Depublisher:
         self.logger = logging.getLogger()
 
         sh = logging.StreamHandler(sys.stdout)
-        if self.config['general']['debug']:
+        if self.config["general"]["debug"]:
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s"
             )
         else:
-            formatter = logging.Formatter('%(asctime)s - %(message)s')
+            formatter = logging.Formatter("%(asctime)s - %(message)s")
 
         sh.setFormatter(formatter)
         self.logger.addHandler(sh)
         self.logger.setLevel(logging.DEBUG)
 
-        level = self.config['general']['debug']
-        if level == 'info':
+        level = self.config["general"]["debug"]
+        if level == "info":
             self.logger.setLevel(logging.INFO)
-        elif level == 'warning':
+        elif level == "warning":
             self.logger.setLevel(logging.WARNING)
-        elif level == 'error':
+        elif level == "error":
             self.logger.setLevel(logging.ERROR)
-        elif level == 'debug':
+        elif level == "debug":
             self.logger.setLevel(logging.DEBUG)
 
-        if self.config['C3Tracker']['host'] == "None":
+        if self.config["C3Tracker"]["host"] == "None":
             self.host = socket.getfqdn()
         else:
-            self.host = self.config['C3Tracker']['host']
+            self.host = self.config["C3Tracker"]["host"]
 
-        self.ticket_type = self.config['C3Tracker']['ticket_type']
-        self.to_state = 'removing'
+        self.ticket_type = self.config["C3Tracker"]["ticket_type"]
+        self.to_state = "removing"
 
         # instance variables we need later
         self.ticket = None
         self.ticket_id = None
 
-        logging.debug('creating C3TTClient')
+        logging.debug("creating C3TTClient")
         try:
             self.c3tt = C3TTClient(
-                self.config['C3Tracker']['url'],
-                self.config['C3Tracker']['group'],
+                self.config["C3Tracker"]["url"],
+                self.config["C3Tracker"]["group"],
                 self.host,
-                self.config['C3Tracker']['secret'],
+                self.config["C3Tracker"]["secret"],
             )
         except Exception as e_:
             raise PublisherException(
-                'Config parameter missing or empty, please check config'
+                "Config parameter missing or empty, please check config"
             ) from e_
 
     def depublish(self):
@@ -114,7 +114,7 @@ class Depublisher:
         self.ticket_id, self.ticket = self._get_ticket_from_tracker()
 
         if not self.ticket:
-            logging.debug('not ticket, returning')
+            logging.debug("not ticket, returning")
             return
 
         errors = []
@@ -122,7 +122,7 @@ class Depublisher:
         # voctoweb
         if self.ticket.voctoweb_enable:
             logging.debug(
-                'encoding profile media flag: '
+                "encoding profile media flag: "
                 + str(self.ticket.profile_voctoweb_enable)
                 + " project media flag: "
                 + str(self.ticket.voctoweb_enable)
@@ -157,24 +157,24 @@ class Depublisher:
         else:
             logging.debug("no youtube :(")
 
-        logging.debug('#done')
+        logging.debug("#done")
         if errors:
             self.c3tt.set_ticket_failed(self.ticket_id, "\n".join(errors))
         else:
             self.c3tt.set_ticket_done(
                 self.ticket_id,
-                f'Video depublished. YouTube videos have been set to private: {str(urls)}',
+                f"Video depublished. YouTube videos have been set to private: {str(urls)}",
             )
 
     def _depublish_from_voctoweb(self):
         vw = VoctowebClient(
             self.ticket,
-            self.config['voctoweb']['api_key'],
-            self.config['voctoweb']['api_url'],
-            self.config['voctoweb']['ssh_host'],
-            self.config['voctoweb']['ssh_port'],
-            self.config['voctoweb']['ssh_user'],
-            self.config['voctoweb']['frontend_url'],
+            self.config["voctoweb"]["api_key"],
+            self.config["voctoweb"]["api_url"],
+            self.config["voctoweb"]["ssh_host"],
+            self.config["voctoweb"]["ssh_port"],
+            self.config["voctoweb"]["ssh_user"],
+            self.config["voctoweb"]["frontend_url"],
         )
 
         event = vw.get_event()
@@ -195,7 +195,7 @@ class Depublisher:
         Request the next unassigned ticket for the configured states
         :return: a ticket object or None in case no ticket is available
         """
-        logging.info('requesting ticket from tracker')
+        logging.info("requesting ticket from tracker")
         t = None
         ticket_id = self.c3tt.assign_next_unassigned_for_state(
             self.ticket_type, self.to_state, {"EncodingProfile.IsMaster": "yes"}
@@ -211,7 +211,7 @@ class Depublisher:
             t = Ticket(tracker_ticket, ticket_id)
         else:
             logging.info(
-                'No ticket of type ' + self.ticket_type + ' for state ' + self.to_state
+                "No ticket of type " + self.ticket_type + " for state " + self.to_state
             )
 
         return ticket_id, t
@@ -224,16 +224,16 @@ class Depublisher:
 
         yt = YoutubeAPI(
             self.ticket,
-            self.config['youtube']['client_id'],
-            self.config['youtube']['secret'],
+            self.config["youtube"]["client_id"],
+            self.config["youtube"]["secret"],
         )
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls, props = yt.depublish()
-        props['Publishing.YouTube.UrlHistory'] = (
-            (self.ticket.get_raw_property('Publishing.YouTube.UrlHistory') or '')
-            + ' '.join(youtube_urls)
-            + ' '
+        props["Publishing.YouTube.UrlHistory"] = (
+            (self.ticket.get_raw_property("Publishing.YouTube.UrlHistory") or "")
+            + " ".join(youtube_urls)
+            + " "
         )
 
         self.c3tt.set_ticket_properties(self.ticket_id, props)
@@ -244,7 +244,7 @@ class DepublisherException(Exception):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         worker = Depublisher()
     except Exception as e:
@@ -257,7 +257,7 @@ if __name__ == '__main__':
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         worker.c3tt.set_ticket_failed(
-            worker.ticket_id, '%s: %s' % (exc_type.__name__, e)
+            worker.ticket_id, "%s: %s" % (exc_type.__name__, e)
         )
         logging.exception(e)
         sys.exit(-1)

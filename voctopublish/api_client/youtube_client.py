@@ -50,38 +50,38 @@ class YoutubeAPI:
         self.config = config
 
         self.lang_map = {
-            'deu': 'German',
-            'eng': 'English',
-            'spa': 'Spanish',
-            'gsw': 'Schweizerdeutsch',
-            'fra': 'French',
-            'rus': 'Russian',
-            'fas': 'Farsi',
-            'chi': 'Chinese',
-            'ara': 'Arabic',
-            'hrv': 'Croatian',
-            'pol': 'Polish',
-            'por': 'Portuguese',
-            'ind': 'Bahasa Indonesia',
-            'ben': 'Bengali',
-            'ita': 'Italian',
+            "deu": "German",
+            "eng": "English",
+            "spa": "Spanish",
+            "gsw": "Schweizerdeutsch",
+            "fra": "French",
+            "rus": "Russian",
+            "fas": "Farsi",
+            "chi": "Chinese",
+            "ara": "Arabic",
+            "hrv": "Croatian",
+            "pol": "Polish",
+            "por": "Portuguese",
+            "ind": "Bahasa Indonesia",
+            "ben": "Bengali",
+            "ita": "Italian",
         }
 
         self.translation_strings = {
-            'deu': 'deutsche Übersetzung',
-            'eng': 'english translation',
-            'spa': 'La traducción española',
-            'gsw': 'Schwizerdüütschi Übersetzig',
-            'fra': 'traduction française',
-            'rus': 'Russian (русский) translation',
-            'chi': '中文翻译',
-            'ara': 'الترجمة العربية',
-            'hrv': 'Hrvatski prijevod',
-            'pol': 'Prijevod s poljskog',
-            'por': 'Tradução portuguesa',
-            'ind': 'Terjemahan bahasa Indonesia',
-            'ben': 'Bengali translation',
-            'ita': 'Traduzione italiana',
+            "deu": "deutsche Übersetzung",
+            "eng": "english translation",
+            "spa": "La traducción española",
+            "gsw": "Schwizerdüütschi Übersetzig",
+            "fra": "traduction française",
+            "rus": "Russian (русский) translation",
+            "chi": "中文翻译",
+            "ara": "الترجمة العربية",
+            "hrv": "Hrvatski prijevod",
+            "pol": "Prijevod s poljskog",
+            "por": "Tradução portuguesa",
+            "ind": "Terjemahan bahasa Indonesia",
+            "ben": "Bengali translation",
+            "ita": "Traduzione italiana",
         }
 
         self.youtube_urls = []
@@ -107,14 +107,14 @@ class YoutubeAPI:
 
         # handle multi language events
         if len(self.t.languages) > 1:
-            logging.debug('Languages: ' + str(self.t.languages))
+            logging.debug("Languages: " + str(self.t.languages))
 
             i = 0
             for lang in self.t.languages:
-                video_url = self.t.get_raw_property('YouTube.Url{}'.format(i))
-                if video_url and self.t.youtube_update != 'force':
+                video_url = self.t.get_raw_property("YouTube.Url{}".format(i))
+                if video_url and self.t.youtube_update != "force":
                     logging.info(
-                        'Video track {} is already on youtube, returning previous URL {}'.format(
+                        "Video track {} is already on youtube, returning previous URL {}".format(
                             i, video_url
                         )
                     )
@@ -131,26 +131,26 @@ class YoutubeAPI:
                     out_path = os.path.join(self.t.publishing_path, out_filename)
 
                     logging.info(
-                        'remuxing ' + self.t.local_filename + ' to ' + out_path
+                        "remuxing " + self.t.local_filename + " to " + out_path
                     )
 
                     try:
                         subprocess.check_output(
-                            'ffmpeg -y -v warning -nostdin -i '
+                            "ffmpeg -y -v warning -nostdin -i "
                             + os.path.join(
                                 self.t.publishing_path, self.t.local_filename
                             )
-                            + ' -map 0:0 -map 0:a:'
+                            + " -map 0:0 -map 0:a:"
                             + str(lang)
-                            + ' -c copy '
+                            + " -c copy "
                             + out_path,
                             shell=True,
                         )
                     except Exception as e_:
                         raise YouTubeException(
-                            'error remuxing '
+                            "error remuxing "
                             + self.t.local_filename
-                            + ' to '
+                            + " to "
                             + out_path
                         ) from e_
 
@@ -160,7 +160,7 @@ class YoutubeAPI:
                         lang = self.t.languages[lang]
 
                     video_id = self.upload(out_path, lang)
-                    video_url = 'https://www.youtube.com/watch?v=' + video_id
+                    video_url = "https://www.youtube.com/watch?v=" + video_id
                     logging.info("published %s video track to %s" % (lang, video_url))
 
                 self.youtube_urls.append(video_url)
@@ -170,7 +170,7 @@ class YoutubeAPI:
                 os.path.join(self.t.publishing_path, self.t.local_filename), None
             )
 
-            video_url = 'https://www.youtube.com/watch?v=' + video_id
+            video_url = "https://www.youtube.com/watch?v=" + video_id
             logging.info("published Ticket to %s" % video_url)
             self.youtube_urls.append(video_url)
 
@@ -191,90 +191,90 @@ class YoutubeAPI:
         if self.t.subtitle:
             subtitle = self.t.subtitle
         else:
-            subtitle = ''
+            subtitle = ""
         if self.t.abstract:
             abstract = self.strip_tags(self.t.abstract)
         else:
-            abstract = ''
+            abstract = ""
 
         if self.t.description:
             description = self.strip_tags(self.t.description)
         else:
-            description = ''
+            description = ""
 
         if self.t.url:
-            if self.t.url.startswith('//'):
-                url = 'https:' + self.t.url
+            if self.t.url.startswith("//"):
+                url = "https:" + self.t.url
             else:
                 url = self.t.url
         else:
-            url = ''
+            url = ""
 
         topline = [
-            "#" + re.sub('[^A-Za-z0-9]+', '', x)
+            "#" + re.sub("[^A-Za-z0-9]+", "", x)
             for x in [self.t.acronym, self.t.track]
             if x
         ]
         if self.t.acronym and lang and lang != self.t.languages[0]:
-            topline.append(topline[0] + '_' + lang)
+            topline.append(topline[0] + "_" + lang)
 
-        description = '\n\n'.join(
+        description = "\n\n".join(
             [
                 subtitle,
                 abstract,
                 description,
-                ' '.join(self.t.people),
+                " ".join(self.t.people),
                 url,
-                ' '.join(topline),
+                " ".join(topline),
             ]
         )
         description = self.strip_tags(description)
 
         if self.t.voctoweb_enable:
             description = (
-                self.config['voctoweb']['frontend_url']
-                + '/v/'
+                self.config["voctoweb"]["frontend_url"]
+                + "/v/"
                 + self.t.slug
-                + '\n\n'
+                + "\n\n"
                 + description
             )
 
-        license = self.t.get_raw_property('Meta.License')
-        if license and 'https://creativecommons.org/licenses/by' in license:
-            license = 'creativeCommon'
+        license = self.t.get_raw_property("Meta.License")
+        if license and "https://creativecommons.org/licenses/by" in license:
+            license = "creativeCommon"
         else:
-            license = 'youtube'
+            license = "youtube"
 
         metadata = {
-            'snippet': {
-                'title': title,
+            "snippet": {
+                "title": title,
                 # YouTube does not allow <> in description -> escape them
-                'description': description.replace('<', '&lt').replace('>', '&gt'),
-                'channelId': self.channelId,
-                'tags': self._select_tags(lang),
-                'defaultLanguage': langcodes.get(self.t.languages[0]).language,
-                'defaultAudioLanguage': langcodes.get(
+                "description": description.replace("<", "&lt").replace(">", "&gt"),
+                "channelId": self.channelId,
+                "tags": self._select_tags(lang),
+                "defaultLanguage": langcodes.get(self.t.languages[0]).language,
+                "defaultAudioLanguage": langcodes.get(
                     lang or self.t.languages[0]
                 ).language,
             },
-            'status': {
-                'privacyStatus': self.t.youtube_privacy,
-                'embeddable': True,
-                'publicStatsViewable': True,
-                'license': license,
+            "status": {
+                "privacyStatus": self.t.youtube_privacy,
+                "embeddable": True,
+                "publicStatsViewable": True,
+                "license": license,
             },
-            'recordingDetails': {
-                'recordingDate': self.t.date,
+            "recordingDetails": {
+                "recordingDate": self.t.date,
             },
         }
 
         if self.t.youtube_publish_at:
             try:
                 publish_at = datetime.strptime(
-                    self.t.youtube_publish_at, '%Y-%m-%d %H:%M'
+                    self.t.youtube_publish_at, "%Y-%m-%d %H:%M"
                 )
             except ValueError:
-                result = re.findall(r'(\d+[wdh])', self.t.youtube_publish_at)
+                result = re.findall(r"(\d+[wdh])", self.t.youtube_publish_at)
                 if not result:
                     raise YouTubeException(
                         "Invalid value for Publishing.YouTube.PublishAt, either use 'YYYY-MM-DD HH:MM' or relative values like '7d 2h' (*w*eeks, *d*ays and *h*ours supported)"
@@ -282,44 +282,44 @@ class YoutubeAPI:
                 else:
                     kwargs = {}
                     for k, keyword in {
-                        'w': 'weeks',
-                        'd': 'days',
-                        'h': 'hours',
+                        "w": "weeks",
+                        "d": "days",
+                        "h": "hours",
                     }:
                         for v in result:
                             if v.endswith(k):
                                 kwargs[keyword] = int(v[:-1])
                     publish_at = datetime.now(timezone.utc) + timedelta(**kwargs)
-            metadata['status']['publishAt'] = publish_at.isoformat(timespec='seconds')
+            metadata["status"]["publishAt"] = publish_at.isoformat(timespec="seconds")
 
         # limit title length to 100 (YouTube api conformity)
-        metadata['snippet']['title'] = metadata['snippet']['title'][:100]
+        metadata["snippet"]["title"] = metadata["snippet"]["title"][:100]
         # limit Description length to 5000 (YouTube api conformity)
-        metadata['snippet']['description'] = metadata['snippet']['description'][:5000]
+        metadata["snippet"]["description"] = metadata["snippet"]["description"][:5000]
 
         if self.t.youtube_category:
-            metadata['snippet']['categoryId'] = int(self.t.youtube_category)
+            metadata["snippet"]["categoryId"] = int(self.t.youtube_category)
 
         (mimetype, encoding) = mimetypes.guess_type(file)
         size = os.stat(file).st_size
 
         logging.debug(
-            'guessed mime type for file %s as %s and its size as %u bytes'
+            "guessed mime type for file %s as %s and its size as %u bytes"
             % (file, mimetype, size)
         )
 
         # https://developers.google.com/youtube/v3/docs/videos#resource
         r = requests.post(
-            'https://www.googleapis.com/upload/youtube/v3/videos',
+            "https://www.googleapis.com/upload/youtube/v3/videos",
             params={
-                'uploadType': 'resumable',
-                'part': 'snippet,status,recordingDetails',
+                "uploadType": "resumable",
+                "part": "snippet,status,recordingDetails",
             },
             headers={
-                'Authorization': 'Bearer ' + self.accessToken,
-                'Content-Type': 'application/json; charset=UTF-8',
-                'X-Upload-Content-Type': mimetype,
-                'X-Upload-Content-Length': str(size),
+                "Authorization": "Bearer " + self.accessToken,
+                "Content-Type": "application/json; charset=UTF-8",
+                "X-Upload-Content-Type": mimetype,
+                "X-Upload-Content-Length": str(size),
             },
             data=json.dumps(metadata),
         )
@@ -328,72 +328,72 @@ class YoutubeAPI:
         if 200 != r.status_code:
             if 400 == r.status_code:
                 raise YouTubeException(
-                    r.json()['error']['message']
-                    + '\n'
+                    r.json()["error"]["message"]
+                    + "\n"
                     + r.text
-                    + '\n\n'
+                    + "\n\n"
                     + json.dumps(metadata, indent=2)
                 )
             else:
                 raise YouTubeException(
-                    'Video creation failed with error-code %u: %s'
+                    "Video creation failed with error-code %u: %s"
                     % (r.status_code, r.text)
                 )
 
-        if 'location' not in r.headers:
+        if "location" not in r.headers:
             raise YouTubeException(
-                'Video creation did not return a location-header to upload to: %s'
+                "Video creation did not return a location-header to upload to: %s"
                 % (r.headers,)
             )
 
         logging.info(
-            'successfully created video and received upload-url from %s'
-            % (r.headers['server'] if 'server' in r.headers else '-')
+            "successfully created video and received upload-url from %s"
+            % (r.headers["server"] if "server" in r.headers else "-")
         )
-        logging.debug('uploading video-data to %s' % r.headers['location'])
+        logging.debug("uploading video-data to %s" % r.headers["location"])
 
-        with open(file, 'rb') as fp:
+        with open(file, "rb") as fp:
             upload = requests.put(
-                r.headers['location'],
+                r.headers["location"],
                 headers={
-                    'Authorization': 'Bearer ' + self.accessToken,
-                    'Content-Type': mimetype,
+                    "Authorization": "Bearer " + self.accessToken,
+                    "Content-Type": mimetype,
                 },
                 data=fp,
             )
 
             if 200 != upload.status_code and 201 != upload.status_code:
                 raise YouTubeException(
-                    'uploading video failed with error-code %u: %s'
+                    "uploading video failed with error-code %u: %s"
                     % (r.status_code, r.text)
                 )
 
         video = upload.json()
 
         outjpg = os.path.join(
-            self.t.publishing_path, self.t.fahrplan_id + '_youtube.jpg'
+            self.t.publishing_path, self.t.fahrplan_id + "_youtube.jpg"
         )
 
         try:
             r = subprocess.check_output(
-                'ffmpeg -loglevel error -i '
+                "ffmpeg -loglevel error -i "
                 + self.thumbnail.path
-                + ' -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y '
+                + " -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y "
                 + outjpg,
                 shell=True,
             )
             logging.info("thumbnails reformatted for youtube")
         except Exception as e_:
             raise YouTubeException(
-                "Could not scale thumbnail: " + r.decode('utf-8')
+                "Could not scale thumbnail: " + r.decode("utf-8")
             ) from e_
 
-        YoutubeAPI.update_thumbnail(self.accessToken, video['id'], outjpg)
+        YoutubeAPI.update_thumbnail(self.accessToken, video["id"], outjpg)
 
-        youtube_url = 'https://www.youtube.com/watch?v=' + video['id']
-        logging.info('successfully uploaded video as %s', youtube_url)
+        youtube_url = "https://www.youtube.com/watch?v=" + video["id"]
+        logging.info("successfully uploaded video as %s", youtube_url)
 
-        return video['id']
+        return video["id"]
 
     def _build_title(self, lang=None):
         """
@@ -410,26 +410,26 @@ class YoutubeAPI:
             else self.t.youtube_title_prefix
         )
         # if localized title exits, overwrite original title
-        if lang and self.t.has_property(f'Fahrplan.Title.{lang}'):
-            title = self.t.get_raw_property(f'Fahrplan.Title.{lang}')
+        if lang and self.t.has_property(f"Fahrplan.Title.{lang}"):
+            title = self.t.get_raw_property(f"Fahrplan.Title.{lang}")
 
         if title_prefix:
             title_prefix = self._replace_language_placeholders(title_prefix, language)
-            title = title_prefix + ' ' + title
-            logging.debug('adding ' + str(title_prefix) + ' as title prefix')
+            title = title_prefix + " " + title
+            logging.debug("adding " + str(title_prefix) + " as title prefix")
 
         # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title,
         # where x is defined by the integer in self.t.youtube_title_prefix_speakers
         if self.t.youtube_title_prefix_speakers and len(self.t.people) <= int(
             self.t.youtube_title_prefix_speakers
         ):
-            title = (', '.join(self.t.people)) + ': ' + title
-            logging.debug('adding speaker names as title prefix: ' + title)
+            title = (", ".join(self.t.people)) + ": " + title
+            logging.debug("adding speaker names as title prefix: " + title)
         elif self.t.youtube_title_append_speakers and len(self.t.people) <= int(
             self.t.youtube_title_append_speakers
         ):
-            title += ' (' + (', '.join(self.t.people)) + ')'
-            logging.debug('appending speaker names to title: ' + title)
+            title += " (" + (", ".join(self.t.people)) + ")"
+            logging.debug("appending speaker names to title: " + title)
 
         title_suffix = (
             self.t.youtube_translation_title_suffix
@@ -438,18 +438,18 @@ class YoutubeAPI:
         )
         if title_suffix:
             title_suffix = self._replace_language_placeholders(title_suffix, language)
-            title = title + ' ' + title_suffix
-            logging.debug('adding ' + str(title_suffix) + ' as title suffix')
+            title = title + " " + title_suffix
+            logging.debug("adding " + str(title_suffix) + " as title suffix")
 
         if (
             lang
             and not self.t.youtube_translation_title_prefix
             and not self.t.youtube_translation_title_suffix
         ):
-            title += self._replace_language_placeholders(' - ${translation}', lang)
+            title += self._replace_language_placeholders(" - ${translation}", lang)
 
         # YouTube does not allow <> in titles – even not as &gt;&lt;
-        return title.replace('<', '(').replace('>', ')')
+        return title.replace("<", "(").replace(">", ")")
 
     def _replace_language_placeholders(self, string, lang):
         """
@@ -458,19 +458,19 @@ class YoutubeAPI:
         :param lang: the language
         :return: Returns the string with applied replacements
         """
-        translation = ''
-        language_name = ''
+        translation = ""
+        language_name = ""
         if lang:
             if lang in self.translation_strings.keys() and lang in self.lang_map:
                 translation = self.translation_strings[lang]
                 language_name = self.lang_map[lang]
             else:
-                raise YouTubeException('language not defined in translation strings')
+                raise YouTubeException("language not defined in translation strings")
 
         return (
-            string.replace('${translation}', translation)
-            .replace('${language_code}', lang)
-            .replace('${language_name}', language_name)
+            string.replace("${translation}", translation)
+            .replace("${language_code}", lang)
+            .replace("${language_name}", language_name)
         )
 
     def _select_tags(self, lang=None):
@@ -483,43 +483,43 @@ class YoutubeAPI:
 
         # if tags are set - copy them into the metadata dict
         if self.t.youtube_tags:
-            tags.extend(map(str.strip, self.t.youtube_tags.split(',')))
+            tags.extend(map(str.strip, self.t.youtube_tags.split(",")))
 
         if self.t.track:
             tags.append(self.t.track)
 
         if self.t.day:
-            tags.append('Day %s' % self.t.day)
+            tags.append("Day %s" % self.t.day)
 
         if self.t.room:
             tags.append(self.t.room)
 
         if self.t.date:
-            tags.append(str(self.t.date).split('-')[0])
+            tags.append(str(self.t.date).split("-")[0])
 
         if lang:
             if lang in self.lang_map.keys():
                 if self.t.languages[0] == lang:
-                    tags.append(self.t.acronym + ' ' + self.lang_map[lang])
-                    tags.append(self.t.acronym + ' ov')
+                    tags.append(self.t.acronym + " " + self.lang_map[lang])
+                    tags.append(self.t.acronym + " ov")
                 else:
                     tags.append(
                         self.lang_map[lang]
-                        + ' ('
+                        + " ("
                         + self.translation_strings[lang]
-                        + ')'
+                        + ")"
                     )
-                    tags.append(self.t.acronym + ' ' + lang)
+                    tags.append(self.t.acronym + " " + lang)
             else:
-                raise YouTubeException('language not in lang map')
+                raise YouTubeException("language not in lang map")
         else:
-            tags.append(self.t.acronym + ' ov')
-            tags.append(self.t.acronym + ' ' + self.t.languages[0])
+            tags.append(self.t.acronym + " ov")
+            tags.append(self.t.acronym + " " + self.t.languages[0])
 
         tags.extend(self.t.people)
         tags.append(self.t.acronym)
 
-        logging.debug('YouTube Tags: ' + str(tags))
+        logging.debug("YouTube Tags: " + str(tags))
 
         return tags
 
@@ -545,19 +545,19 @@ class YoutubeAPI:
         depublished_urls = []
         props = {}
         for lang in self.t.languages:
-            video_url = self.t.get_raw_property(f'YouTube.Url{i}')
+            video_url = self.t.get_raw_property(f"YouTube.Url{i}")
             if video_url:
                 try:
-                    video_id = video_url.split('=', 2)[1]
+                    video_id = video_url.split("=", 2)[1]
                     self.update_metadata(
                         video_id,
-                        {'id': video_id, 'status': {'privacyStatus': 'private'}},
+                        {"id": video_id, "status": {"privacyStatus": "private"}},
                     )
                     logging.info(
                         "depublished %s video track from %s" % (lang, video_url)
                     )
                     depublished_urls.append(video_url)
-                    props[f'YouTube.Url{i}'] = ''
+                    props[f"YouTube.Url{i}"] = ""
 
                     if self.t.youtube_playlists:
                         yt.remove_from_playlists(video_id, self.t.youtube_playlists)
@@ -570,13 +570,13 @@ class YoutubeAPI:
     def update_metadata(self, video_id, metadata):
         # https://developers.google.com/youtube/v3/docs/videos#resource
         r = requests.put(
-            'https://youtube.googleapis.com/youtube/v3/videos',
+            "https://youtube.googleapis.com/youtube/v3/videos",
             params={
-                'part': 'status'  # TODO extract keys from ','.join(metadata.keys())
+                "part": "status"  # TODO extract keys from ','.join(metadata.keys())
             },
             headers={
-                'Authorization': 'Bearer ' + self.accessToken,
-                'Content-Type': 'application/json; charset=UTF-8',
+                "Authorization": "Bearer " + self.accessToken,
+                "Content-Type": "application/json; charset=UTF-8",
             },
             data=json.dumps(metadata),
         )
@@ -585,15 +585,15 @@ class YoutubeAPI:
             logging.debug(metadata)
             if 400 == r.status_code:
                 raise YouTubeException(
-                    r.json()['error']['message']
-                    + '\n'
+                    r.json()["error"]["message"]
+                    + "\n"
                     + r.text
-                    + '\n\n'
+                    + "\n\n"
                     + json.dumps(metadata, indent=2)
                 )
             else:
                 raise YouTubeException(
-                    'Video update failed with error-code %u: %s'
+                    "Video update failed with error-code %u: %s"
                     % (r.status_code, r.text)
                 )
         return r
@@ -610,19 +610,19 @@ class YoutubeAPI:
         :param playlist_id:
         """
         r = requests.post(
-            'https://www.googleapis.com/youtube/v3/playlistItems',
-            params={'part': 'snippet'},
+            "https://www.googleapis.com/youtube/v3/playlistItems",
+            params={"part": "snippet"},
             headers={
-                'Authorization': 'Bearer ' + self.accessToken,
-                'Content-Type': 'application/json; charset=UTF-8',
+                "Authorization": "Bearer " + self.accessToken,
+                "Content-Type": "application/json; charset=UTF-8",
             },
             data=json.dumps(
                 {
-                    'snippet': {
-                        'playlistId': playlist_id,  # required
-                        'resourceId': {
-                            'kind': 'youtube#video',
-                            'videoId': video_id,
+                    "snippet": {
+                        "playlistId": playlist_id,  # required
+                        "resourceId": {
+                            "kind": "youtube#video",
+                            "videoId": video_id,
                         },  # required
                     },
                 }
@@ -631,11 +631,11 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'Adding video to playlist failed with error-code %u: %s'
+                "Adding video to playlist failed with error-code %u: %s"
                 % (r.status_code, r.text)
             )
 
-        logging.info('video added to playlist: ' + playlist_id)
+        logging.info("video added to playlist: " + playlist_id)
 
     def remove_from_playlists(self, video_id: str, ids):
         """
@@ -644,26 +644,26 @@ class YoutubeAPI:
         :param ids: list or string of playlist ids
         """
         r = requests.get(
-            'https://www.googleapis.com/youtube/v3/playlistItems',
+            "https://www.googleapis.com/youtube/v3/playlistItems",
             params={
-                'part': 'id',
-                'id': ','.join(ids),
-                'videoId': video_id,
+                "part": "id",
+                "id": ",".join(ids),
+                "videoId": video_id,
             },
             headers={
-                'Authorization': 'Bearer ' + self.accessToken,
-                'Content-Type': 'application/json; charset=UTF-8',
+                "Authorization": "Bearer " + self.accessToken,
+                "Content-Type": "application/json; charset=UTF-8",
             },
         )
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'Could not lookup playlist item ids, failed with error-code %u: %s'
+                "Could not lookup playlist item ids, failed with error-code %u: %s"
                 % (r.status_code, r.text)
             )
 
-        for item in r.json()['items']:
-            remove_playlist_item(item['id'])
+        for item in r.json()["items"]:
+            remove_playlist_item(item["id"])
 
     def remove_playlist_item(self, item_id: str):
         """
@@ -671,26 +671,26 @@ class YoutubeAPI:
         :param item_id:
         """
         r = requests.delete(
-            'https://www.googleapis.com/youtube/v3/playlistItems',
-            params={'part': 'id'},
+            "https://www.googleapis.com/youtube/v3/playlistItems",
+            params={"part": "id"},
             headers={
-                'Authorization': 'Bearer ' + self.accessToken,
-                'Content-Type': 'application/json; charset=UTF-8',
+                "Authorization": "Bearer " + self.accessToken,
+                "Content-Type": "application/json; charset=UTF-8",
             },
             data=json.dumps(
                 {
-                    'id': item_id,
+                    "id": item_id,
                 }
             ),
         )
 
         if 204 != r.status_code:
             raise YouTubeException(
-                'Removing video from playlist failed with error-code %u: %s'
+                "Removing video from playlist failed with error-code %u: %s"
                 % (r.status_code, r.text)
             )
 
-        logging.info('video removed from playlist ')
+        logging.info("video removed from playlist ")
 
     @staticmethod
     def update_thumbnail(access_token: str, video_id: str, thumbnail: str):
@@ -700,24 +700,24 @@ class YoutubeAPI:
         :param video_id:
         :param thumbnail:
         """
-        fp = open(thumbnail, 'rb')
+        fp = open(thumbnail, "rb")
 
         r = requests.post(
-            'https://www.googleapis.com/upload/youtube/v3/thumbnails/set',
-            params={'videoId': video_id},
+            "https://www.googleapis.com/upload/youtube/v3/thumbnails/set",
+            params={"videoId": video_id},
             headers={
-                'Authorization': 'Bearer ' + access_token,
-                'Content-Type': 'image/png',
+                "Authorization": "Bearer " + access_token,
+                "Content-Type": "image/png",
             },
             data=fp.read(),
         )
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'Video update failed with error-code %u: %s' % (r.status_code, r.text)
+                "Video update failed with error-code %u: %s" % (r.status_code, r.text)
             )
 
-        logging.info(f'Thumbnails for {video_id} updated')
+        logging.info(f"Thumbnails for {video_id} updated")
 
     @staticmethod
     def get_playlist(access_token: str, playlist_id: str):
@@ -728,17 +728,17 @@ class YoutubeAPI:
         :return:
         """
         r = requests.get(
-            'https://www.googleapis.com/youtube/v3/playlistItems',
-            params={'part': 'snippet', 'playlistId': playlist_id},
+            "https://www.googleapis.com/youtube/v3/playlistItems",
+            params={"part": "snippet", "playlistId": playlist_id},
             headers={
-                'Authorization': 'Bearer ' + access_token,
-                'Content-Type': 'application/json; charset=UTF-8',
+                "Authorization": "Bearer " + access_token,
+                "Content-Type": "application/json; charset=UTF-8",
             },
         )
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'Video add to playlist failed with error-code %u: %s'
+                "Video add to playlist failed with error-code %u: %s"
                 % (r.status_code, r.text)
             )
 
@@ -754,33 +754,33 @@ class YoutubeAPI:
         :return: YouTube access token
         """
         logging.debug(
-            'fetching fresh Access-Token on behalf of the refreshToken %s'
+            "fetching fresh Access-Token on behalf of the refreshToken %s"
             % refresh_token
         )
         r = requests.post(
-            'https://accounts.google.com/o/oauth2/token',
+            "https://accounts.google.com/o/oauth2/token",
             data={
-                'client_id': client_id,
-                'client_secret': client_secret,
-                'refresh_token': refresh_token,
-                'grant_type': 'refresh_token',
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "refresh_token": refresh_token,
+                "grant_type": "refresh_token",
             },
         )
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'fetching a fresh authToken failed with error-code %u: %s'
+                "fetching a fresh authToken failed with error-code %u: %s"
                 % (r.status_code, r.text)
             )
 
         data = r.json()
-        if 'access_token' not in data:
+        if "access_token" not in data:
             raise YouTubeException(
-                'fetching a fresh authToken did not return a access_token: %s' % r.text
+                "fetching a fresh authToken did not return a access_token: %s" % r.text
             )
 
-        logging.info("successfully fetched Access-Token %s" % data['access_token'])
-        return data['access_token']
+        logging.info("successfully fetched Access-Token %s" % data["access_token"])
+        return data["access_token"]
 
     @staticmethod
     def get_channel_id(access_token: str):
@@ -790,30 +790,30 @@ class YoutubeAPI:
         :return: YouTube channel id
         """
         logging.debug(
-            'fetching Channel-Info on behalf of the accessToken %s' % access_token
+            "fetching Channel-Info on behalf of the accessToken %s" % access_token
         )
         r = requests.get(
-            'https://www.googleapis.com/youtube/v3/channels',
+            "https://www.googleapis.com/youtube/v3/channels",
             headers={
-                'Authorization': 'Bearer ' + access_token,
+                "Authorization": "Bearer " + access_token,
             },
             params={
-                'part': 'id,brandingSettings',
-                'mine': 'true',
+                "part": "id,brandingSettings",
+                "mine": "true",
             },
         )
 
         if 200 != r.status_code:
             raise YouTubeException(
-                'fetching channelID failed with error-code %u: %s'
+                "fetching channelID failed with error-code %u: %s"
                 % (r.status_code, r.text)
             )
 
         data = r.json()
-        channel = data['items'][0]
+        channel = data["items"][0]
 
-        logging.info("successfully fetched Channel-ID %s " % (channel['id']))
-        return channel['id']
+        logging.info("successfully fetched Channel-ID %s " % (channel["id"]))
+        return channel["id"]
 
     @staticmethod
     def strip_tags(html):
@@ -841,7 +841,7 @@ class MLStripper(HTMLParser):
         self.fed.append(d)
 
     def get_data(self):
-        return ''.join(self.fed)
+        return "".join(self.fed)
 
 
 class YouTubeException(Exception):
