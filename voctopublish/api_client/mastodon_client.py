@@ -19,7 +19,6 @@ import logging
 from pathlib import Path
 
 from mastodon import Mastodon
-
 from tools.announcements import EmptyAnnouncementMessage, make_message
 
 

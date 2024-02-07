@@ -130,9 +130,11 @@ def send_chat_message(ticket, config):
                                 "widgets": [
                                     {
                                         "textParagraph": {
-                                            "text": ticket.abstract
-                                            if ticket.abstract
-                                            else "",
+                                            "text": (
+                                                ticket.abstract
+                                                if ticket.abstract
+                                                else ""
+                                            ),
                                         },
                                     },
                                     *key_value,

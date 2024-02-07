@@ -29,8 +29,6 @@ try:
 except ImportError:
     from rtoml import load as toml_load
 
-from c3tt_rpc_client import C3TTClient
-
 import api_client.bluesky_client as bluesky
 import api_client.googlechat_client as googlechat
 import api_client.mastodon_client as mastodon
@@ -38,6 +36,7 @@ import api_client.twitter_client as twitter
 from api_client.rclone_client import RCloneClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
+from c3tt_rpc_client import C3TTClient
 from model.ticket_module import PublishingTicket, RecordingTicket, Ticket
 from tools.thumbnails import ThumbnailGenerator
 
@@ -600,7 +599,9 @@ class Worker:
         logging.info("Downloading file from: " + source)
         if not self.ticket.download_command:
             with open(target, "wb") as fh:
-                with urllib.request.urlopen(urllib.parse.quote(source, safe=":/")) as df:
+                with urllib.request.urlopen(
+                    urllib.parse.quote(source, safe=":/")
+                ) as df:
                     # original version tried to write whole file to ram and ran out of memory
                     # read in 16 kB chunks instead
                     while True:

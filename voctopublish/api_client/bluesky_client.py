@@ -20,7 +20,6 @@ from datetime import datetime, timezone
 from re import finditer
 
 import requests
-
 from tools.announcements import EmptyAnnouncementMessage, make_message
 
 LOG = logging.getLogger("Bluesky")

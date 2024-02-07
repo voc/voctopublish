@@ -17,9 +17,8 @@
 
 import logging
 
-from twitter import OAuth, Twitter
-
 from tools.announcements import EmptyAnnouncementMessage, make_message
+from twitter import OAuth, Twitter
 
 
 def send_tweet(ticket, config):

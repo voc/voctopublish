@@ -27,7 +27,6 @@ from html.parser import HTMLParser
 
 import langcodes
 import requests
-
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
 

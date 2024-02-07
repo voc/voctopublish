@@ -26,7 +26,6 @@ import time
 
 import paramiko
 import requests
-
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
 
