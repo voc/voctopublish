@@ -597,7 +597,7 @@ class Worker:
         :return:
         """
         logging.info("Downloading file from: " + source)
-        if not self.ticket.download_command:
+        if self.ticket.download_command in (None, True, False):
             with open(target, "wb") as fh:
                 with urllib.request.urlopen(
                     urllib.parse.quote(source, safe=":/")

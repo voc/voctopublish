@@ -16,7 +16,7 @@ url = "<tracker url>"
 [download.workers]
 # list all available download tools here. Use whatever you want, as long
 # as it supports directly downloading to a specific file name.
-python = false # this will use urllib.urlopen() to download the file
+python = true # the value of this does not matter
 wget = ["wget", "-q", "-O", "--TARGETPATH--", "--", "--DOWNLOADURL--"]
 
 # "enable_default" below specifies the behaviour if the `Publishing.<service>.Enable`
