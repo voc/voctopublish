@@ -70,7 +70,8 @@ class Worker:
                 f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
             )
 
-        self.config = toml_load(my_config_path)
+        with open(my_config_path) as f:
+            self.config = toml_load(f.read())
 
         # set up logging
         logging.addLevelName(
