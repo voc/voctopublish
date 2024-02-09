@@ -11,8 +11,8 @@ logging = logging.getLogger(__name__)
 class RCloneClient:
     def __init__(self, t: Ticket, config):
         self.ticket = t
-        self.rclone_path = config.get("rclone", "exe_path")
-        self.rclone_config = config.get("rclone", "config_path")
+        self.rclone_path = config["rclone"]["exe_path"]
+        self.rclone_config = config["rclone"]["config_path"]
 
         date_time = datetime.strptime(t.date, "%Y-%m-%dT%H:%M:%S%z")
         self.destination = self.ticket.rclone_destination.format(
