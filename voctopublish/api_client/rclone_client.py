@@ -5,7 +5,7 @@ from subprocess import CalledProcessError, check_output
 
 from model.ticket_module import Ticket
 
-logging = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class RCloneClient:
@@ -41,19 +41,19 @@ class RCloneClient:
                 ]
             )
             for line in out.decode().splitlines():
-                logging.debug(line)
+                LOG.debug(line)
         except CalledProcessError as e:
             if e.returncode == 9:
-                logging.warn(f"rclone reported no transferred files (return code 9)!")
+                LOG.warn(f"rclone reported no transferred files (return code 9)!")
             else:
-                logging.error(f"rclone exited {e.returncode}!")
+                LOG.error(f"rclone exited {e.returncode}!")
             if e.stdout:
                 for line in e.stdout.decode().splitlines():
-                    logging.error(f"STDOUT: {line}")
+                    LOG.error(f"STDOUT: {line}")
             if e.stderr:
                 for line in e.stderr.decode().splitlines():
-                    logging.error(f"STDERR: {line}")
+                    LOG.error(f"STDERR: {line}")
             return e.returncode
         else:
-            logging.info(f"uploaded to {self.destination}")
+            LOG.info(f"uploaded to {self.destination}")
             return 0
