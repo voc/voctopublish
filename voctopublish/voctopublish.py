@@ -123,10 +123,9 @@ class Worker:
             logging.error("Unknown worker type " + self.worker_type)
             raise PublisherException("Unknown worker type " + self.worker_type)
 
-        if self.config["C3Tracker"]["host"] == "None":
+        self.host = self.config["C3Tracker"].get("host", "").strip()
+        if not self.host:
             self.host = socket.getfqdn()
-        else:
-            self.host = self.config["C3Tracker"]["host"]
 
         logging.debug("creating C3TTClient")
         try:
