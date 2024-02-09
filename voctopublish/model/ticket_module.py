@@ -303,10 +303,10 @@ class PublishingTicket(Ticket):
             self.voctoweb_event_id = self._validate_("Voctoweb.EventId", True)
 
         # rclone properties
-        rclone_enabled = self._validate_("Publishing.Rclone.Enable", True) == "yes"
+        rclone_enabled = self._validate_("Publishing.Rclone.Enable", True)
         if rclone_enabled is None:
-            rclone_enabled = config["rclone"]["enable_default"]
-        self.rclone_enabled = rclone_enabled
+            rclone_enabled = "yes" if config["rclone"]["enable_default"] else "no"
+        self.rclone_enabled = rclone_enabled == "yes"
 
         if self.rclone_enabled:
             self.rclone_destination = self._validate_("Publishing.Rclone.Destination")
