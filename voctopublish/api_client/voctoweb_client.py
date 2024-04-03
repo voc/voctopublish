@@ -91,6 +91,22 @@ class VoctowebClient:
         self.sftp = self.ssh.open_sftp()
         logging.info("SSH connection established to " + str(self.ssh_host))
 
+        for dir_type, path in {
+            'thumbnail': self.t.voctoweb_thumb_path,
+            'video': self.t.voctoweb_path,
+        }.items():
+            try:
+                self.sftp.stat(path)
+                logging.debug(f'{dir_type} directory {path} already exists')
+            except IOError as e:
+                if e.errno == errno.ENOENT:
+                    try:
+                        self.sftp.mkdir(path)
+                    except IOError as e:
+                        raise VoctowebException(
+                            f"Could not create {dir_type} dir {path} - {e!r}"
+                        ) from e
+
     def generate_thumbs(self):
         """
         This function generates thumbnails to be used on voctoweb
@@ -255,27 +271,11 @@ class VoctowebClient:
         format_folder = os.path.join(self.t.voctoweb_path, remote_folder)
 
         # Check if the directory exists and if not create it.
-        # This only works for the format sub directories not for the event itself
         try:
             self.sftp.stat(format_folder)
         except IOError as e:
             if e.errno == errno.ENOENT:
                 try:
-                    # Check if parent directory exists and if not create it.
-                    try:
-                        self.sftp.stat(self.t.voctoweb_path)
-                    except IOError as e:
-                        if e.errno == errno.ENOENT:
-                            try:
-                                self.sftp.mkdir(self.t.voctoweb_path)
-                            except IOError as e:
-                                raise VoctowebException(
-                                    "Could not create parent subdir "
-                                    + self.t.voctoweb_path
-                                    + " : "
-                                    + str(e)
-                                ) from e
-                    # Finally create format folder
                     self.sftp.mkdir(format_folder)
                 except IOError as e:
                     raise VoctowebException(
