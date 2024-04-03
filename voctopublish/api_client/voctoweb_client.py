@@ -152,7 +152,7 @@ class VoctowebClient:
                     "could not upload thumb because file " + file + " does not exist"
                 )
             target = os.path.join(
-                self.t.voctoweb_thump_path, self.t.voctoweb_filename_base + ext_vw
+                self.t.voctoweb_thumb_path, self.t.voctoweb_filename_base + ext_vw
             )
             try:
                 logging.debug("Uploading " + file + " to " + target)
@@ -221,7 +221,7 @@ class VoctowebClient:
             basepath + ".thumbnails-*.jpg"
         )
         for file in files:
-            target = os.path.join(self.t.voctoweb_thump_path, os.path.basename(file))
+            target = os.path.join(self.t.voctoweb_thumb_path, os.path.basename(file))
             try:
                 logging.debug("Uploading " + file + " to " + target)
                 self.sftp.put(file, target)

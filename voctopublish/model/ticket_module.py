@@ -279,7 +279,7 @@ class PublishingTicket(Ticket):
             self.voctoweb_filename_base = self.fahrplan_id + "-" + self.guid
 
             self.mime_type = self._validate_("Publishing.Voctoweb.MimeType")
-            self.voctoweb_thump_path = self._validate_("Publishing.Voctoweb.Thumbpath")
+            self.voctoweb_thumb_path = self._validate_("Publishing.Voctoweb.Thumbpath")
             self.voctoweb_path = self._validate_("Publishing.Voctoweb.Path")
             self.voctoweb_slug = self._validate_("Publishing.Voctoweb.Slug")
             self.voctoweb_tags = [
