@@ -42,7 +42,7 @@ from tools.thumbnails import ThumbnailGenerator
 
 MY_PATH = os.path.abspath(os.path.dirname(__file__))
 POSSIBLE_CONFIG_PATHS = [
-    os.getenv("VOCTOPUBLISH_CONFIG"),
+    os.getenv("VOCTOPUBLISH_CONFIG", ""),
     os.path.expanduser("~/voctopublish.conf"),
     os.path.join(MY_PATH, "voctopublish.conf"),
     os.path.join(MY_PATH, "client.conf"),
@@ -61,7 +61,7 @@ class Worker:
         self.thumbs = None
 
         for path in POSSIBLE_CONFIG_PATHS:
-            if path is not None:
+            if path:
                 if os.path.isfile(path):
                     my_config_path = path
                     break
