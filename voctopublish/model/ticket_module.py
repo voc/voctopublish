@@ -117,7 +117,9 @@ class PublishingTicket(Ticket):
         super().__init__(ticket, ticket_id)
 
         # recording ticket properties
-        self.language = self._validate_("Record.Language")
+        self.language = self._validate_("Record.Language", True)
+        if self.language is None:
+            self.language = self._validate("Fahrplan.Language")
         self.languages = {
             int(k.split(".")[-1]): self._validate_(k)
             for k in self._tracker_ticket
