@@ -33,6 +33,7 @@ import api_client.bluesky_client as bluesky
 import api_client.googlechat_client as googlechat
 import api_client.mastodon_client as mastodon
 import api_client.twitter_client as twitter
+import api_client.webhook_client as webhook
 from api_client.rclone_client import RCloneClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
@@ -203,8 +204,9 @@ class Worker:
             else:
                 self._publish_to_youtube()
 
-        logging.debug(f"#rclone {self.ticket.rclone_enabled}")
-        if self.ticket.rclone_enabled:
+        logging.debug(f"#rclone {self.ticket.rclone_enable}")
+        rclone = None
+        if self.ticket.rclone_enable:
             if self.ticket.master or not self.ticket.rclone_only_master:
                 rclone = RCloneClient(self.ticket, self.config)
                 ret = rclone.upload()
@@ -221,6 +223,25 @@ class Worker:
                 logging.debug(
                     "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
                 )
+
+        if self.ticket.webhook_url:
+            if self.ticket.master or not self.ticket.webhook_only_master:
+                result = webhook.send(
+                    self.ticket,
+                    self.config,
+                    getattr(self, 'voctoweb_filename', None),
+                    getattr(self, 'voctoweb_language', ticket.language),
+                    rclone,
+                )
+                if (not isinstance(result, int) or result >= 300) and self.ticket.webhook_fail_on_error:
+                    raise PublisherException(f"POSTing webhook to {self.ticket.webhook_url} failed with http status code {result}")
+                elif isinstance(result, int):
+                    self.c3tt.set_ticket_properties(
+                        self.ticket_id,
+                        {
+                            "Webhook.StatusCode": result,
+                        },
+                    )
 
         self.c3tt.set_ticket_done(self.ticket_id)
 
@@ -360,25 +381,25 @@ class Worker:
         # audio tracks of the master we need to reflect that in the target filename
         if self.ticket.language_index:
             index = int(self.ticket.language_index)
-            filename = (
+            self.voctoweb_filename = (
                 self.ticket.language_template % self.ticket.languages[index]
                 + "_"
                 + self.ticket.profile_slug
                 + "."
                 + self.ticket.profile_extension
             )
-            language = self.ticket.languages[index]
+            self.voctoweb_language = self.ticket.languages[index]
         else:
-            filename = self.ticket.filename
-            language = self.ticket.language
+            self.voctoweb_filename = self.ticket.filename
+            self.voctoweb_language = self.ticket.language
 
-        vw.upload_file(self.ticket.local_filename, filename, self.ticket.folder)
+        vw.upload_file(self.ticket.local_filename, self.voctoweb_filename, self.ticket.folder)
 
         recording_id = vw.create_recording(
             self.ticket.local_filename,
-            filename,
+            self.voctoweb_filename,
             self.ticket.folder,
-            language,
+            self.voctoweb_language,
             hq,
             html5,
         )
