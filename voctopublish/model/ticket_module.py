@@ -338,8 +338,12 @@ class PublishingTicket(Ticket):
         if self.webhook_url:
             self.webhook_user = self._validate_("Publishing.Webhook.User", True)
             self.webhook_pass = self._validate_("Publishing.Webhook.Password", True)
-            self.webhook_only_master = self._validate_("Publishing.Webhook.OnlyMaster", True) == "yes"
-            self.webhook_fail_on_error = self._validate_("Publishing.Webhook.FailOnError", True) == "yes"
+            self.webhook_only_master = (
+                self._validate_("Publishing.Webhook.OnlyMaster", True) == "yes"
+            )
+            self.webhook_fail_on_error = (
+                self._validate_("Publishing.Webhook.FailOnError", True) == "yes"
+            )
 
         # twitter properties
         self.witter_enable = self._get_bool("Publishing.Twitter.Enable", True)

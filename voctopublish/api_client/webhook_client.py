@@ -18,7 +18,6 @@
 import logging
 
 from requests import RequestException, post
-
 from tools.announcements import EmptyAnnouncementMessage, make_message
 
 LOG = logging.getLogger("Webhook")
