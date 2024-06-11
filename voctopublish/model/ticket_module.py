@@ -305,15 +305,27 @@ class PublishingTicket(Ticket):
             self.voctoweb_event_id = self._validate_("Voctoweb.EventId", True)
 
         # rclone properties
-        rclone_enabled = self._validate_("Publishing.Rclone.Enable", True)
-        if rclone_enabled is None:
-            rclone_enabled = "yes" if config["rclone"]["enable_default"] else "no"
-        self.rclone_enabled = rclone_enabled == "yes"
+        rclone_enable = self._validate_("Publishing.Rclone.Enable", True)
+        if rclone_enable is None:
+            rclone_enable = "yes" if config["rclone"]["enable_default"] else "no"
+        self.rclone_enable = rclone_enable == "yes"
 
-        if self.rclone_enabled:
+        if self.rclone_enable:
             self.rclone_destination = self._validate_("Publishing.Rclone.Destination")
             self.rclone_only_master = (
                 self._validate_("Publishing.Rclone.OnlyMaster") == "yes"
+            )
+
+        # generic webhook that gets called on release
+        self.webhook_url = self._validate_("Publishing.Webhook.Url", True)
+        if self.webhook_url:
+            self.webhook_user = self._validate_("Publishing.Webhook.User", True)
+            self.webhook_pass = self._validate_("Publishing.Webhook.Password", True)
+            self.webhook_only_master = (
+                self._validate_("Publishing.Webhook.OnlyMaster", True) == "yes"
+            )
+            self.webhook_fail_on_error = (
+                self._validate_("Publishing.Webhook.FailOnError", True) == "yes"
             )
 
         # twitter properties
