@@ -229,12 +229,16 @@ class Worker:
                 result = webhook.send(
                     self.ticket,
                     self.config,
-                    getattr(self, 'voctoweb_filename', None),
-                    getattr(self, 'voctoweb_language', ticket.language),
+                    getattr(self, "voctoweb_filename", None),
+                    getattr(self, "voctoweb_language", ticket.language),
                     rclone,
                 )
-                if (not isinstance(result, int) or result >= 300) and self.ticket.webhook_fail_on_error:
-                    raise PublisherException(f"POSTing webhook to {self.ticket.webhook_url} failed with http status code {result}")
+                if (
+                    not isinstance(result, int) or result >= 300
+                ) and self.ticket.webhook_fail_on_error:
+                    raise PublisherException(
+                        f"POSTing webhook to {self.ticket.webhook_url} failed with http status code {result}"
+                    )
                 elif isinstance(result, int):
                     self.c3tt.set_ticket_properties(
                         self.ticket_id,
@@ -393,7 +397,9 @@ class Worker:
             self.voctoweb_filename = self.ticket.filename
             self.voctoweb_language = self.ticket.language
 
-        vw.upload_file(self.ticket.local_filename, self.voctoweb_filename, self.ticket.folder)
+        vw.upload_file(
+            self.ticket.local_filename, self.voctoweb_filename, self.ticket.folder
+        )
 
         recording_id = vw.create_recording(
             self.ticket.local_filename,
