@@ -8,7 +8,12 @@ class EmptyAnnouncementMessage(Exception):
     pass
 
 
-def make_message(ticket, max_length=200, override_url_length=None):
+def make_message(ticket, max_length=None, override_url_length=None):
+    if max_length is None:
+        # if max_length is not set, set it to something very big here.
+        # saves us a bunch of isinstance() calls below
+        max_length = 1_000_000
+
     LOG.info(f"generating announcement message with max length of {max_length} chars")
 
     targets = []

@@ -24,11 +24,13 @@ wget = ["wget", "-q", "-O", "--TARGETPATH--", "--", "--DOWNLOADURL--"]
 # otherwise it"s disabled.
 [voctoweb]
 enable_default = false
-# e.g. https://exmaple.com/api/
+# e.g. https://exmaple.com/api/ - with trailing slash
 api_url = "<voctoweb api url>"
 api_key = "<voctoweb key>"
-# url your frontend is reachable on, used to build urls in tweets / toots
+# url your frontend is reachable on, used to build urls in tweets / toots - no trailing slash
 frontend_url = "<voctoweb frontend url>"
+# cdn url, used for webhook notifications - no trailing slash
+cdn_url = "<voctoweb cdn url>"
 # instance name is the name you refer to you"re instead with, its used for the tweets / toots
 instance_name = "<voctoweb instance name>"
 ssh_host = "<host to release files to>"

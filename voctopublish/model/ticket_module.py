@@ -325,13 +325,21 @@ class PublishingTicket(Ticket):
                 self.voctoweb_tags.append(f"Day {self.day}")
 
         # rclone properties
-        self.rclone_enabled = self._get_bool("Publishing.Rclone.Enable", True)
-        if self.rclone_enabled is None:
-            self.rclone_enabled = config["rclone"]["enable_default"]
+        self.rclone_enable = self._get_bool("Publishing.Rclone.Enable", True)
+        if self.rclone_enable is None:
+            self.rclone_enable = config["rclone"]["enable_default"]
 
-        if self.rclone_enabled:
+        if self.rclone_enable:
             self.rclone_destination = self._get_str("Publishing.Rclone.Destination")
             self.rclone_only_master = self._get_bool("Publishing.Rclone.OnlyMaster")
+
+        # generic webhook that gets called on release
+        self.webhook_url = self._validate_("Publishing.Webhook.Url", True)
+        if self.webhook_url:
+            self.webhook_user = self._validate_("Publishing.Webhook.User", True)
+            self.webhook_pass = self._validate_("Publishing.Webhook.Password", True)
+            self.webhook_only_master = self._validate_("Publishing.Webhook.OnlyMaster", True) == "yes"
+            self.webhook_fail_on_error = self._validate_("Publishing.Webhook.FailOnError", True) == "yes"
 
         # twitter properties
         self.witter_enable = self._get_bool("Publishing.Twitter.Enable", True)
