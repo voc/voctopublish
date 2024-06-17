@@ -64,6 +64,7 @@ class YoutubeAPI:
             "ind": "Bahasa Indonesia",
             "ben": "Bengali",
             "ita": "Italian",
+            "swe": "Swedish",
         }
 
         self.translation_strings = {
@@ -81,6 +82,7 @@ class YoutubeAPI:
             "ind": "Terjemahan bahasa Indonesia",
             "ben": "Bengali translation",
             "ita": "Traduzione italiana",
+            'swe': 'Svensk översättning',
         }
 
         self.youtube_urls = []
