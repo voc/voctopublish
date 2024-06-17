@@ -349,9 +349,11 @@ class VoctowebClient:
         logging.info("removing event from " + self.api_url)
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
-        headers = {"CONTENT-TYPE": "application/json"}
+        headers = {
+            "Authorization": f"Token {self.api_key}",
+            "CONTENT-TYPE": "application/json",
+        }
         payload = {
-            "api_key": self.api_key,
             "acronym": self.t.voctoweb_slug,
             "event": {"id": self.t.voctoweb_event_id},
         }
@@ -431,9 +433,11 @@ class VoctowebClient:
                 )
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
-        headers = {"CONTENT-TYPE": "application/json"}
+        headers = {
+            "Authorization": f"Token {self.api_key}",
+            "CONTENT-TYPE": "application/json",
+        }
         payload = {
-            "api_key": self.api_key,
             "acronym": self.t.voctoweb_slug,
             "event": {
                 "guid": self.t.guid,
@@ -558,9 +562,11 @@ class VoctowebClient:
                 "length": str(ret[1]),
             }
 
-        headers = {"CONTENT-TYPE": "application/json"}
+        headers = {
+            "Authorization": f"Token {self.api_key}",
+            "CONTENT-TYPE": "application/json",
+        }
         payload = {
-            "api_key": self.api_key,
             "guid": self.t.guid,
             "acronym": self.t.slug,
             "recording": {
