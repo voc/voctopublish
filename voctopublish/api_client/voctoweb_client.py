@@ -92,12 +92,12 @@ class VoctowebClient:
         logging.info("SSH connection established to " + str(self.ssh_host))
 
         for dir_type, path in {
-            'thumbnail': self.t.voctoweb_thumb_path,
-            'video': self.t.voctoweb_path,
+            "thumbnail": self.t.voctoweb_thumb_path,
+            "video": self.t.voctoweb_path,
         }.items():
             try:
                 self.sftp.stat(path)
-                logging.debug(f'{dir_type} directory {path} already exists')
+                logging.debug(f"{dir_type} directory {path} already exists")
             except IOError as e:
                 if e.errno == errno.ENOENT:
                     try:

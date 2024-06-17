@@ -82,7 +82,7 @@ class YoutubeAPI:
             "ind": "Terjemahan bahasa Indonesia",
             "ben": "Bengali translation",
             "ita": "Traduzione italiana",
-            'swe': 'Svensk översättning',
+            "swe": "Svensk översättning",
         }
 
         self.youtube_urls = []
