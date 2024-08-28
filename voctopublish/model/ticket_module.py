@@ -318,32 +318,28 @@ class PublishingTicket(Ticket):
             self.voctoweb_event_id = self._get_str("Voctoweb.EventId", True)
 
         # rclone properties
-        rclone_enabled = self._get_bool("Publishing.Rclone.Enable", True)
-        if rclone_enabled is None:
-            rclone_enabled = config["rclone"]["enable_default"]
-        self.rclone_enabled = rclone_enabled
+        self.rclone_enabled = self._get_bool("Publishing.Rclone.Enable", True)
+        if self.rclone_enabled is None:
+            self.rclone_enabled = config["rclone"]["enable_default"]
 
         if self.rclone_enabled:
             self.rclone_destination = self._get_str("Publishing.Rclone.Destination")
             self.rclone_only_master = self._get_bool("Publishing.Rclone.OnlyMaster")
 
         # twitter properties
-        twitter_enable = self._get_bool("Publishing.Twitter.Enable", True)
-        if twitter_enable is None:
-            twitter_enable = config["twitter"]["enable_default"]
-        self.twitter_enable = twitter_enable
+        self.witter_enable = self._get_bool("Publishing.Twitter.Enable", True)
+        if self.twitter_enable is None:
+            self.twitter_enable = config["twitter"]["enable_default"]
 
         # mastodon properties
-        mastodon_enable = self._get_bool("Publishing.Mastodon.Enable", True)
-        if mastodon_enable is None:
-            mastodon_enable = config["mastodon"]["enable_default"]
-        self.mastodon_enable = mastodon_enable
+        self.mastodon_enable = self._get_bool("Publishing.Mastodon.Enable", True)
+        if self.mastodon_enable is None:
+            self.mastodon_enable = config["mastodon"]["enable_default"]
 
         # bluesky properties
-        bluesky_enable = self._get_bool("Publishing.Bluesky.Enable", True)
-        if bluesky_enable is None:
-            bluesky_enable = config["bluesky"]["enable_default"]
-        self.bluesky_enable = bluesky_enable
+        self.bluesky_enable = self._get_bool("Publishing.Bluesky.Enable", True)
+        if self.bluesky_enable is None:
+            self.bluesky_enable = config["bluesky"]["enable_default"]
 
         # googlechat properties
         self.googlechat_webhook_url = self._get_str(
