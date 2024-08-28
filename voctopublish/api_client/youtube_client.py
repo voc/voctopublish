@@ -484,7 +484,7 @@ class YoutubeAPI:
 
         # if tags are set - copy them into the metadata dict
         if self.t.youtube_tags:
-            tags.extend(map(str.strip, self.t.youtube_tags.split(",")))
+            tags.extend(self.t.youtube_tags)
 
         if self.t.track:
             tags.append(self.t.track)

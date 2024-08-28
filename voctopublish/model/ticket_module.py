@@ -204,8 +204,13 @@ class PublishingTicket(Ticket):
 
         # general publishing properties
         self.publishing_path = self._get_str("Publishing.Path")
-        self.publishing_tags = self._get_str("Publishing.Tags", True)
         self.thumbnail_file = self._get_str("Publishing.Thumbnail.PathOverride", True)
+
+        publishing_tags = self._get_str("Publishing.Tags", True)
+        if publishing_tags:
+            self.publishing_tags = [x.strip() for x in publishing_tags.split(",") if x]
+        else:
+            self.publishing_tags = []
 
         # youtube properties
         if self._get_bool("Publishing.YouTube.EnableProfile"):
@@ -230,7 +235,6 @@ class PublishingTicket(Ticket):
             self.youtube_privacy = (
                 self._get_str("Publishing.YouTube.Privacy", True) or "private"
             )
-            self.youtube_tags = self._get_str("Publishing.YouTube.Tags", True)
             self.youtube_title_prefix = self._get_str(
                 "Publishing.YouTube.TitlePrefix", True
             )
@@ -272,6 +276,16 @@ class PublishingTicket(Ticket):
             else:
                 self.youtube_playlists = []
 
+            self.youtube_tags = []
+            youtube_tags = self._get_str("Publishing.YouTube.Tags", True)
+            if youtube_tags:
+                self.youtube_tags.extend([
+                    x.strip()
+                    for x in youtube_tags.split(",")
+                    if x
+                ])
+            self.youtube_tags.extend(self.publishing_tags)
+
             if self.youtube_publish_at and self.youtube_privacy != "private":
                 raise TicketException(
                     "Cannot use Publishing.YouTube.PublishAt when privacy is not 'private'!"
@@ -299,6 +313,8 @@ class PublishingTicket(Ticket):
             self.voctoweb_thumb_path = self._get_str("Publishing.Voctoweb.Thumbpath")
             self.voctoweb_path = self._get_str("Publishing.Voctoweb.Path")
             self.voctoweb_slug = self._get_str("Publishing.Voctoweb.Slug")
+            self.recording_id = self._get_str("Voctoweb.RecordingId.Master", True)
+            self.voctoweb_event_id = self._get_str("Voctoweb.EventId", True)
             self.voctoweb_tags = [
                 self.acronym,
                 self.fahrplan_id,
@@ -306,18 +322,14 @@ class PublishingTicket(Ticket):
             ]
             if self.track:
                 self.voctoweb_tags.append(self.track)
-            if "Publishing.Voctoweb.Tags" in ticket:
-                self.voctoweb_tags += (
-                    self._get_str("Publishing.Voctoweb.Tags", True)
-                    .replace(" ", "")
-                    .split(",")
-                )
-            if "Publishing.Tags" in ticket:
-                self.voctoweb_tags += (
-                    self._get_str("Publishing.Tags", True).replace(" ", "").split(",")
-                )
-            self.recording_id = self._get_str("Voctoweb.RecordingId.Master", True)
-            self.voctoweb_event_id = self._get_str("Voctoweb.EventId", True)
+            voctoweb_tags = self._get_str("Publishing.Voctoweb.Tags", True)
+            if voctoweb_tags:
+                self.voctoweb_tags.extend([
+                    x.strip().replace(" ", "")
+                    for x in voctoweb_tags.split(",")
+                    if x
+                ])
+            self.voctoweb_tags.extend(self.publishing_tags)
 
         # rclone properties
         self.rclone_enabled = self._get_bool("Publishing.Rclone.Enable", True)
