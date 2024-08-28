@@ -57,6 +57,12 @@ class Ticket:
                 raise TicketException(key + " is missing or empty in ticket")
         return value
 
+    def _get_bool(self, key, optional=False):
+        value = self._validate_(key, optional)
+        if value is not None and value.lower() == "yes":
+            return True
+        return False
+
     @staticmethod
     def _get_language_from_string_(lang):
         # https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
@@ -96,7 +102,7 @@ class RecordingTicket(Ticket):
         # recording ticket properties
         self.download_url = self._validate_("Fahrplan.VideoDownloadURL")
         self.fuse_path = join(fuse_path, self._validate_("Project.Slug"))
-        self.redownload_enabled = self._validate_("Record.Redownload", True) == "yes"
+        self.redownload_enabled = self._get_bool("Record.Redownload", True)
 
         download_tool = self._validate_("Record.DownloadHelper", True)
         if download_tool is None:
@@ -135,7 +141,7 @@ class PublishingTicket(Ticket):
         self.language_template = self._validate_("Encoding.LanguageTemplate")
 
         # encoding profile properties
-        if self._validate_("EncodingProfile.IsMaster") == "yes":
+        if self._get_bool("EncodingProfile.IsMaster"):
             self.master = True
         else:
             self.master = False
@@ -200,14 +206,14 @@ class PublishingTicket(Ticket):
         self.thumbnail_file = self._validate_("Publishing.Thumbnail.PathOverride", True)
 
         # youtube properties
-        if self._validate_("Publishing.YouTube.EnableProfile") == "yes":
+        if self._get_bool("Publishing.YouTube.EnableProfile"):
             profile_youtube = True
         else:
             profile_youtube = False
-        youtube = self._validate_("Publishing.YouTube.Enable", True)
+        youtube = self._get_bool("Publishing.YouTube.Enable", True)
         if youtube is None:
             youtube = config["youtube"]["enable_default"]
-        if youtube == "yes":
+        if youtube:
             self.youtube_enable = profile_youtube
         else:
             self.youtube_enable = False
@@ -270,14 +276,14 @@ class PublishingTicket(Ticket):
                 )
 
         # voctoweb properties
-        if self._validate_("Publishing.Voctoweb.EnableProfile") == "yes":
+        if self._get_bool("Publishing.Voctoweb.EnableProfile"):
             profile_voctoweb = True
         else:
             profile_voctoweb = False
-        voctoweb = self._validate_("Publishing.Voctoweb.Enable", True)
+        voctoweb = self._get_bool("Publishing.Voctoweb.Enable", True)
         if voctoweb is None:
             voctoweb = config["voctoweb"]["enable_default"]
-        if voctoweb == "yes":
+        if voctoweb:
             self.voctoweb_enable = profile_voctoweb
         else:
             self.voctoweb_enable = False
@@ -312,31 +318,29 @@ class PublishingTicket(Ticket):
             self.voctoweb_event_id = self._validate_("Voctoweb.EventId", True)
 
         # rclone properties
-        rclone_enabled = self._validate_("Publishing.Rclone.Enable", True)
+        rclone_enabled = self._get_bool("Publishing.Rclone.Enable", True)
         if rclone_enabled is None:
-            rclone_enabled = "yes" if config["rclone"]["enable_default"] else "no"
-        self.rclone_enabled = rclone_enabled == "yes"
+            rclone_enabled = config["rclone"]["enable_default"]
+        self.rclone_enabled = rclone_enabled
 
         if self.rclone_enabled:
             self.rclone_destination = self._validate_("Publishing.Rclone.Destination")
-            self.rclone_only_master = (
-                self._validate_("Publishing.Rclone.OnlyMaster") == "yes"
-            )
+            self.rclone_only_master = self._get_bool("Publishing.Rclone.OnlyMaster")
 
         # twitter properties
-        twitter_enable = self._validate_("Publishing.Twitter.Enable", True) == "yes"
+        twitter_enable = self._get_bool("Publishing.Twitter.Enable", True)
         if twitter_enable is None:
             twitter_enable = config["twitter"]["enable_default"]
         self.twitter_enable = twitter_enable
 
         # mastodon properties
-        mastodon_enable = self._validate_("Publishing.Mastodon.Enable", True) == "yes"
+        mastodon_enable = self._get_bool("Publishing.Mastodon.Enable", True)
         if mastodon_enable is None:
             mastodon_enable = config["mastodon"]["enable_default"]
         self.mastodon_enable = mastodon_enable
 
         # bluesky properties
-        bluesky_enable = self._validate_("Publishing.Bluesky.Enable", True) == "yes"
+        bluesky_enable = self._get_bool("Publishing.Bluesky.Enable", True)
         if bluesky_enable is None:
             bluesky_enable = config["bluesky"]["enable_default"]
         self.bluesky_enable = bluesky_enable
