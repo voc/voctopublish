@@ -72,7 +72,7 @@ class Ticket:
         value = self._get_str(key, optional)
         if value is None:
             return None
-        if value.lower() == "yes":
+        if value.lower() in ("yes", "1"):
             return True
         return False
 
