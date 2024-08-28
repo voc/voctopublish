@@ -486,18 +486,6 @@ class YoutubeAPI:
         if self.t.youtube_tags:
             tags.extend(self.t.youtube_tags)
 
-        if self.t.track:
-            tags.append(self.t.track)
-
-        if self.t.day:
-            tags.append("Day %s" % self.t.day)
-
-        if self.t.room:
-            tags.append(self.t.room)
-
-        if self.t.date:
-            tags.append(str(self.t.date).split("-")[0])
-
         if lang:
             if lang in self.lang_map.keys():
                 if self.t.languages[0] == lang:
@@ -518,7 +506,6 @@ class YoutubeAPI:
             tags.append(self.t.acronym + " " + self.t.languages[0])
 
         tags.extend(self.t.people)
-        tags.append(self.t.acronym)
 
         logging.debug("YouTube Tags: " + str(tags))
 

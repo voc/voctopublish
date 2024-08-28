@@ -206,7 +206,13 @@ class PublishingTicket(Ticket):
         self.publishing_path = self._get_str("Publishing.Path")
         self.thumbnail_file = self._get_str("Publishing.Thumbnail.PathOverride", True)
 
-        self.publishing_tags = self._get_list("Publishing.Tags", True)
+        self.publishing_tags = [
+            self.acronym,
+            self.track,
+            self.room,
+            self.date.split("-")[0],
+            *self._get_list("Publishing.Tags", True),
+        ]
 
         # youtube properties
         if self._get_bool("Publishing.YouTube.EnableProfile"):
@@ -269,8 +275,12 @@ class PublishingTicket(Ticket):
                 "Publishing.YouTube.Playlists", True
             )
 
-            self.youtube_tags = self._get_list("Publishing.YouTube.Tags", True)
-            self.youtube_tags.extend(self.publishing_tags)
+            self.youtube_tags = [
+                *self._get_list("Publishing.YouTube.Tags", True),
+                *self.publishing_tags,
+            ]
+            if self.day:
+                self.youtube_tags.append(f"Day {self.day}")
 
             if self.youtube_publish_at and self.youtube_privacy != "private":
                 raise TicketException(
@@ -302,14 +312,12 @@ class PublishingTicket(Ticket):
             self.recording_id = self._get_str("Voctoweb.RecordingId.Master", True)
             self.voctoweb_event_id = self._get_str("Voctoweb.EventId", True)
             self.voctoweb_tags = [
-                self.acronym,
                 self.fahrplan_id,
-                self.date.split("-")[0],
+                *self._get_list("Publishing.Voctoweb.Tags", True),
+                *self.publishing_tags,
             ]
-            if self.track:
-                self.voctoweb_tags.append(self.track)
-            self.voctoweb_tags.extend(self._get_list("Publishing.Voctoweb.Tags", True))
-            self.voctoweb_tags.extend(self.publishing_tags)
+            if self.day:
+                self.voctoweb_tags.append(f"Day {self.day}")
 
         # rclone properties
         self.rclone_enabled = self._get_bool("Publishing.Rclone.Enable", True)
