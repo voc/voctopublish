@@ -243,10 +243,10 @@ class PublishingTicket(Ticket):
             self.youtube_translation_title_prefix = self._get_str(
                 "Publishing.YouTube.TranslationTitlePrefix", True
             )
-            self.youtube_title_prefix_speakers = self._get_str(
+            self.youtube_title_prefix_speakers = self._get_bool(
                 "Publishing.YouTube.TitlePrefixSpeakers", True
             )
-            self.youtube_title_append_speakers = self._get_str(
+            self.youtube_title_append_speakers = self._get_bool(
                 "Publishing.YouTube.TitleAppendSpeakers", True
             )
             self.youtube_title_suffix = self._get_str(
