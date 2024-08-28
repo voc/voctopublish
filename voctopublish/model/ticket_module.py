@@ -59,7 +59,9 @@ class Ticket:
 
     def _get_bool(self, key, optional=False):
         value = self._get_str(key, optional)
-        if value is not None and value.lower() == "yes":
+        if value is None:
+            return None
+        if value.lower() == "yes":
             return True
         return False
 
