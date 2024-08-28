@@ -38,10 +38,17 @@ class Ticket:
         # general publishing properties
         self.publishing_path = ticket["Publishing.Path"]
 
+    def __get_property(self, key):
+        key = key.lower()
+        for k, v in self._tracker_ticket.items():
+            if k.lower() == key:
+                return v
+        return None
+
     def _validate_(self, key, optional=False):
-        value = None
-        if key in self._tracker_ticket and self._tracker_ticket[key]:
-            value = str(self._tracker_ticket[key]).strip()
+        value = self.__get_property(key)
+        if value is not None:
+            value = str(value).strip()
         else:
             if optional:
                 logging.warning("optional property was not in ticket: " + key)
