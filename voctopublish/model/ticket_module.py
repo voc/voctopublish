@@ -57,6 +57,17 @@ class Ticket:
                 raise TicketException(key + " is missing or empty in ticket")
         return value
 
+    def _get_list(self, key, optional=False, split_by=","):
+        value = self._get_str(key, optional)
+        if value is None:
+            return []
+        result = []
+        for v in value.split(split_by):
+            v = v.strip()
+            if v:
+                result.append(v)
+        return result
+
     def _get_bool(self, key, optional=False):
         value = self._get_str(key, optional)
         if value is None:
@@ -167,12 +178,8 @@ class PublishingTicket(Ticket):
             self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
         )
         self.room = self._get_str("Fahrplan.Room")
-        self.people = []
-        if "Fahrplan.Person_list" in ticket:
-            self.people = self._get_str("Fahrplan.Person_list").split(", ")
-        self.links = []
-        if "Fahrplan.Links" in ticket:
-            self.links = self._get_str("Fahrplan.Links", True).split(" ")
+        self.people = self._get_list("Fahrplan.Person_list")
+        self.links = self._get_list("Fahrplan.Links", optional=True, split_by=" ")
         # the following are arguments that my not be present in every fahrplan
         self.track = self._get_str("Fahrplan.Track", True)
         self.day = self._get_str("Fahrplan.Day", True)
@@ -191,26 +198,15 @@ class PublishingTicket(Ticket):
         if "Encoding.Language" in ticket:
             self.language = self._get_str("Encoding.Language")
             self.languages = dict(
-                enumerate(self._get_str("Encoding.Language").split("-"))
+                enumerate(self._get_list("Encoding.Language", split_by="-"))
             )
-        else:
-            self.language = self._get_str("Record.Language")
-            self.languages = {
-                int(k.split(".")[-1]): self._get_str(k)
-                for k in self._tracker_ticket
-                if k.startswith("Record.Language.")
-            }
         self.language_template = self._get_str("Encoding.LanguageTemplate")
 
         # general publishing properties
         self.publishing_path = self._get_str("Publishing.Path")
         self.thumbnail_file = self._get_str("Publishing.Thumbnail.PathOverride", True)
 
-        publishing_tags = self._get_str("Publishing.Tags", True)
-        if publishing_tags:
-            self.publishing_tags = [x.strip() for x in publishing_tags.split(",") if x]
-        else:
-            self.publishing_tags = []
+        self.publishing_tags = self._get_list("Publishing.Tags", True)
 
         # youtube properties
         if self._get_bool("Publishing.YouTube.EnableProfile"):
@@ -269,21 +265,11 @@ class PublishingTicket(Ticket):
                         self.youtube_urls[key] = self._get_str(key)
             else:
                 self.has_youtube_url = False
-            if self._get_str("Publishing.YouTube.Playlists", True) is not None:
-                self.youtube_playlists = self._get_str(
-                    "Publishing.YouTube.Playlists", True
-                ).split(",")
-            else:
-                self.youtube_playlists = []
+            self.youtube_playlists = self._get_list(
+                "Publishing.YouTube.Playlists", True
+            )
 
-            self.youtube_tags = []
-            youtube_tags = self._get_str("Publishing.YouTube.Tags", True)
-            if youtube_tags:
-                self.youtube_tags.extend([
-                    x.strip()
-                    for x in youtube_tags.split(",")
-                    if x
-                ])
+            self.youtube_tags = self._get_list("Publishing.YouTube.Tags", True)
             self.youtube_tags.extend(self.publishing_tags)
 
             if self.youtube_publish_at and self.youtube_privacy != "private":
@@ -322,13 +308,7 @@ class PublishingTicket(Ticket):
             ]
             if self.track:
                 self.voctoweb_tags.append(self.track)
-            voctoweb_tags = self._get_str("Publishing.Voctoweb.Tags", True)
-            if voctoweb_tags:
-                self.voctoweb_tags.extend([
-                    x.strip().replace(" ", "")
-                    for x in voctoweb_tags.split(",")
-                    if x
-                ])
+            self.voctoweb_tags.extend(self._get_list("Publishing.Voctoweb.Tags", True))
             self.voctoweb_tags.extend(self.publishing_tags)
 
         # rclone properties
