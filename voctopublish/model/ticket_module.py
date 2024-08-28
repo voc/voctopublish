@@ -258,19 +258,16 @@ class PublishingTicket(Ticket):
             self.youtube_publish_at = self._get_str(
                 "Publishing.YouTube.PublishAt", True
             )
+
             self.youtube_urls = {}
             # check if this event has already been published to youtube
-            if (
-                "YouTube.Url0" in self._tracker_ticket
-                and self._get_str("YouTube.Url0") is not None
-            ):
-                self.has_youtube_url = True
-
-                for key in ticket:
-                    if key.startswith("YouTube."):
-                        self.youtube_urls[key] = self._get_str(key)
+            for key in ticket:
+                if key.lower().startswith('youtube.'):
+                    self.has_youtube_url = True
+                    self.youtube_urls[key] = self._get_str(key)
             else:
                 self.has_youtube_url = False
+
             self.youtube_playlists = self._get_list(
                 "Publishing.YouTube.Playlists", True
             )
