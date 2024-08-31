@@ -204,7 +204,14 @@ class PublishingTicket(Ticket):
         self.language_template = self._get_str("Encoding.LanguageTemplate")
 
         # general publishing properties
-        self.publishing_path = self._get_str("Publishing.Path")
+        self.publishing_path = self._get_str("Publishing.Path", True)
+        if not self.publishing_path:
+            self.publishing_path = join(
+                self._get_str("Processing.BasePath"),
+                "fuse",
+                self._get_str("Project.Slug"),
+            )
+
         self.thumbnail_file = self._get_str("Publishing.Thumbnail.PathOverride", True)
 
         self.publishing_tags = [
