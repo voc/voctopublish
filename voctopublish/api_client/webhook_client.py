@@ -68,17 +68,22 @@ def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
         content = _get_json(ticket, config, voctoweb_filename, language, rclone)
         LOG.debug(f"{content=}")
 
+        kwargs = {
+            'json': content,
+        }
+
         if ticket.webhook_user and ticket.webhook_pass:
-            r = post(
-                ticket.webhook_url,
-                auth=(ticket.webhook_user, ticket.webhook_pass),
-                json=content,
-            )
-        else:
-            r = post(
-                ticket.webhook_url,
-                json=content,
-            )
+            # have username and password, assume basic auth
+            kwargs['auth'] = (ticket.webhook_user, ticket.webhook_pass)
+        elif ticket.webhook_pass:
+            # have only password, assume Authorization header
+            kwargs['headers'] = {
+                'Authorization': ticket.webhook_pass,
+            }
+        r = post(
+            ticket.webhook_url,
+            **kwargs
+        )
         result = r.status_code
     except RequestException as e:
         pass
