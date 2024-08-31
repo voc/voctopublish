@@ -1,4 +1,5 @@
 import logging
+from re import sub
 
 LOG = logging.getLogger("announcements")
 
@@ -42,6 +43,9 @@ def make_message(ticket, config, max_length=None, override_url_length=None):
     message = title + msg
 
     for tag in ticket.publishing_tags:
+        tag = sub(r"[^A-Za-z0-9]+", "", tag)
+        if tag.isdigit():
+            continue
         if len(message) < (max_length - 2 - len(tag)):
             message += " #" + tag
 
