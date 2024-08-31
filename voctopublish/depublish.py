@@ -25,7 +25,22 @@ import traceback
 from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
-from model.ticket_module import Ticket
+from c3tt_rpc_client import C3TTClient
+from model.ticket_module import PublishingTicket, Ticket
+
+try:
+    # python 3.11
+    from tomllib import loads as toml_load
+except ImportError:
+    from rtoml import load as toml_load
+
+MY_PATH = os.path.abspath(os.path.dirname(__file__))
+POSSIBLE_CONFIG_PATHS = [
+    os.getenv("VOCTOPUBLISH_CONFIG", ""),
+    os.path.expanduser("~/voctopublish.conf"),
+    os.path.join(MY_PATH, "voctopublish.conf"),
+    os.path.join(MY_PATH, "client.conf"),
+]
 
 
 class Depublisher:
@@ -35,12 +50,18 @@ class Depublisher:
     """
 
     def __init__(self):
-        # load config
-        if not os.path.exists("client.conf"):
-            raise IOError("Error: config file not found")
+        for path in POSSIBLE_CONFIG_PATHS:
+            if path:
+                if os.path.isfile(path):
+                    my_config_path = path
+                    break
+        else:
+            raise FileNotFoundError(
+                f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
+            )
 
-        self.config = configparser.ConfigParser()
-        self.config.read("client.conf")
+        with open(my_config_path) as f:
+            self.config = toml_load(f.read())
 
         # set up logging
         logging.addLevelName(
@@ -86,7 +107,7 @@ class Depublisher:
         else:
             self.host = self.config["C3Tracker"]["host"]
 
-        self.ticket_type = self.config["C3Tracker"]["ticket_type"]
+        self.ticket_type = "recording"
         self.to_state = "removing"
 
         # instance variables we need later
@@ -197,18 +218,19 @@ class Depublisher:
         """
         logging.info("requesting ticket from tracker")
         t = None
-        ticket_id = self.c3tt.assign_next_unassigned_for_state(
+        ticket_meta = self.c3tt.assign_next_unassigned_for_state(
             self.ticket_type, self.to_state, {"EncodingProfile.IsMaster": "yes"}
         )
-        if ticket_id:
+        if ticket_meta:
+            ticket_id = ticket_meta["id"]
             logging.info("Ticket ID:" + str(ticket_id))
             try:
                 tracker_ticket = self.c3tt.get_ticket_properties(ticket_id)
-                logging.debug("Ticket: " + str(tracker_ticket))
+                logging.debug("Ticket Properties: " + str(tracker_ticket))
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
-            t = Ticket(tracker_ticket, ticket_id)
+            t = PublishingTicket(tracker_ticket, ticket_id, self.config)
         else:
             logging.info(
                 "No ticket of type " + self.ticket_type + " for state " + self.to_state
