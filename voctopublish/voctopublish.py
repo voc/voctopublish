@@ -592,7 +592,8 @@ class Worker:
         # set recording language TODO multilang
         try:
             self.c3tt.set_ticket_properties(
-                self.ticket_id, {
+                self.ticket_id,
+                {
                     "Record.Language": self.ticket.language,
                     "Record.Room": self.ticket.fuse_room,
                 },
