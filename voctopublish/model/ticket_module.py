@@ -16,6 +16,7 @@
 
 import logging
 from os.path import join
+from re import sub as re_sub
 
 
 class Ticket:
@@ -127,7 +128,7 @@ class RecordingTicket(Ticket):
         self.download_command = config["download"]["workers"][download_tool]
 
         # fahrplan properties
-        self.room = self._get_str("Fahrplan.Room")
+        self.fuse_room = re_sub('[^a-z0-9-_]+', '_', self._get_str("Fahrplan.Room").lower())
         self.fahrplan_id = self._get_str("Fahrplan.ID")
         self.language = self._get_language_from_string_(
             self._get_str("Fahrplan.Language")

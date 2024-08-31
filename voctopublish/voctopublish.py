@@ -525,7 +525,7 @@ class Worker:
         # we name our input video file uncut ts so tracker will find it. This is not the nicest way to go
         # TODO find a better integration in to the pipeline
         path = os.path.join(
-            self.ticket.fuse_path, self.ticket.room, self.ticket.fahrplan_id
+            self.ticket.fuse_path, self.ticket.fuse_room, self.ticket.fahrplan_id
         )
         file = os.path.join(path, "uncut.ts")
         logging.info(
@@ -565,7 +565,10 @@ class Worker:
         # set recording language TODO multilang
         try:
             self.c3tt.set_ticket_properties(
-                self.ticket_id, {"Record.Language": self.ticket.language}
+                self.ticket_id, {
+                    "Record.Language": self.ticket.language,
+                    "Record.Room": self.ticket.fuse_room,
+                },
             )
         except AttributeError as err_:
             self.c3tt.set_ticket_failed(
