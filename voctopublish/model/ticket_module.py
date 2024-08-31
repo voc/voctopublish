@@ -348,7 +348,7 @@ class PublishingTicket(Ticket):
             )
 
         # twitter properties
-        self.witter_enable = self._get_bool("Publishing.Twitter.Enable", True)
+        self.twitter_enable = self._get_bool("Publishing.Twitter.Enable", True)
         if self.twitter_enable is None:
             self.twitter_enable = config["twitter"]["enable_default"]
 
