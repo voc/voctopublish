@@ -8,7 +8,7 @@ class EmptyAnnouncementMessage(Exception):
     pass
 
 
-def make_message(ticket, max_length=None, override_url_length=None):
+def make_message(ticket, config, max_length=None, override_url_length=None):
     if max_length is None:
         # if max_length is not set, set it to something very big here.
         # saves us a bunch of isinstance() calls below

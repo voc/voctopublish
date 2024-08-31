@@ -96,7 +96,7 @@ def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
 
 def _get_json(ticket, config, voctoweb_filename, language, rclone):
     try:
-        message = make_message(ticket)
+        message = make_message(ticket, config)
     except EmptyAnnouncementMessage:
         message = None
 

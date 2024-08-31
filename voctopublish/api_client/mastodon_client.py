@@ -27,7 +27,7 @@ def send_toot(ticket, config):
     LOG.info("toot the release")
 
     try:
-        message = make_message(ticket, 500)
+        message = make_message(ticket, config, 500)
     except EmptyAnnouncementMessage:
         return
 

@@ -29,7 +29,7 @@ def send_post(ticket, config):
     LOG.info("post the release to bluesky")
 
     try:
-        message = make_message(ticket, 280, 24)
+        message = make_message(ticket, config, 280, 24)
     except EmptyAnnouncementMessage:
         return
 

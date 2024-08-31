@@ -26,7 +26,7 @@ def send_tweet(ticket, config):
     LOG.info("tweeting the release")
 
     try:
-        message = make_message(ticket, 280, 24)
+        message = make_message(ticket, config, 280, 24)
     except EmptyAnnouncementMessage:
         return
 
