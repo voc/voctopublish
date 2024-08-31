@@ -102,10 +102,9 @@ class Depublisher:
         elif level == "debug":
             self.logger.setLevel(logging.DEBUG)
 
-        if self.config["C3Tracker"]["host"] == "None":
+        self.host = self.config["C3Tracker"].get("host", "").strip()
+        if not self.host:
             self.host = socket.getfqdn()
-        else:
-            self.host = self.config["C3Tracker"]["host"]
 
         self.ticket_type = "recording"
         self.to_state = "removing"
@@ -218,6 +217,7 @@ class Depublisher:
         """
         logging.info("requesting ticket from tracker")
         t = None
+        ticket_id = None
         ticket_meta = self.c3tt.assign_next_unassigned_for_state(
             self.ticket_type, self.to_state, {"EncodingProfile.IsMaster": "yes"}
         )
