@@ -26,7 +26,7 @@ LOG = logging.getLogger("Webhook")
     Webhook gets POSTed to the specified url, format is JSON:
 
     {
-        "announcement": "announcement message like it gets posted to social media", # or null
+        "announcement": "announcement message like it gets posted to social media", # or null if no message was generated
         "is_master": true,
         "fahrplan": {
             "conference": "democon",
