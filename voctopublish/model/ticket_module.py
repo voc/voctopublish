@@ -128,7 +128,9 @@ class RecordingTicket(Ticket):
         self.download_command = config["download"]["workers"][download_tool]
 
         # fahrplan properties
-        self.fuse_room = re_sub('[^a-z0-9-_]+', '_', self._get_str("Fahrplan.Room").lower())
+        self.fuse_room = re_sub(
+            "[^a-z0-9-_]+", "_", self._get_str("Fahrplan.Room").lower()
+        )
         self.fahrplan_id = self._get_str("Fahrplan.ID")
         self.language = self._get_language_from_string_(
             self._get_str("Fahrplan.Language")
@@ -270,7 +272,7 @@ class PublishingTicket(Ticket):
             self.youtube_urls = {}
             # check if this event has already been published to youtube
             for key in ticket:
-                if key.lower().startswith('youtube.'):
+                if key.lower().startswith("youtube."):
                     self.has_youtube_url = True
                     self.youtube_urls[key] = self._get_str(key)
             else:
@@ -334,15 +336,15 @@ class PublishingTicket(Ticket):
             self.rclone_only_master = self._get_bool("Publishing.Rclone.OnlyMaster")
 
         # generic webhook that gets called on release
-        self.webhook_url = self._validate_("Publishing.Webhook.Url", True)
+        self.webhook_url = self._get_str("Publishing.Webhook.Url", True)
         if self.webhook_url:
-            self.webhook_user = self._validate_("Publishing.Webhook.User", True)
-            self.webhook_pass = self._validate_("Publishing.Webhook.Password", True)
-            self.webhook_only_master = (
-                self._validate_("Publishing.Webhook.OnlyMaster", True) == "yes"
+            self.webhook_user = self._get_str("Publishing.Webhook.User", True)
+            self.webhook_pass = self._get_str("Publishing.Webhook.Password", True)
+            self.webhook_only_master = self._get_bool(
+                "Publishing.Webhook.OnlyMaster", True
             )
-            self.webhook_fail_on_error = (
-                self._validate_("Publishing.Webhook.FailOnError", True) == "yes"
+            self.webhook_fail_on_error = self._get_bool(
+                "Publishing.Webhook.FailOnError", True
             )
 
         # twitter properties
