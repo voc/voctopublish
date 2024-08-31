@@ -20,6 +20,7 @@ import logging
 import os
 import socket
 import subprocess
+import sys
 import traceback
 
 from api_client.voctoweb_client import VoctowebClient
