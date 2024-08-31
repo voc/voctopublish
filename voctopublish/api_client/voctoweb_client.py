@@ -161,7 +161,7 @@ class VoctowebClient:
             "_voctoweb.jpg": ".jpg",
             "_voctoweb_preview.jpg": "_preview.jpg",
         }
-        for ext_local, ext_vw in thumbs_ext.items():
+        for ext_local, ext_vw in thumbs.items():
             file = os.path.join(self.t.publishing_path, self.t.fahrplan_id + ext_local)
             if not os.path.isfile(file):
                 raise VoctowebException(
