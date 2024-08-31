@@ -22,7 +22,6 @@ import socket
 import subprocess
 import traceback
 
-from api_client.c3tt_rpc_client import C3TTClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from c3tt_rpc_client import C3TTClient
