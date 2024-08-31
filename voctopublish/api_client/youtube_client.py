@@ -440,7 +440,7 @@ class YoutubeAPI:
         if title_suffix:
             title_suffix = self._replace_language_placeholders(title_suffix, language)
             title = title + " " + title_suffix
-            logging.debug("adding " + str(title_suffix) + " as title suffix")
+            logging.debug(f"adding '{title_suffix}' as title suffix, new title: {title}")
 
         if (
             lang
@@ -450,7 +450,9 @@ class YoutubeAPI:
             title += self._replace_language_placeholders(" - ${translation}", lang)
 
         # YouTube does not allow <> in titles – even not as &gt;&lt;
-        return title.replace("<", "(").replace(">", ")")
+        title = title.replace("<", "(").replace(">", ")")
+        logging.debug(f"final title: {title}")
+        return title
 
     def _replace_language_placeholders(self, string, lang):
         """
