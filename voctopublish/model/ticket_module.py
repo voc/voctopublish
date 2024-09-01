@@ -210,7 +210,7 @@ class PublishingTicket(Ticket):
         if not self.publishing_path:
             self.publishing_path = join(
                 self._get_str("Processing.BasePath"),
-                "fuse",
+                "encoded",
                 self._get_str("Project.Slug"),
             )
 
