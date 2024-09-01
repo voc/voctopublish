@@ -38,7 +38,8 @@ LOG = logging.getLogger("Webhook")
             "title": "my super cool talk",
         },
         "voctoweb": {
-            "cdn_url": "https://cdn.example.com/my-video.mp4",
+            "cdn_path": "/cdn.example.com/my-video.mp4",
+            "thumb_path": "/static.example.com/my-video.jpg",
             "enabled": true,
             "format": "h264-hd",
             "frontend_url": "https://example.com/my-video",
