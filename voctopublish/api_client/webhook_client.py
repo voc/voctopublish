@@ -16,8 +16,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from os.path import join
 
 from requests import RequestException, post
+
 from tools.announcements import EmptyAnnouncementMessage, make_message
 
 LOG = logging.getLogger("Webhook")
@@ -69,21 +71,18 @@ def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
         LOG.debug(f"{content=}")
 
         kwargs = {
-            'json': content,
+            "json": content,
         }
 
         if ticket.webhook_user and ticket.webhook_pass:
             # have username and password, assume basic auth
-            kwargs['auth'] = (ticket.webhook_user, ticket.webhook_pass)
+            kwargs["auth"] = (ticket.webhook_user, ticket.webhook_pass)
         elif ticket.webhook_pass:
             # have only password, assume Authorization header
-            kwargs['headers'] = {
-                'Authorization': ticket.webhook_pass,
+            kwargs["headers"] = {
+                "Authorization": ticket.webhook_pass,
             }
-        r = post(
-            ticket.webhook_url,
-            **kwargs
-        )
+        r = post(ticket.webhook_url, **kwargs)
         result = r.status_code
     except RequestException as e:
         pass
@@ -114,11 +113,14 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
 
     if ticket.voctoweb_enable:
         content["voctoweb"] = {
-            "cdn_url": "{}/{}/{}/{}".format(
-                config["voctoweb"]["cdn_url"],
+            "cdn_path": join(
                 ticket.voctoweb_path,
                 ticket.folder,
                 voctoweb_filename,
+            ),
+            "thumb_path": join(
+                ticket.voctoweb_thumb_path,
+                ticket.voctoweb_filename_base + ".jpg",
             ),
             "enabled": True,
             "format": self.folder,
