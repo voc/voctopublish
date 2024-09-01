@@ -43,6 +43,8 @@ def make_message(ticket, config, max_length=None, override_url_length=None):
     message = title + msg
 
     for tag in ticket.publishing_tags:
+        if tag is None:
+            continue
         tag = sub(r"[^A-Za-z0-9]+", "", str(tag))
         if tag.isdigit():
             continue
