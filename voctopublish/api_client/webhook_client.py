@@ -121,7 +121,7 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
             ),
             "thumb_path": join(
                 ticket.voctoweb_thumb_path,
-                ticket.voctoweb_filename_base + ".jpg",
+                ticket.voctoweb_filename_base + "_preview.jpg",
             ),
             "enabled": True,
             "format": self.folder,
