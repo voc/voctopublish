@@ -15,8 +15,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import re
 from os.path import join
-from re import sub as re_sub
 
 
 class Ticket:
@@ -128,7 +128,7 @@ class RecordingTicket(Ticket):
         self.download_command = config["download"]["workers"][download_tool]
 
         # fahrplan properties
-        self.fuse_room = re_sub(
+        self.fuse_room = re.sub(
             "[^a-z0-9-_]+", "_", self._get_str("Fahrplan.Room").lower()
         )
         self.fahrplan_id = self._get_str("Fahrplan.ID")
@@ -265,9 +265,6 @@ class PublishingTicket(Ticket):
             self.youtube_translation_title_suffix = self._get_str(
                 "Publishing.YouTube.TranslationTitleSuffix", True
             )
-            self.youtube_publish_at = self._get_str(
-                "Publishing.YouTube.PublishAt", True
-            )
 
             self.youtube_urls = {}
             # check if this event has already been published to youtube
@@ -289,10 +286,36 @@ class PublishingTicket(Ticket):
             if self.day:
                 self.youtube_tags.append(f"Day {self.day}")
 
-            if self.youtube_publish_at and self.youtube_privacy != "private":
-                raise TicketException(
-                    "Cannot use Publishing.YouTube.PublishAt when privacy is not 'private'!"
-                )
+            youtube_publish_at = self._get_str(
+                "Publishing.YouTube.PublishAt", True
+            )
+            self.youtube_publish_at = None
+            if youtube_publish_at:
+                if self.youtube_privacy != "private":
+                    raise TicketException(
+                        "Cannot use Publishing.YouTube.PublishAt when privacy is not 'private'!"
+                    )
+                try:
+                    self.youtube_publish_at = datetime.strptime(
+                        youtube_publish_at, "%Y-%m-%d %H:%M"
+                    )
+                except ValueError:
+                    result = re.findall(r"(\d+[wdh])", youtube_publish_at)
+                    if not result:
+                        raise TicketException(
+                            "Invalid value for Publishing.YouTube.PublishAt, either use 'YYYY-MM-DD HH:MM' or relative values like '7d 2h' (*w*eeks, *d*ays and *h*ours supported)"
+                        )
+                    else:
+                        kwargs = {}
+                        for k, keyword in {
+                            "w": "weeks",
+                            "d": "days",
+                            "h": "hours",
+                        }:
+                            for v in result:
+                                if v.endswith(k):
+                                    kwargs[keyword] = int(v[:-1])
+                        self.youtube_publish_at = datetime.now(timezone.utc) + timedelta(**kwargs)
 
         # voctoweb properties
         if self._get_bool("Publishing.Voctoweb.EnableProfile"):
