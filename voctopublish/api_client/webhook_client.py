@@ -19,7 +19,6 @@ import logging
 from os.path import join
 
 from requests import RequestException, post
-
 from tools.announcements import EmptyAnnouncementMessage, make_message
 
 LOG = logging.getLogger("Webhook")
@@ -47,6 +46,8 @@ LOG = logging.getLogger("Webhook")
         },
         "youtube": {
             "enabled": true,
+            "privacy": "private", # or "public", "unlisted"
+            "publish_at": "ISO8601 datetime", # or null
             "urls": [
                 "https://example.com/asdf",
                 "https://example.com/uiae",
@@ -137,6 +138,8 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
     if ticket.youtube_enable:
         content["youtube"] = {
             "enabled": True,
+            "privacy": ticket.youtube_privacy,
+            "publish_at": ticket.youtube_publish_at.isoformat() if ticket.youtube_publish_at else None,
             "urls": list(ticket.youtube_urls.values()),
         }
     else:
