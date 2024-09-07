@@ -244,12 +244,10 @@ class PublishingTicket(Ticket):
         ]
 
         # youtube properties
-        if self._get_bool("Publishing.YouTube.EnableProfile"):
-            profile_youtube = True
-        else:
-            profile_youtube = False
-        if self._get_bool("Publishing.YouTube.Enable", optional=True, try_default=True):
-            self.youtube_enable = profile_youtube
+        if self._get_bool(
+            "Publishing.YouTube.Enable", optional=True, try_default=True
+        ) and self._get_bool("Publishing.YouTube.EnableProfile"):
+            self.youtube_enable = True
         else:
             self.youtube_enable = False
 
@@ -338,14 +336,10 @@ class PublishingTicket(Ticket):
                         ) + timedelta(**kwargs)
 
         # voctoweb properties
-        if self._get_bool("Publishing.Voctoweb.EnableProfile"):
-            profile_voctoweb = True
-        else:
-            profile_voctoweb = False
         if self._get_bool(
             "Publishing.Voctoweb.Enable", optional=True, try_default=True
-        ):
-            self.voctoweb_enable = profile_voctoweb
+        ) and self._get_bool("Publishing.Voctoweb.EnableProfile"):
+            self.voctoweb_enable = True
         else:
             self.voctoweb_enable = False
 
