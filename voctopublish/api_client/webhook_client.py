@@ -139,7 +139,11 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
         content["youtube"] = {
             "enabled": True,
             "privacy": ticket.youtube_privacy,
-            "publish_at": ticket.youtube_publish_at.isoformat() if ticket.youtube_publish_at else None,
+            "publish_at": (
+                ticket.youtube_publish_at.isoformat()
+                if ticket.youtube_publish_at
+                else None
+            ),
             "urls": list(ticket.youtube_urls.values()),
         }
     else:

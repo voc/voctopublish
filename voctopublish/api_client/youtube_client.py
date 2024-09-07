@@ -270,7 +270,9 @@ class YoutubeAPI:
         }
 
         if self.t.youtube_publish_at:
-            metadata["status"]["publishAt"] = self.t.youtube_publish_at.isoformat(timespec="seconds")
+            metadata["status"]["publishAt"] = self.t.youtube_publish_at.isoformat(
+                timespec="seconds"
+            )
 
         # limit title length to 100 (YouTube api conformity)
         metadata["snippet"]["title"] = metadata["snippet"]["title"][:100]
@@ -419,7 +421,9 @@ class YoutubeAPI:
         if title_suffix:
             title_suffix = self._replace_language_placeholders(title_suffix, language)
             title = title + " " + title_suffix
-            logging.debug(f"adding '{title_suffix}' as title suffix, new title: {title}")
+            logging.debug(
+                f"adding '{title_suffix}' as title suffix, new title: {title}"
+            )
 
         if (
             lang
