@@ -59,14 +59,13 @@ class Ticket:
     def _get_str(self, key, optional=False, try_default=False):
         value = self.__get_property(key)
         if not value:
-            if optional:
-                if try_default:
-                    logging.warning(
-                        f"optional property '{key}' was not in ticket, trying default"
-                    )
-                    value = self.__get_default(key)
-                else:
-                    logging.warning(f"optional property '{key}' was not in ticket")
+            if try_default:
+                logging.warning(
+                    f"optional property '{key}' was not in ticket, trying default"
+                )
+                value = self.__get_default(key)
+            elif optional:
+                logging.warning(f"optional property '{key}' was not in ticket")
             if not optional and value is None:
                 raise TicketException(f"Property '{key}' is missing or empty in ticket")
         return value
@@ -131,13 +130,9 @@ class RecordingTicket(Ticket):
         # recording ticket properties
         self.download_url = self._get_str("Fahrplan.VideoDownloadURL")
         self.fuse_path = join(fuse_path, self._get_str("Project.Slug"))
-        self.redownload_enabled = self._get_bool(
-            "Record.Redownload", optional=True, try_default=True
-        )
+        self.redownload_enabled = self._get_bool("Record.Redownload", try_default=True)
 
-        download_tool = self._get_str(
-            "Record.DownloadHelper", optional=True, try_default=True
-        )
+        download_tool = self._get_str("Record.DownloadHelper", try_default=True)
         if download_tool not in config["download"]["workers"]:
             raise TicketException(
                 f'Record.DownloadHelper uses invalid value {download_tool}, must be one of {", ".join(sorted(config["download"]["workers"].keys()))}'
@@ -245,7 +240,7 @@ class PublishingTicket(Ticket):
 
         # youtube properties
         if self._get_bool(
-            "Publishing.YouTube.Enable", optional=True, try_default=True
+            "Publishing.YouTube.Enable", try_default=True
         ) and self._get_bool("Publishing.YouTube.EnableProfile", optional=True):
             self.youtube_enable = True
         else:
@@ -254,14 +249,14 @@ class PublishingTicket(Ticket):
         # we will fill the following variables only if youtube is enabled
         if self.youtube_enable:
             self.youtube_update = self._get_str(
-                "Publishing.YouTube.Update", optional=True, try_default=True
+                "Publishing.YouTube.Update", try_default=True
             )
             self.youtube_token = self._get_str("Publishing.YouTube.Token")
             self.youtube_category = self._get_str(
-                "Publishing.YouTube.Category", optional=True, try_default=True
+                "Publishing.YouTube.Category", try_default=True
             )
             self.youtube_privacy = self._get_str(
-                "Publishing.YouTube.Privacy", optional=True, try_default=True
+                "Publishing.YouTube.Privacy", try_default=True
             )
             self.youtube_title_prefix = self._get_str(
                 "Publishing.YouTube.TitlePrefix", optional=True
@@ -303,7 +298,7 @@ class PublishingTicket(Ticket):
                 self.youtube_tags.append(f"Day {self.day}")
 
             youtube_publish_at = self._get_str(
-                "Publishing.YouTube.PublishAt", optional=True, try_default=True
+                "Publishing.YouTube.PublishAt", try_default=True
             )
             self.youtube_publish_at = None
             if youtube_publish_at:
@@ -337,7 +332,7 @@ class PublishingTicket(Ticket):
 
         # voctoweb properties
         if self._get_bool(
-            "Publishing.Voctoweb.Enable", optional=True, try_default=True
+            "Publishing.Voctoweb.Enable", try_default=True
         ) and self._get_bool("Publishing.Voctoweb.EnableProfile", optional=True):
             self.voctoweb_enable = True
         else:
@@ -366,46 +361,44 @@ class PublishingTicket(Ticket):
 
         # rclone properties
         self.rclone_enable = self._get_bool(
-            "Publishing.Rclone.Enable", optional=True, try_default=True
+            "Publishing.Rclone.Enable", try_default=True
         )
         if self.rclone_enable:
             self.rclone_destination = self._get_str(
-                "Publishing.Rclone.Destination", optional=True, try_default=True
+                "Publishing.Rclone.Destination", try_default=True
             )
             self.rclone_only_master = self._get_bool(
-                "Publishing.Rclone.OnlyMaster", optional=True, try_default=True
+                "Publishing.Rclone.OnlyMaster", try_default=True
             )
 
         # generic webhook that gets called on release
-        self.webhook_url = self._get_str(
-            "Publishing.Webhook.Url", optional=True, try_default=True
-        )
+        self.webhook_url = self._get_str("Publishing.Webhook.Url", try_default=True)
         if self.webhook_url:
             self.webhook_user = self._get_str(
-                "Publishing.Webhook.User", optional=True, try_default=True
+                "Publishing.Webhook.User", try_default=True
             )
             self.webhook_pass = self._get_str(
-                "Publishing.Webhook.Password", optional=True, try_default=True
+                "Publishing.Webhook.Password", try_default=True
             )
             self.webhook_only_master = self._get_bool(
-                "Publishing.Webhook.OnlyMaster", optional=True, try_default=True
+                "Publishing.Webhook.OnlyMaster", try_default=True
             )
             self.webhook_fail_on_error = self._get_bool(
-                "Publishing.Webhook.FailOnError", optional=True, try_default=True
+                "Publishing.Webhook.FailOnError", try_default=True
             )
 
         # various announcement bots
         self.twitter_enable = self._get_bool(
-            "Publishing.Twitter.Enable", optional=True, try_default=True
+            "Publishing.Twitter.Enable", try_default=True
         )
         self.mastodon_enable = self._get_bool(
-            "Publishing.Mastodon.Enable", optional=True, try_default=True
+            "Publishing.Mastodon.Enable", try_default=True
         )
         self.bluesky_enable = self._get_bool(
-            "Publishing.Bluesky.Enable", optional=True, try_default=True
+            "Publishing.Bluesky.Enable", try_default=True
         )
         self.googlechat_webhook_url = self._get_str(
-            "Publishing.Googlechat.Webhook", optional=True, try_default=True
+            "Publishing.Googlechat.Webhook", try_default=True
         )
 
     def has_property(self, key):
