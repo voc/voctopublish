@@ -122,7 +122,7 @@ class RecordingTicket(Ticket):
     """
 
     def __init__(self, ticket, ticket_id, config):
-        super().__init__(ticket, ticket_id)
+        super().__init__(ticket, ticket_id, config)
 
         fuse_path = self._get_str("Processing.Path.Raw", optional=True)
         if not fuse_path:
@@ -160,7 +160,7 @@ class PublishingTicket(Ticket):
     """
 
     def __init__(self, ticket, ticket_id, config):
-        super().__init__(ticket, ticket_id)
+        super().__init__(ticket, ticket_id, config)
 
         # recording ticket properties
         self.language = self._get_str("Record.Language", optional=True)
