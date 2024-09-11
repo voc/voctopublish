@@ -246,7 +246,7 @@ class PublishingTicket(Ticket):
         # youtube properties
         if self._get_bool(
             "Publishing.YouTube.Enable", optional=True, try_default=True
-        ) and self._get_bool("Publishing.YouTube.EnableProfile"):
+        ) and self._get_bool("Publishing.YouTube.EnableProfile", optional=True):
             self.youtube_enable = True
         else:
             self.youtube_enable = False
@@ -254,7 +254,7 @@ class PublishingTicket(Ticket):
         # we will fill the following variables only if youtube is enabled
         if self.youtube_enable:
             self.youtube_update = self._get_str(
-                "Publishing.YouTube.Update", optional=True
+                "Publishing.YouTube.Update", optional=True, try_default=True
             )
             self.youtube_token = self._get_str("Publishing.YouTube.Token")
             self.youtube_category = self._get_str(
@@ -303,7 +303,7 @@ class PublishingTicket(Ticket):
                 self.youtube_tags.append(f"Day {self.day}")
 
             youtube_publish_at = self._get_str(
-                "Publishing.YouTube.PublishAt", optional=True
+                "Publishing.YouTube.PublishAt", optional=True, try_default=True
             )
             self.youtube_publish_at = None
             if youtube_publish_at:
@@ -338,7 +338,7 @@ class PublishingTicket(Ticket):
         # voctoweb properties
         if self._get_bool(
             "Publishing.Voctoweb.Enable", optional=True, try_default=True
-        ) and self._get_bool("Publishing.Voctoweb.EnableProfile"):
+        ) and self._get_bool("Publishing.Voctoweb.EnableProfile", optional=True):
             self.voctoweb_enable = True
         else:
             self.voctoweb_enable = False
@@ -369,21 +369,29 @@ class PublishingTicket(Ticket):
             "Publishing.Rclone.Enable", optional=True, try_default=True
         )
         if self.rclone_enable:
-            self.rclone_destination = self._get_str("Publishing.Rclone.Destination")
-            self.rclone_only_master = self._get_bool("Publishing.Rclone.OnlyMaster")
+            self.rclone_destination = self._get_str(
+                "Publishing.Rclone.Destination", optional=True, try_default=True
+            )
+            self.rclone_only_master = self._get_bool(
+                "Publishing.Rclone.OnlyMaster", optional=True, try_default=True
+            )
 
         # generic webhook that gets called on release
-        self.webhook_url = self._get_str("Publishing.Webhook.Url", optional=True)
+        self.webhook_url = self._get_str(
+            "Publishing.Webhook.Url", optional=True, try_default=True
+        )
         if self.webhook_url:
-            self.webhook_user = self._get_str("Publishing.Webhook.User", optional=True)
+            self.webhook_user = self._get_str(
+                "Publishing.Webhook.User", optional=True, try_default=True
+            )
             self.webhook_pass = self._get_str(
-                "Publishing.Webhook.Password", optional=True
+                "Publishing.Webhook.Password", optional=True, try_default=True
             )
             self.webhook_only_master = self._get_bool(
-                "Publishing.Webhook.OnlyMaster", optional=True
+                "Publishing.Webhook.OnlyMaster", optional=True, try_default=True
             )
             self.webhook_fail_on_error = self._get_bool(
-                "Publishing.Webhook.FailOnError", optional=True
+                "Publishing.Webhook.FailOnError", optional=True, try_default=True
             )
 
         # various announcement bots
