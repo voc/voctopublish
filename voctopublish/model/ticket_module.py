@@ -37,9 +37,6 @@ class Ticket:
             "Project.Slug"
         )
 
-        # general publishing properties
-        self.publishing_path = ticket["Publishing.Path"]
-
     def __get_default(self, key):
         key = key.lower()
         for k, v in self.config.get("defaults", {}).items():
