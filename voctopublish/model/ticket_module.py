@@ -41,6 +41,8 @@ class Ticket:
         key = key.lower()
         for k, v in self.config.get("defaults", {}).items():
             if k.lower() == key:
+                if isinstance(v, bool):
+                    return v
                 return str(v).strip()
         return None
 
@@ -48,8 +50,6 @@ class Ticket:
         key = key.lower()
         for k, v in self._tracker_ticket.items():
             if k.lower() == key:
-                if isinstance(v, bool):
-                    return v
                 return str(v).strip()
         return None
 
