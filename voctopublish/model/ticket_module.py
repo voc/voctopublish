@@ -127,7 +127,9 @@ class RecordingTicket(Ticket):
         # recording ticket properties
         self.download_url = self._get_str("Fahrplan.VideoDownloadURL")
         self.fuse_path = join(fuse_path, self._get_str("Project.Slug"))
-        self.redownload_enabled = self._get_bool("Record.Redownload", try_default=True)
+        self.redownload_enabled = self._get_bool(
+            "Record.Redownload", optional=True, try_default=True
+        )
 
         download_tool = self._get_str("Record.DownloadHelper", try_default=True)
         if download_tool not in config["download"]["workers"]:
@@ -246,7 +248,7 @@ class PublishingTicket(Ticket):
         # we will fill the following variables only if youtube is enabled
         if self.youtube_enable:
             self.youtube_update = self._get_str(
-                "Publishing.YouTube.Update", try_default=True
+                "Publishing.YouTube.Update", optional=True, try_default=True
             )
             self.youtube_token = self._get_str("Publishing.YouTube.Token")
             self.youtube_category = self._get_str(
@@ -295,7 +297,7 @@ class PublishingTicket(Ticket):
                 self.youtube_tags.append(f"Day {self.day}")
 
             youtube_publish_at = self._get_str(
-                "Publishing.YouTube.PublishAt", try_default=True
+                "Publishing.YouTube.PublishAt", optional=True, try_default=True
             )
             self.youtube_publish_at = None
             if youtube_publish_at:
@@ -365,37 +367,39 @@ class PublishingTicket(Ticket):
                 "Publishing.Rclone.Destination", try_default=True
             )
             self.rclone_only_master = self._get_bool(
-                "Publishing.Rclone.OnlyMaster", try_default=True
+                "Publishing.Rclone.OnlyMaster", optional=True, try_default=True
             )
 
         # generic webhook that gets called on release
-        self.webhook_url = self._get_str("Publishing.Webhook.Url", try_default=True)
+        self.webhook_url = self._get_str(
+            "Publishing.Webhook.Url", optional=True, try_default=True
+        )
         if self.webhook_url:
             self.webhook_user = self._get_str(
-                "Publishing.Webhook.User", try_default=True
+                "Publishing.Webhook.User", optional=True, try_default=True
             )
             self.webhook_pass = self._get_str(
-                "Publishing.Webhook.Password", try_default=True
+                "Publishing.Webhook.Password", optional=True, try_default=True
             )
             self.webhook_only_master = self._get_bool(
-                "Publishing.Webhook.OnlyMaster", try_default=True
+                "Publishing.Webhook.OnlyMaster", optional=True, try_default=True
             )
             self.webhook_fail_on_error = self._get_bool(
-                "Publishing.Webhook.FailOnError", try_default=True
+                "Publishing.Webhook.FailOnError", optional=True, try_default=True
             )
 
         # various announcement bots
         self.twitter_enable = self._get_bool(
-            "Publishing.Twitter.Enable", try_default=True
+            "Publishing.Twitter.Enable", optional=True, try_default=True
         )
         self.mastodon_enable = self._get_bool(
-            "Publishing.Mastodon.Enable", try_default=True
+            "Publishing.Mastodon.Enable", optional=True, try_default=True
         )
         self.bluesky_enable = self._get_bool(
-            "Publishing.Bluesky.Enable", try_default=True
+            "Publishing.Bluesky.Enable", optional=True, try_default=True
         )
         self.googlechat_webhook_url = self._get_str(
-            "Publishing.Googlechat.Webhook", try_default=True
+            "Publishing.Googlechat.Webhook", optional=True, try_default=True
         )
 
 
