@@ -63,7 +63,7 @@ class Ticket:
                 value = self.__get_default(key)
             elif optional:
                 logging.warning(f"optional property '{key}' was not in ticket")
-            if not optional and value is None:
+            if not optional and value in (None, ""):
                 raise TicketException(f"Property '{key}' is missing or empty in ticket")
         return value
 
