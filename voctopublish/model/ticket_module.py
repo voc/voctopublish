@@ -401,19 +401,6 @@ class PublishingTicket(Ticket):
             "Publishing.Googlechat.Webhook", try_default=True
         )
 
-    def has_property(self, key):
-        return key in self.__tracker_ticket
-
-    def get_raw_property(self, key, optional=True):
-        value = None
-        if key in self._tracker_ticket:
-            value = self._tracker_ticket[key]
-        else:
-            if not optional:
-                logging.debug(key + " is missing in ticket")
-                raise TicketException(key + " is missing in ticket")
-        return value
-
 
 class TicketException(Exception):
     pass

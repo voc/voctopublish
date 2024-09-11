@@ -112,7 +112,7 @@ class YoutubeAPI:
 
             i = 0
             for lang in self.t.languages:
-                video_url = self.t.get_raw_property("YouTube.Url{}".format(i))
+                video_url = self.t._get_str(f"YouTube.Url{i}", optional=True)
                 if video_url and self.t.youtube_update != "force":
                     logging.info(
                         "Video track {} is already on youtube, returning previous URL {}".format(
@@ -240,7 +240,7 @@ class YoutubeAPI:
                 + description
             )
 
-        license = self.t.get_raw_property("Meta.License")
+        license = self.t._get_str("Meta.License", optional=True)
         if license and "https://creativecommons.org/licenses/by" in license:
             license = "creativeCommon"
         else:
@@ -392,8 +392,10 @@ class YoutubeAPI:
             else self.t.youtube_title_prefix
         )
         # if localized title exits, overwrite original title
-        if lang and self.t.has_property(f"Fahrplan.Title.{lang}"):
-            title = self.t.get_raw_property(f"Fahrplan.Title.{lang}")
+        if lang:
+            localized_title = self.t._get_str(f"Fahrplan.Title.{lang}", optional=True)
+            if localized_title:
+                title = localized_title
 
         if title_prefix:
             title_prefix = self._replace_language_placeholders(title_prefix, language)
@@ -518,7 +520,7 @@ class YoutubeAPI:
         depublished_urls = []
         props = {}
         for lang in self.t.languages:
-            video_url = self.t.get_raw_property(f"YouTube.Url{i}")
+            video_url = self.t._get_str(f"YouTube.Url{i}", optional=True)
             if video_url:
                 try:
                     video_id = video_url.split("=", 2)[1]

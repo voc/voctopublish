@@ -535,7 +535,9 @@ class VoctowebClient:
 
         recording_id = self.t.recording_id
         if single_language:
-            recording_id = self.t.get_raw_property("Voctoweb.RecordingId." + language)
+            recording_id = self.t._get_str(
+                f"Voctoweb.RecordingId.{language}", optional=True
+            )
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/recordings_controller.rb
         url = self.api_url + "recordings"

@@ -252,10 +252,13 @@ class Depublisher:
         yt.setup(self.ticket.youtube_token)
 
         youtube_urls, props = yt.depublish()
-        props["Publishing.YouTube.UrlHistory"] = (
-            (self.ticket.get_raw_property("Publishing.YouTube.UrlHistory") or "")
-            + " ".join(youtube_urls)
-            + " "
+        props["Publishing.YouTube.UrlHistory"] = " ".join(
+            [
+                *self.ticket._get_list(
+                    "Publishing.YouTube.UrlHistory", optional=True, split_by=" "
+                ),
+                *youtube_urls,
+            ]
         )
 
         self.c3tt.set_ticket_properties(self.ticket_id, props)
