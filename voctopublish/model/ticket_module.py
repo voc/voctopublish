@@ -84,7 +84,7 @@ class Ticket:
             return None
         if isinstance(value, bool):
             return value
-        if value.lower() in ("yes", "1"):
+        if value.lower() in ("yes", "1", "true"):
             return True
         return False
 
