@@ -432,6 +432,10 @@ class VoctowebClient:
                     [description, '<a href="' + link + '">' + link + "</a>"]
                 )
 
+        if self.t.license:
+            # FIXME <https://github.com/emfcamp/Website/issues/1780>
+            description += f"\n\n{self.t.license}"
+
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {
             "Authorization": f"Token {self.api_key}",

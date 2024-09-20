@@ -240,11 +240,11 @@ class YoutubeAPI:
                 + description
             )
 
-        license = self.t._get_str("Meta.License", optional=True)
-        if license and "https://creativecommons.org/licenses/by" in license:
-            license = "creativeCommon"
-        else:
-            license = "youtube"
+        license = "youtube"
+        if self.t.license:
+            if "https://creativecommons.org/licenses/by" in self.t.license:
+                license = "creativeCommon"
+            description += f"\n\n{self.t.license}"
 
         metadata = {
             "snippet": {

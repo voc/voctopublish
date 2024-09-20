@@ -236,6 +236,7 @@ class PublishingTicket(Ticket):
             self.date.split("-")[0],
             *self._get_list("Publishing.Tags", optional=True),
         ]
+        self.license = self._get_str("Meta.License", optional=True, try_default=True)
 
         # youtube properties
         if self._get_bool(
