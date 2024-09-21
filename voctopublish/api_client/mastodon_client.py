@@ -23,7 +23,7 @@ from tools.announcements import EmptyAnnouncementMessage, make_message
 
 
 def send_toot(ticket, config):
-    LOG = logging.getLogger("Twitter")
+    LOG = logging.getLogger("Mastodon")
     LOG.info("toot the release")
 
     try:
