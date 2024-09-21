@@ -219,32 +219,32 @@ class YoutubeAPI:
         if self.t.acronym and lang and lang != self.t.languages[0]:
             topline.append(topline[0] + "_" + lang)
 
-        description = "\n\n".join(
-            [
-                subtitle,
-                abstract,
-                description,
-                " ".join(self.t.people),
-                url,
-                " ".join(topline),
-            ]
-        )
-        description = self.strip_tags(description)
-
+        description_components = [
+            subtitle,
+            abstract,
+            description,
+            " ".join(self.t.people),
+            url,
+            " ".join(topline),
+        ]
         if self.t.voctoweb_enable:
-            description = (
-                self.config["voctoweb"]["frontend_url"]
-                + "/v/"
-                + self.t.slug
-                + "\n\n"
-                + description
-            )
+            description_components.insert(0, f"{self.config['voctoweb']['frontend_url']}/v/{self.t.slug}")
 
         license = "youtube"
         if self.t.license:
             if "https://creativecommons.org/licenses/by" in self.t.license:
                 license = "creativeCommon"
-            description += f"\n\n{self.t.license}"
+            description_components.append(self.t.license)
+
+        LOG.debug(f"{description_components=}"
+
+        description = ""
+        for item in description_components:
+            if item:
+                description += f"\n\n{item}"
+        description = self.strip_tags(description.strip())
+
+        LOG.debug(f"{description=}")
 
         metadata = {
             "snippet": {
