@@ -30,7 +30,7 @@ import requests
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
 
-logging = logging.getLogger()
+LOG = logging.getLogger('YoutubeAPI')
 
 
 class YoutubeAPI:
@@ -102,19 +102,19 @@ class YoutubeAPI:
         publish a file on youtube
         :return: returns a list containing a youtube url for each released file
         """
-        logging.info(
+        LOG.info(
             "publishing Ticket %s (%s) to youtube" % (self.t.fahrplan_id, self.t.title)
         )
 
         # handle multi language events
         if len(self.t.languages) > 1:
-            logging.debug("Languages: " + str(self.t.languages))
+            LOG.debug("Languages: " + str(self.t.languages))
 
             i = 0
             for lang in self.t.languages:
                 video_url = self.t._get_str(f"YouTube.Url{i}", optional=True)
                 if video_url and self.t.youtube_update != "force":
-                    logging.info(
+                    LOG.info(
                         "Video track {} is already on youtube, returning previous URL {}".format(
                             i, video_url
                         )
@@ -131,7 +131,7 @@ class YoutubeAPI:
                     )
                     out_path = os.path.join(self.t.publishing_path, out_filename)
 
-                    logging.info(
+                    LOG.info(
                         "remuxing " + self.t.local_filename + " to " + out_path
                     )
 
@@ -162,7 +162,7 @@ class YoutubeAPI:
 
                     video_id = self.upload(out_path, lang)
                     video_url = "https://www.youtube.com/watch?v=" + video_id
-                    logging.info("published %s video track to %s" % (lang, video_url))
+                    LOG.info("published %s video track to %s" % (lang, video_url))
 
                 self.youtube_urls.append(video_url)
                 i += 1
@@ -172,7 +172,7 @@ class YoutubeAPI:
             )
 
             video_url = "https://www.youtube.com/watch?v=" + video_id
-            logging.info("published Ticket to %s" % video_url)
+            LOG.info("published Ticket to %s" % video_url)
             self.youtube_urls.append(video_url)
 
         return self.youtube_urls
@@ -285,7 +285,7 @@ class YoutubeAPI:
         (mimetype, encoding) = mimetypes.guess_type(file)
         size = os.stat(file).st_size
 
-        logging.debug(
+        LOG.debug(
             "guessed mime type for file %s as %s and its size as %u bytes"
             % (file, mimetype, size)
         )
@@ -305,7 +305,7 @@ class YoutubeAPI:
             },
             data=json.dumps(metadata),
         )
-        logging.info(json.dumps(metadata, indent=2))
+        LOG.info(json.dumps(metadata, indent=2))
 
         if 200 != r.status_code:
             if 400 == r.status_code:
@@ -328,11 +328,11 @@ class YoutubeAPI:
                 % (r.headers,)
             )
 
-        logging.info(
+        LOG.info(
             "successfully created video and received upload-url from %s"
             % (r.headers["server"] if "server" in r.headers else "-")
         )
-        logging.debug("uploading video-data to %s" % r.headers["location"])
+        LOG.debug("uploading video-data to %s" % r.headers["location"])
 
         with open(file, "rb") as fp:
             upload = requests.put(
@@ -364,7 +364,7 @@ class YoutubeAPI:
                 + outjpg,
                 shell=True,
             )
-            logging.info("thumbnails reformatted for youtube")
+            LOG.info("thumbnails reformatted for youtube")
         except Exception as e_:
             raise YouTubeException(
                 "Could not scale thumbnail: " + r.decode("utf-8")
@@ -373,7 +373,7 @@ class YoutubeAPI:
         YoutubeAPI.update_thumbnail(self.accessToken, video["id"], outjpg)
 
         youtube_url = "https://www.youtube.com/watch?v=" + video["id"]
-        logging.info("successfully uploaded video as %s", youtube_url)
+        LOG.info("successfully uploaded video as %s", youtube_url)
 
         return video["id"]
 
@@ -400,7 +400,7 @@ class YoutubeAPI:
         if title_prefix:
             title_prefix = self._replace_language_placeholders(title_prefix, language)
             title = title_prefix + " " + title
-            logging.debug("adding " + str(title_prefix) + " as title prefix")
+            LOG.debug("adding " + str(title_prefix) + " as title prefix")
 
         # when self.t.youtube_title_prefix_speakers is set, prepend up to x people to title,
         # where x is defined by the integer in self.t.youtube_title_prefix_speakers
@@ -408,12 +408,12 @@ class YoutubeAPI:
             self.t.youtube_title_prefix_speakers
         ):
             title = (", ".join(self.t.people)) + ": " + title
-            logging.debug("adding speaker names as title prefix: " + title)
+            LOG.debug("adding speaker names as title prefix: " + title)
         elif self.t.youtube_title_append_speakers and len(self.t.people) <= int(
             self.t.youtube_title_append_speakers
         ):
             title += " (" + (", ".join(self.t.people)) + ")"
-            logging.debug("appending speaker names to title: " + title)
+            LOG.debug("appending speaker names to title: " + title)
 
         title_suffix = (
             self.t.youtube_translation_title_suffix
@@ -423,7 +423,7 @@ class YoutubeAPI:
         if title_suffix:
             title_suffix = self._replace_language_placeholders(title_suffix, language)
             title = title + " " + title_suffix
-            logging.debug(
+            LOG.debug(
                 f"adding '{title_suffix}' as title suffix, new title: {title}"
             )
 
@@ -436,7 +436,7 @@ class YoutubeAPI:
 
         # YouTube does not allow <> in titles – even not as &gt;&lt;
         title = title.replace("<", "(").replace(">", ")")
-        logging.debug(f"final title: {title}")
+        LOG.debug(f"final title: {title}")
         return title
 
     def _replace_language_placeholders(self, string, lang):
@@ -494,7 +494,7 @@ class YoutubeAPI:
 
         tags.extend(self.t.people)
 
-        logging.debug("YouTube Tags: " + str(tags))
+        LOG.debug("YouTube Tags: " + str(tags))
 
         return tags
 
@@ -503,7 +503,7 @@ class YoutubeAPI:
         depublish videos on youtube
         :return:
         """
-        logging.info(
+        LOG.info(
             "depublishing Ticket %s (%s) to youtube"
             % (self.t.fahrplan_id, self.t.title)
         )
@@ -513,7 +513,7 @@ class YoutubeAPI:
         #    yt = YoutubeAPI(self.ticket, self.config['youtube']['client_id'], self.config['youtube']['secret'])
         #    yt.setup(self.config['youtube']['playlist_token'])
         # else:
-        #    logging.debug('using same token for publishing and playlist management')
+        #    LOG.debug('using same token for publishing and playlist management')
         yt = self
 
         i = 0
@@ -528,7 +528,7 @@ class YoutubeAPI:
                         video_id,
                         {"id": video_id, "status": {"privacyStatus": "private"}},
                     )
-                    logging.info(
+                    LOG.info(
                         "depublished %s video track from %s" % (lang, video_url)
                     )
                     depublished_urls.append(video_url)
@@ -537,7 +537,7 @@ class YoutubeAPI:
                     if self.t.youtube_playlists:
                         yt.remove_from_playlists(video_id, self.t.youtube_playlists)
                 except Exception as e:
-                    logging.error(f"debublishing of {video_url} failed with {e}")
+                    LOG.error(f"debublishing of {video_url} failed with {e}")
 
                 i += 1
             return depublished_urls, props
@@ -557,7 +557,7 @@ class YoutubeAPI:
         )
 
         if 200 != r.status_code:
-            logging.debug(metadata)
+            LOG.debug(metadata)
             if 400 == r.status_code:
                 raise YouTubeException(
                     r.json()["error"]["message"]
@@ -610,7 +610,7 @@ class YoutubeAPI:
                 % (r.status_code, r.text)
             )
 
-        logging.info("video added to playlist: " + playlist_id)
+        LOG.info("video added to playlist: " + playlist_id)
 
     def remove_from_playlists(self, video_id: str, ids):
         """
@@ -665,7 +665,7 @@ class YoutubeAPI:
                 % (r.status_code, r.text)
             )
 
-        logging.info("video removed from playlist ")
+        LOG.info("video removed from playlist ")
 
     @staticmethod
     def update_thumbnail(access_token: str, video_id: str, thumbnail: str):
@@ -692,7 +692,7 @@ class YoutubeAPI:
                 "Video update failed with error-code %u: %s" % (r.status_code, r.text)
             )
 
-        logging.info(f"Thumbnails for {video_id} updated")
+        LOG.info(f"Thumbnails for {video_id} updated")
 
     @staticmethod
     def get_playlist(access_token: str, playlist_id: str):
@@ -717,7 +717,7 @@ class YoutubeAPI:
                 % (r.status_code, r.text)
             )
 
-        logging.debug(json.dumps(r.json(), indent=4))
+        LOG.debug(json.dumps(r.json(), indent=4))
 
     @staticmethod
     def get_fresh_token(refresh_token: str, client_id: str, client_secret: str):
@@ -728,7 +728,7 @@ class YoutubeAPI:
         :param client_secret:
         :return: YouTube access token
         """
-        logging.debug(
+        LOG.debug(
             "fetching fresh Access-Token on behalf of the refreshToken %s"
             % refresh_token
         )
@@ -754,7 +754,7 @@ class YoutubeAPI:
                 "fetching a fresh authToken did not return a access_token: %s" % r.text
             )
 
-        logging.info("successfully fetched Access-Token %s" % data["access_token"])
+        LOG.info("successfully fetched Access-Token %s" % data["access_token"])
         return data["access_token"]
 
     @staticmethod
@@ -764,7 +764,7 @@ class YoutubeAPI:
         :param access_token: Youtube access token
         :return: YouTube channel id
         """
-        logging.debug(
+        LOG.debug(
             "fetching Channel-Info on behalf of the accessToken %s" % access_token
         )
         r = requests.get(
@@ -787,7 +787,7 @@ class YoutubeAPI:
         data = r.json()
         channel = data["items"][0]
 
-        logging.info("successfully fetched Channel-ID %s " % (channel["id"]))
+        LOG.info("successfully fetched Channel-ID %s " % (channel["id"]))
         return channel["id"]
 
     @staticmethod
