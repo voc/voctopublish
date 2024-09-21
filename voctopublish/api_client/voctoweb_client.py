@@ -70,7 +70,7 @@ class VoctowebClient:
         """
         LOG.info("Establishing SSH connection")
         self.ssh = paramiko.SSHClient()
-        LOG.getLogger("paramiko").setLevel(LOG.INFO)
+        logging.getLogger("paramiko").setLevel(logging.INFO)
         # TODO set hostkey handling via config
         # client.get_host_keys().add(upload_host,'ssh-rsa', key)
         self.ssh.load_system_host_keys()
