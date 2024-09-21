@@ -30,7 +30,7 @@ import requests
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
 
-LOG = logging.getLogger('YoutubeAPI')
+LOG = logging.getLogger("YoutubeAPI")
 
 
 class YoutubeAPI:
@@ -131,9 +131,7 @@ class YoutubeAPI:
                     )
                     out_path = os.path.join(self.t.publishing_path, out_filename)
 
-                    LOG.info(
-                        "remuxing " + self.t.local_filename + " to " + out_path
-                    )
+                    LOG.info("remuxing " + self.t.local_filename + " to " + out_path)
 
                     try:
                         subprocess.check_output(
@@ -228,7 +226,9 @@ class YoutubeAPI:
             " ".join(topline),
         ]
         if self.t.voctoweb_enable:
-            description_components.insert(0, f"{self.config['voctoweb']['frontend_url']}/v/{self.t.slug}")
+            description_components.insert(
+                0, f"{self.config['voctoweb']['frontend_url']}/v/{self.t.slug}"
+            )
 
         license = "youtube"
         if self.t.license:
@@ -236,7 +236,7 @@ class YoutubeAPI:
                 license = "creativeCommon"
             description_components.append(self.t.license)
 
-        LOG.debug(f"{description_components=}"
+        LOG.debug(f"{description_components=}")
 
         description = ""
         for item in description_components:
@@ -307,7 +307,9 @@ class YoutubeAPI:
             },
             data=metadata_json,
         )
-        LOG.info(f"Request to create youtube video yielded status code {r.status_code}: {r.text}")
+        LOG.info(
+            f"Request to create youtube video yielded status code {r.status_code}: {r.text}"
+        )
         LOG.debug(f"{r.headers=}")
 
         if 200 != r.status_code:
@@ -426,9 +428,7 @@ class YoutubeAPI:
         if title_suffix:
             title_suffix = self._replace_language_placeholders(title_suffix, language)
             title = title + " " + title_suffix
-            LOG.debug(
-                f"adding '{title_suffix}' as title suffix, new title: {title}"
-            )
+            LOG.debug(f"adding '{title_suffix}' as title suffix, new title: {title}")
 
         if (
             lang
@@ -531,9 +531,7 @@ class YoutubeAPI:
                         video_id,
                         {"id": video_id, "status": {"privacyStatus": "private"}},
                     )
-                    LOG.info(
-                        "depublished %s video track from %s" % (lang, video_url)
-                    )
+                    LOG.info("depublished %s video track from %s" % (lang, video_url))
                     depublished_urls.append(video_url)
                     props[f"YouTube.Url{i}"] = ""
 
