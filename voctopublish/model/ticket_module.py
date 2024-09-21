@@ -18,6 +18,7 @@ import logging
 import re
 from os.path import join
 
+LOG = logging.getLogger('Ticket')
 
 class Ticket:
     """
@@ -57,14 +58,15 @@ class Ticket:
         value = self.__get_property(key)
         if not value:
             if try_default:
-                logging.warning(
+                LOG.warning(
                     f"optional property '{key}' was not in ticket, trying default"
                 )
                 value = self.__get_default(key)
             elif optional:
-                logging.warning(f"optional property '{key}' was not in ticket")
+                LOG.warning(f"optional property '{key}' was not in ticket")
             if not optional and value in (None, ""):
                 raise TicketException(f"Property '{key}' is missing or empty in ticket")
+            LOG.debug(f"{key!r} = {value!r}")
         return value
 
     def _get_list(self, key, optional=False, try_default=False, split_by=","):
