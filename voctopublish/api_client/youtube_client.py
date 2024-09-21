@@ -221,7 +221,7 @@ class YoutubeAPI:
             subtitle,
             abstract,
             description,
-            " ".join(self.t.people),
+            ", ".join(self.t.people),
             url,
             " ".join(topline),
         ]
