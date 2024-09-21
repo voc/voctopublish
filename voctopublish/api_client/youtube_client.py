@@ -290,6 +290,8 @@ class YoutubeAPI:
             % (file, mimetype, size)
         )
 
+        metadata_json = json.dumps(metadata)
+        LOG.debug(f"{metadata_json=}")
         # https://developers.google.com/youtube/v3/docs/videos#resource
         r = requests.post(
             "https://www.googleapis.com/upload/youtube/v3/videos",
@@ -303,9 +305,10 @@ class YoutubeAPI:
                 "X-Upload-Content-Type": mimetype,
                 "X-Upload-Content-Length": str(size),
             },
-            data=json.dumps(metadata),
+            data=metadata_json,
         )
-        LOG.info(json.dumps(metadata, indent=2))
+        LOG.info(f"Request to create youtube video yielded status code {r.status_code}: {r.text}")
+        LOG.debug(f"{r.headers=}")
 
         if 200 != r.status_code:
             if 400 == r.status_code:
