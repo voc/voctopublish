@@ -157,7 +157,6 @@ class Depublisher:
         else:
             logging.info("ticket not on voctoweb")
 
-        urls = set()
         if self.ticket.youtube_enable and self.ticket.has_youtube_url:
             try:
                 urls = self._depublish_from_youtube()
@@ -179,7 +178,7 @@ class Depublisher:
         else:
             self.c3tt.set_ticket_done(
                 self.ticket_id,
-                f"Video depublished. YouTube videos have been set to private: {str(urls)}",
+                f"Video depublished. YouTube videos have been set to private.",
             )
 
     def _depublish_from_voctoweb(self):
