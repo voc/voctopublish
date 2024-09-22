@@ -137,47 +137,45 @@ class Depublisher:
             logging.debug("not ticket, returning")
             return
 
-        errors = []
+        logging.info(f"trying to depublish ticket {self.ticket_id}")
 
+        errors = set()
         # voctoweb
-        if self.ticket.voctoweb_enable:
-            logging.debug(
-                " project media flag: "
-                + str(self.ticket.voctoweb_enable)
+        if self.ticket.voctoweb_enable and self.ticket.voctoweb_event_id:
+            logging.info(
+                f"removing {self.ticket_id} from voctoweb, event id {self.ticket.voctoweb_event_id}"
             )
             try:
                 self._depublish_from_voctoweb()
-            except:
-                errors.append(
-                    "Removal from voctoweb failed:\n" + traceback.format_exc()
-                )
-        else:
-            logging.debug("no voctoweb :(")
-
-        logging.debug(
-            "#youtube {}".format(
-                self.ticket.youtube_enable
+            except Exception as e:
+                logging.exception("failed to remove video from voctoweb")
+                errors.add(f"Removal from voctoweb failed: {e!r}")
+        elif self.ticket.voctoweb_event_id:
+            logging.warning(
+                f"ticket has voctoweb_event_id={self.ticket.voctoweb_event_id} set, but voctoweb is disabled. NOT removing!"
             )
-        )
-        # YouTube
-        logging.debug(f"#youtube {self.ticket.youtube_enable}")
-        urls = []
-        if self.ticket.youtube_enable:
-            try:
-                if not self.ticket.has_youtube_url:
-                    logging.info(
-                        "Ticket has no YouTube URLs. Probably already depublished."
-                    )
-                else:
-                    urls = self._depublish_from_youtube()
-            except:
-                errors.append("Removal from youtube failed:\n" + traceback.format_exc())
         else:
-            logging.debug("no youtube :(")
+            logging.info("ticket not on voctoweb")
 
-        logging.debug("#done")
+        urls = set()
+        if self.ticket.youtube_enable and self.ticket.has_youtube_url:
+            try:
+                urls = self._depublish_from_youtube()
+            except Exception as e:
+                logging.exception("failed to remove video from youtube")
+                errors.add(f"Removal from youtube failed: {e!r}")
+        elif self.ticket.has_youtube_url:
+            logging.warning(
+                f"ticket has youtube urls set, but youtube is disabled. NOT removing!"
+            )
+        else:
+            logging.info("ticket not on youtube")
+
+        # TODO rclone
+        # TODO webhook
+
         if errors:
-            self.c3tt.set_ticket_failed(self.ticket_id, "\n".join(errors))
+            self.c3tt.set_ticket_failed(self.ticket_id, "\n".join(sorted(errors)))
         else:
             self.c3tt.set_ticket_done(
                 self.ticket_id,

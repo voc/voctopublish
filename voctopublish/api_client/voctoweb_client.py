@@ -322,19 +322,9 @@ class VoctowebClient:
 
         headers = {"CONTENT-TYPE": "application/json"}
 
-        url = self.api_url + "events"
-        LOG.debug(
-            "api url: "
-            + url
-            + " header: "
-            + str(headers)
-            + " slug: "
-            + str(self.t.slug)
-        )
-
         # call voctoweb api
         r = requests.get(
-            self.frontend_url + "/public/events/" + self.t.voctoweb_event_id,
+            f"{self.frontend_url}/public/events/{self.t.voctoweb_event_id}",
             headers=headers,
         )
         return r.json()
