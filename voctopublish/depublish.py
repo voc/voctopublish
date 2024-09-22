@@ -244,6 +244,8 @@ class Depublisher:
 
         yt = YoutubeAPI(
             self.ticket,
+            None,
+            self.config,
             self.config["youtube"]["client_id"],
             self.config["youtube"]["secret"],
         )
