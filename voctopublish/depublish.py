@@ -185,6 +185,7 @@ class Depublisher:
     def _depublish_from_voctoweb(self):
         vw = VoctowebClient(
             self.ticket,
+            None,
             self.config["voctoweb"]["api_key"],
             self.config["voctoweb"]["api_url"],
             self.config["voctoweb"]["ssh_host"],
