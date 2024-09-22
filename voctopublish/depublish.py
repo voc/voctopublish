@@ -106,7 +106,7 @@ class Depublisher:
         if not self.host:
             self.host = socket.getfqdn()
 
-        self.ticket_type = "recording"
+        self.ticket_type = "encoding"
         self.to_state = "removing"
 
         # instance variables we need later
@@ -142,9 +142,7 @@ class Depublisher:
         # voctoweb
         if self.ticket.voctoweb_enable:
             logging.debug(
-                "encoding profile media flag: "
-                + str(self.ticket.profile_voctoweb_enable)
-                + " project media flag: "
+                " project media flag: "
                 + str(self.ticket.voctoweb_enable)
             )
             try:
@@ -157,8 +155,8 @@ class Depublisher:
             logging.debug("no voctoweb :(")
 
         logging.debug(
-            "#youtube {} {}".format(
-                self.ticket.profile_youtube_enable, self.ticket.youtube_enable
+            "#youtube {}".format(
+                self.ticket.youtube_enable
             )
         )
         # YouTube

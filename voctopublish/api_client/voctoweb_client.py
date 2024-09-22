@@ -29,8 +29,8 @@ import requests
 from model.ticket_module import Ticket
 from tools.thumbnails import ThumbnailGenerator
 
+LOG = logging.getLogger("Voctoweb")
 
-LOG = logging.getLogger('Voctoweb')
 
 class VoctowebClient:
     def __init__(
@@ -262,9 +262,7 @@ class VoctowebClient:
         :param remote_filename:
         :param remote_folder:
         """
-        LOG.info(
-            "uploading " + os.path.join(self.t.publishing_path, local_filename)
-        )
+        LOG.info("uploading " + os.path.join(self.t.publishing_path, local_filename))
 
         # Check if ssh connection is open.
         if self.sftp is None:
