@@ -63,6 +63,22 @@ def _send_bluesky_post(message, config):
             }
         )
 
+    for url in _parse_tags(message):
+        post["facets"].append(
+            {
+                "features": [
+                    {
+                        "$type": "app.bsky.richtext.facet#tag",
+                        "tag": url["tag"],
+                    }
+                ],
+                "index": {
+                    "byteEnd": url["end"],
+                    "byteStart": url["start"],
+                },
+            }
+        )
+
     r = requests.post(
         "https://bsky.social/xrpc/com.atproto.server.createSession",
         json={
@@ -92,15 +108,22 @@ def _send_bluesky_post(message, config):
 
 
 def _parse_urls(text):
-    spans = []
     url_regex = rb"[$|\W](https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*[-a-zA-Z0-9@%_\+~#//=])?)"
     text_bytes = text.encode("UTF-8")
     for m in finditer(url_regex, text_bytes):
-        spans.append(
-            {
-                "start": m.start(1),
-                "end": m.end(1),
-                "url": m.group(1).decode("UTF-8"),
-            }
-        )
-    return spans
+        yield {
+            "start": m.start(1),
+            "end": m.end(1),
+            "url": m.group(1).decode("UTF-8"),
+        }
+
+
+def _parse_hashtags(text):
+    tag_regex = rb"[$|\W](#\S+)"
+    text_bytes = text.encode("UTF-8")
+    for m in finditer(tag_regex, text_bytes):
+        yield {
+            "start": m.start(1),
+            "end": m.end(1),
+            "tag": m.group(1).decode("UTF-8")[1:],
+        }
