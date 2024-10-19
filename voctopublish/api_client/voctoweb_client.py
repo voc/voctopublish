@@ -408,23 +408,20 @@ class VoctowebClient:
         else:
             event_url = "https://c3voc.de"
 
+        description = []
+        if self.t.abstract is not None:
+            description.append(self.t.abstract)
+
         if self.t.description is not None:
-            if self.t.abstract is not None:
-                description = "\n\n".join([self.t.abstract, self.t.description])
-            else:
-                description = self.t.description
-        else:
-            description = self.t.abstract
+            description.append(self.t.description)
 
         if self.t.links:
             for link in self.t.links:
-                description = "\n\n".join(
-                    [description, '<a href="' + link + '">' + link + "</a>"]
-                )
+                description.append('<a href="' + link + '">' + link + "</a>")
 
         if self.t.license:
             # FIXME <https://github.com/emfcamp/Website/issues/1780>
-            description += f"\n\n{self.t.license}"
+            description.append(self.t.license)
 
         # API code https://github.com/voc/voctoweb/blob/master/app/controllers/api/events_controller.rb
         headers = {
@@ -445,7 +442,7 @@ class VoctowebClient:
                 "timeline_filename": self.t.voctoweb_filename_base + ".timeline.jpg",
                 "thumbnails_filename": self.t.voctoweb_filename_base
                 + ".thumbnails.vtt",
-                "description": description,
+                "description": "\n\n".join(description),
                 "date": self.t.date,
                 "persons": self.t.people,
                 "tags": self.t.voctoweb_tags,
