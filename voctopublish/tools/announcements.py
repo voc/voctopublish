@@ -21,7 +21,7 @@ def _replace_special_chars(maybe_string):
         "ü": "ue",
         "ẞ": "Ss",
     }.items():
-        string.replace(search, replace)
+        string = string.replace(search, replace)
     return sub(r"[^A-Za-z0-9]+", "", string)
 
 
