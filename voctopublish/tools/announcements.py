@@ -9,6 +9,22 @@ class EmptyAnnouncementMessage(Exception):
     pass
 
 
+def _replace_special_chars(maybe_string):
+    string = str(maybe_string)
+    for search, replace in {
+        "Ä": "Ae",
+        "Ö": "Oe",
+        "Ü": "Ue",
+        "ß": "ss",
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "ẞ": "Ss",
+    }.items():
+        string.replace(search, replace)
+    return sub(r"[^A-Za-z0-9]+", "", string)
+
+
 def make_message(ticket, config, max_length=None, override_url_length=None):
     if max_length is None:
         # if max_length is not set, set it to something very big here.
@@ -45,7 +61,7 @@ def make_message(ticket, config, max_length=None, override_url_length=None):
     for tag in ticket.publishing_tags:
         if tag is None:
             continue
-        tag = sub(r"[^A-Za-z0-9]+", "", str(tag))
+        tag = _replace_special_chars(tag)
         if tag.isdigit():
             continue
         if len(message) < (max_length - 2 - len(tag)):
