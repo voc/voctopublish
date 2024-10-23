@@ -357,6 +357,14 @@ class YoutubeAPI:
 
         video = upload.json()
 
+        self.generate_and_upload_thumbnail(video["id"])
+
+        youtube_url = "https://www.youtube.com/watch?v=" + video["id"]
+        LOG.info("successfully uploaded video as %s", youtube_url)
+
+        return video["id"]
+
+    def generate_and_upload_thumbnail(self, video_id):
         outjpg = os.path.join(
             self.t.publishing_path, self.t.fahrplan_id + "_youtube.jpg"
         )
@@ -375,12 +383,7 @@ class YoutubeAPI:
                 "Could not scale thumbnail: " + r.decode("utf-8")
             ) from e_
 
-        YoutubeAPI.update_thumbnail(self.accessToken, video["id"], outjpg)
-
-        youtube_url = "https://www.youtube.com/watch?v=" + video["id"]
-        LOG.info("successfully uploaded video as %s", youtube_url)
-
-        return video["id"]
+        YoutubeAPI.update_thumbnail(self.accessToken, video_id, outjpg)
 
     def _build_title(self, lang=None):
         """
