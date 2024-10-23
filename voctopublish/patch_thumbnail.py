@@ -44,21 +44,21 @@ except IndexError:
 
 try:
     MY_PATH = os.path.abspath(os.path.dirname(__file__))
-    POSSIBLE_config_PATHS = [
-        os.getenv("VOCTOPUBLISH_config", ""),
+    POSSIBLE_CONFIG_PATHS = [
+        os.getenv("VOCTOPUBLISH_CONFIG", ""),
         os.path.expanduser("~/voctopublish.conf"),
         os.path.join(MY_PATH, "voctopublish.conf"),
         os.path.join(MY_PATH, "client.conf"),
     ]
 
-    for path in POSSIBLE_config_PATHS:
+    for path in POSSIBLE_CONFIG_PATHS:
         if path:
             if os.path.isfile(path):
                 my_config_path = path
                 break
     else:
         raise FileNotFoundError(
-            f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_config_PATHS)}'
+            f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
         )
 
     with open(my_config_path) as f:
