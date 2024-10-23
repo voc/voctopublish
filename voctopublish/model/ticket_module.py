@@ -162,7 +162,7 @@ class PublishingTicket(Ticket):
         # recording ticket properties
         self.language = self._get_str("Record.Language", optional=True)
         if self.language is None:
-            self.language = self._validate("Fahrplan.Language")
+            self.language = self._get_str("Fahrplan.Language")
         self.languages = {
             int(k.split(".")[-1]): self._get_str(k)
             for k in self._tracker_ticket
