@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import socket
 from sys import argv
 
 try:
