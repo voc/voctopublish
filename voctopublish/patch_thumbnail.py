@@ -83,7 +83,7 @@ try:
     properties = c3tt.get_ticket_properties(TRACKER_ID)
     ticket = PublishingTicket(properties, TRACKER_ID, config)
 except Exception:
-    LOG.exception("could not get ticket from tracker")
+    LOG.exception("could not get ticket from tracker, are you sure you're using the *tracker id* of the master encoding?")
     exit(1)
 
 if not ticket.master:
