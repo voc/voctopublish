@@ -63,7 +63,7 @@ def _send_bluesky_post(message, config):
             }
         )
 
-    for url in _parse_tags(message):
+    for url in _parse_hashtags(message):
         post["facets"].append(
             {
                 "features": [
