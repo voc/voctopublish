@@ -259,10 +259,11 @@ class YoutubeAPI:
                 ).language,
             },
             "status": {
-                "privacyStatus": self.t.youtube_privacy,
                 "embeddable": True,
-                "publicStatsViewable": True,
                 "license": license,
+                "privacyStatus": self.t.youtube_privacy,
+                "publicStatsViewable": True,
+                "selfDeclaredMadeForKids": False,
             },
             "recordingDetails": {
                 "recordingDate": self.t.date,
