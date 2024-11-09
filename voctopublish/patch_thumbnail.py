@@ -12,11 +12,10 @@ try:
 except ImportError:
     from rtoml import load as toml_load
 
-from c3tt_rpc_client import C3TTClient
-from c3tt_rpc_client.exceptions import C3TTException
-
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
+from c3tt_rpc_client import C3TTClient
+from c3tt_rpc_client.exceptions import C3TTException
 from model.ticket_module import PublishingTicket
 from tools.thumbnails import ThumbnailGenerator
 
@@ -83,7 +82,9 @@ try:
     properties = c3tt.get_ticket_properties(TRACKER_ID)
     ticket = PublishingTicket(properties, TRACKER_ID, config)
 except Exception:
-    LOG.exception("could not get ticket from tracker, are you sure you're using the *tracker id* of the master encoding?")
+    LOG.exception(
+        "could not get ticket from tracker, are you sure you're using the *tracker id* of the master encoding?"
+    )
     exit(1)
 
 if not ticket.master:
