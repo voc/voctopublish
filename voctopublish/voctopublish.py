@@ -22,6 +22,7 @@ import socket
 import subprocess
 import sys
 import urllib.request
+from time import sleep
 
 try:
     # python 3.11
@@ -663,42 +664,47 @@ class PublisherException(Exception):
     pass
 
 
-if __name__ == "__main__":
-    try:
-        w = Worker()
-    except Exception as e:
-        logging.error(e)
-        logging.exception(e)
-        sys.exit(-1)
-
-    try:
-        w.get_ticket_from_tracker()
-    except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        w.c3tt.set_ticket_failed(w.ticket_id, "%s: %s" % (exc_type.__name__, e))
+def process_single_ticket():
+    w = Worker()
+    w.get_ticket_from_tracker()
 
     if w.ticket:
-        if w.worker_type == "releasing":
-            try:
+        try:
+            if w.worker_type == "releasing":
                 w.publish()
-            except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                w.c3tt.set_ticket_failed(w.ticket_id, "%s: %s" % (exc_type.__name__, e))
-                logging.exception(e)
-                sys.exit(-1)
-        elif w.worker_type == "recording":
-            try:
+            elif w.worker_type == "recording":
                 w.download()
-            except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                w.c3tt.set_ticket_failed(w.ticket_id, "%s: %s" % (exc_type.__name__, e))
-                logging.exception(e)
-                sys.exit(-1)
-        else:
-            logging.error(f"unknown worker type {w.worker_type}")
-            w.c3tt.set_ticket_failed(
-                w.ticket_id, f"unknown worker ticket type {w.worker_type}"
-            )
-            sys.exit(-1)
-    else:
+            else:
+                raise PublisherException(f"unknown worker type {w.worker_type}")
+            return True
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            w.c3tt.set_ticket_failed(w.ticket_id, f"{exc_type.__name__}: {e}")
+            logging.exception(f"could not process ticket {w.ticket_id}")
+    return False
+
+
+if __name__ == "__main__":
+    run_mode = CONFIG["general"].get("run_mode", "single")
+
+    if run_mode == "loop_until_empty" or run_mode == "loop_forever":
+        while True:
+            have_processed_ticket = process_single_ticket()
+            if have_processed_ticket:
+                # if we have processed a ticket, sleep a short time
+                # and then try to process the next ticket
+                sleep(2)
+            elif run_mode == "loop_forever":
+                # no tickets processed right now, so wait longer
+                sleep(30)
+            else:
+                # no tickets processed right now, so we exit cleanly
+                sys.exit(0)
+
+    elif run_mode == "single":
+        process_single_ticket()
         sys.exit(0)
+
+    else:
+        logging.error(f"unknown run_mode {run_mode}")
+        sys.exit(1)
