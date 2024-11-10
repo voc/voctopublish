@@ -49,6 +49,19 @@ POSSIBLE_CONFIG_PATHS = [
     os.path.join(MY_PATH, "client.conf"),
 ]
 
+for path in POSSIBLE_CONFIG_PATHS:
+    if path:
+        if os.path.isfile(path):
+            my_config_path = path
+            break
+else:
+    raise FileNotFoundError(
+        f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
+    )
+
+with open(my_config_path) as f:
+    CONFIG = toml_load(f.read())
+
 
 class Worker:
     """
@@ -60,19 +73,6 @@ class Worker:
         self.ticket = None
         self.ticket_id = None
         self.thumbs = None
-
-        for path in POSSIBLE_CONFIG_PATHS:
-            if path:
-                if os.path.isfile(path):
-                    my_config_path = path
-                    break
-        else:
-            raise FileNotFoundError(
-                f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
-            )
-
-        with open(my_config_path) as f:
-            self.config = toml_load(f.read())
 
         # set up logging
         logging.addLevelName(
@@ -92,7 +92,7 @@ class Worker:
         self.logger = logging.getLogger()
 
         sh = logging.StreamHandler(sys.stdout)
-        if self.config["general"]["debug"]:
+        if CONFIG["general"]["debug"]:
             formatter = logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s"
             )
@@ -103,7 +103,7 @@ class Worker:
         self.logger.addHandler(sh)
         self.logger.setLevel(logging.DEBUG)
 
-        level = self.config["general"]["debug"]
+        level = CONFIG["general"]["debug"]
         if level == "info":
             self.logger.setLevel(logging.INFO)
         elif level == "warning":
@@ -113,7 +113,7 @@ class Worker:
         elif level == "debug":
             self.logger.setLevel(logging.DEBUG)
 
-        self.worker_type = self.config["general"]["worker_type"]
+        self.worker_type = CONFIG["general"]["worker_type"]
         if self.worker_type == "releasing":
             self.ticket_type = "encoding"
             self.to_state = "releasing"
@@ -124,17 +124,17 @@ class Worker:
             logging.error("Unknown worker type " + self.worker_type)
             raise PublisherException("Unknown worker type " + self.worker_type)
 
-        self.host = self.config["C3Tracker"].get("host", "").strip()
+        self.host = CONFIG["C3Tracker"].get("host", "").strip()
         if not self.host:
             self.host = socket.getfqdn()
 
         logging.debug("creating C3TTClient")
         try:
             self.c3tt = C3TTClient(
-                self.config["C3Tracker"]["url"],
-                self.config["C3Tracker"]["group"],
+                CONFIG["C3Tracker"]["url"],
+                CONFIG["C3Tracker"]["group"],
                 self.host,
-                self.config["C3Tracker"]["secret"],
+                CONFIG["C3Tracker"]["secret"],
             )
         except Exception as e_:
             raise PublisherException(
@@ -177,7 +177,7 @@ class Worker:
                     "Output path is not writable (%s)" % self.ticket.publishing_path
                 )
 
-        self.thumbs = ThumbnailGenerator(self.ticket, self.config)
+        self.thumbs = ThumbnailGenerator(self.ticket, CONFIG)
         if not self.thumbs.exists and (
             (self.ticket.voctoweb_enable and self.ticket.mime_type.startswith("video"))
             or (self.ticket.youtube_enable and self.ticket.youtube_enable)
@@ -208,7 +208,7 @@ class Worker:
         rclone = None
         if self.ticket.rclone_enable:
             if self.ticket.master or not self.ticket.rclone_only_master:
-                rclone = RCloneClient(self.ticket, self.config)
+                rclone = RCloneClient(self.ticket, CONFIG)
                 ret = rclone.upload()
                 if ret not in (0, 9):
                     raise PublisherException(f"rclone failed with exit code {ret}")
@@ -228,7 +228,7 @@ class Worker:
             if self.ticket.master or not self.ticket.webhook_only_master:
                 result = webhook.send(
                     self.ticket,
-                    self.config,
+                    CONFIG,
                     getattr(self, "voctoweb_filename", None),
                     getattr(self, "voctoweb_language", ticket.language),
                     rclone,
@@ -251,19 +251,19 @@ class Worker:
 
         # Twitter
         if self.ticket.twitter_enable and self.ticket.master:
-            twitter.send_tweet(self.ticket, self.config)
+            twitter.send_tweet(self.ticket, CONFIG)
 
         # Mastodon
         if self.ticket.mastodon_enable and self.ticket.master:
-            mastodon.send_toot(self.ticket, self.config)
+            mastodon.send_toot(self.ticket, CONFIG)
 
         # Bluesky
         if self.ticket.bluesky_enable and self.ticket.master:
-            bluesky.send_post(self.ticket, self.config)
+            bluesky.send_post(self.ticket, CONFIG)
 
         # Google Chat (former Hangouts Chat)
         if self.ticket.googlechat_webhook_url and self.ticket.master:
-            googlechat.send_chat_message(self.ticket, self.config)
+            googlechat.send_chat_message(self.ticket, CONFIG)
 
         logging.debug("#done")
 
@@ -287,11 +287,9 @@ class Worker:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
             if self.ticket_type == "encoding":
-                self.ticket = PublishingTicket(
-                    ticket_properties, ticket_id, self.config
-                )
+                self.ticket = PublishingTicket(ticket_properties, ticket_id, CONFIG)
             elif self.ticket_type == "recording":
-                self.ticket = RecordingTicket(ticket_properties, ticket_id, self.config)
+                self.ticket = RecordingTicket(ticket_properties, ticket_id, CONFIG)
             else:
                 logging.info(
                     "Unknown ticket type "
@@ -313,11 +311,11 @@ class Worker:
             vw = VoctowebClient(
                 self.ticket,
                 self.thumbs,
-                self.config["voctoweb"]["api_key"],
-                self.config["voctoweb"]["api_url"],
-                self.config["voctoweb"]["ssh_host"],
-                self.config["voctoweb"]["ssh_port"],
-                self.config["voctoweb"]["ssh_user"],
+                CONFIG["voctoweb"]["api_key"],
+                CONFIG["voctoweb"]["api_url"],
+                CONFIG["voctoweb"]["ssh_host"],
+                CONFIG["voctoweb"]["ssh_port"],
+                CONFIG["voctoweb"]["ssh_user"],
             )
         except Exception as e_:
             raise PublisherException(
@@ -510,9 +508,9 @@ class Worker:
         yt = YoutubeAPI(
             self.ticket,
             self.thumbs,
-            self.config,
-            self.config["youtube"]["client_id"],
-            self.config["youtube"]["secret"],
+            CONFIG,
+            CONFIG["youtube"]["client_id"],
+            CONFIG["youtube"]["secret"],
         )
         yt.setup(self.ticket.youtube_token)
 
@@ -527,15 +525,15 @@ class Worker:
         # now, after we reported everything back to the tracker, we try to add the videos to our own playlists
         # second YoutubeAPI instance for playlist management at youtube.com
         if (
-            "playlist_token" in self.config["youtube"]
-            and self.ticket.youtube_token != self.config["youtube"]["playlist_token"]
+            "playlist_token" in CONFIG["youtube"]
+            and self.ticket.youtube_token != CONFIG["youtube"]["playlist_token"]
         ):
             yt_voctoweb = YoutubeAPI(
                 self.ticket,
-                self.config["youtube"]["client_id"],
-                self.config["youtube"]["secret"],
+                CONFIG["youtube"]["client_id"],
+                CONFIG["youtube"]["secret"],
             )
-            yt_voctoweb.setup(self.config["youtube"]["playlist_token"])
+            yt_voctoweb.setup(CONFIG["youtube"]["playlist_token"])
         else:
             logging.info("using same token for publishing and playlist management")
             yt_voctoweb = yt
