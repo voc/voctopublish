@@ -6,6 +6,15 @@ debug = "info"
 # except for C3Tracker
 worker_type = "releasing"
 
+# operation mode must be one of "loop_until_empty", "loop_forever" or
+# "single" (default).
+#   loop_until_empty: process all available tickets until none are available,
+#                     then exit cleanly
+#   loop_forever: loop forever. wait two seconds if a ticket was processed,
+#                 30 seconds if no ticket was found
+#   single: process a single ticket, then exit.
+run_mode = "single"
+
 [C3Tracker]
 group = "<group>"
 #only set host if you don"t wont to use local machine name
@@ -23,7 +32,6 @@ wget = ["wget", "-q", "-O", "--TARGETPATH--", "--", "--DOWNLOADURL--"]
 # property is missing in a ticket. If "yes", using the service is enabled,
 # otherwise it"s disabled.
 [voctoweb]
-enable_default = false
 # e.g. https://exmaple.com/api/ - with trailing slash
 api_url = "<voctoweb api url>"
 api_key = "<voctoweb key>"
@@ -36,29 +44,30 @@ ssh_port = "<ssh port on the release host>"
 ssh_user = "<ssh user on the release host>"
 
 [youtube]
-enable_default = false
 secret = "<youtube-api-secret>"
 client_id = "<youtube-client-id>"
 
 [twitter]
-enable_default = false
 token = "<user token>"
 token_secret = "<user secret>"
 consumer_key = "<consumer key>"
 consumer_secret = "<consumer secret>"
 
 [mastodon]
-enable_default = false
 api_base_url = "https://mastodon.social" # no trailing slash
 email = "<loginemail>"
 password = "<password>"
 
 [bluesky]
-enable_default = false
 username = "<username>"
 app_password = "<app password>"
 
 [rclone]
-enable_default = false
 exe_path = "/path/to/rclone/binary"
 config_path = "/path/to/rclone/config"
+
+[defaults]
+# For some properties, you can define defaults which get used if the
+# property is not found in the ticket itself. Note that the property being
+# empty in the ticket does also trigger a fallback to the default.
+"Publishing.Twitter.Enable" = false
