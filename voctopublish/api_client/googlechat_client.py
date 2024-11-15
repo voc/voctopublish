@@ -62,9 +62,23 @@ def send_chat_message(ticket, config):
                     }
                 )
 
-    if not buttons:
-        LOG.warning("GoogleChat: No buttons for videos, not sending message")
-        return
+    if ticket.googlechat_webhook_extralink:
+        if '|' not in ticket.googlechat_webhook_extralink:
+            link_url = ticket.googlechat_webhook_extralink
+            link_text = 'Link'
+        else:
+            link_text, link_url = ticket.googlechat_webhook_extralink.split('|', 1)
+
+        buttons.append(
+            {
+                "text": link_text,
+                "onClick": {
+                    "openLink": {
+                        "url": link_url,
+                    },
+                },
+            }
+        )
 
     if ticket.url:
         buttons.append(

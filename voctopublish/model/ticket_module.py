@@ -404,6 +404,9 @@ class PublishingTicket(Ticket):
         self.googlechat_webhook_url = self._get_str(
             "Publishing.Googlechat.Webhook", optional=True, try_default=True
         )
+        self.googlechat_webhook_extralink = self._get_str(
+            "Publishing.Googlechat.ExtraLink", optional=True, try_default=True
+        )
 
 
 class TicketException(Exception):
