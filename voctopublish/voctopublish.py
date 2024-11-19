@@ -198,9 +198,10 @@ class Worker:
                 and self.ticket.youtube_update != "force"
                 and len(self.ticket.languages) <= 1
             ):
-                if not self.ticket.youtube_update != "ignore":
+                logging.debug(f"{self.ticket.youtube_urls=} {self.ticket.youtube_update=}")
+                if self.ticket.youtube_update != "ignore":
                     raise PublisherException(
-                        "YouTube URLs already exist in ticket, wont publish to youtube"
+                        "YouTube URLs already exist in ticket, wont publish to YouTube."
                     )
             else:
                 self._publish_to_youtube()
