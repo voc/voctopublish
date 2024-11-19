@@ -69,7 +69,7 @@ logging.addLevelName(logging.INFO, "\033[1;32mINFO\033[1;0m")
 logging.addLevelName(logging.DEBUG, "\033[1;85mDEBUG\033[1;0m")
 
 logging.basicConfig(
-    level=CONFIG["general"]["debug"],
+    level=CONFIG["general"]["debug"].upper(),
     format="%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s",
 )
 
