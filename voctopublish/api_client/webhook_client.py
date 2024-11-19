@@ -69,7 +69,9 @@ def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
     r = None
     result = None
     try:
-        content = _get_json(ticket, config, voctoweb_filename, voctoweb_language, rclone)
+        content = _get_json(
+            ticket, config, voctoweb_filename, voctoweb_language, rclone
+        )
         LOG.debug(f"{content=}")
 
         kwargs = {

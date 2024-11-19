@@ -63,11 +63,11 @@ def send_chat_message(ticket, config):
                 )
 
     if ticket.googlechat_webhook_extralink:
-        if '|' not in ticket.googlechat_webhook_extralink:
+        if "|" not in ticket.googlechat_webhook_extralink:
             link_url = ticket.googlechat_webhook_extralink
-            link_text = 'Link'
+            link_text = "Link"
         else:
-            link_text, link_url = ticket.googlechat_webhook_extralink.split('|', 1)
+            link_text, link_url = ticket.googlechat_webhook_extralink.split("|", 1)
 
         buttons.append(
             {

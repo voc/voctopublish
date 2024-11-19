@@ -63,6 +63,16 @@ else:
 with open(my_config_path) as f:
     CONFIG = toml_load(f.read())
 
+logging.addLevelName(logging.WARNING, "\033[1;33mWARN\033[1;0m")
+logging.addLevelName(logging.ERROR, "\033[1;41mERROR\033[1;0m")
+logging.addLevelName(logging.INFO, "\033[1;32mINFO\033[1;0m")
+logging.addLevelName(logging.DEBUG, "\033[1;85mDEBUG\033[1;0m")
+
+logging.basicConfig(
+    level=CONFIG["general"]["debug"],
+    format="%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s",
+)
+
 
 class Worker:
     """
@@ -75,45 +85,6 @@ class Worker:
         self.ticket_id = None
         self.thumbs = None
 
-        # set up logging
-        logging.addLevelName(
-            logging.WARNING,
-            "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.WARNING),
-        )
-        logging.addLevelName(
-            logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR)
-        )
-        logging.addLevelName(
-            logging.INFO, "\033[1;32m%s\033[1;0m" % logging.getLevelName(logging.INFO)
-        )
-        logging.addLevelName(
-            logging.DEBUG, "\033[1;85m%s\033[1;0m" % logging.getLevelName(logging.DEBUG)
-        )
-
-        self.logger = logging.getLogger()
-
-        sh = logging.StreamHandler(sys.stdout)
-        if CONFIG["general"]["debug"]:
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s {%(filename)s:%(lineno)d} %(message)s"
-            )
-        else:
-            formatter = logging.Formatter("%(asctime)s - %(message)s")
-
-        sh.setFormatter(formatter)
-        self.logger.addHandler(sh)
-        self.logger.setLevel(logging.DEBUG)
-
-        level = CONFIG["general"]["debug"]
-        if level == "info":
-            self.logger.setLevel(logging.INFO)
-        elif level == "warning":
-            self.logger.setLevel(logging.WARNING)
-        elif level == "error":
-            self.logger.setLevel(logging.ERROR)
-        elif level == "debug":
-            self.logger.setLevel(logging.DEBUG)
-
         self.worker_type = CONFIG["general"]["worker_type"]
         if self.worker_type == "releasing":
             self.ticket_type = "encoding"
@@ -122,14 +93,15 @@ class Worker:
             self.ticket_type = "recording"
             self.to_state = "recording"
         else:
-            logging.error("Unknown worker type " + self.worker_type)
             raise PublisherException("Unknown worker type " + self.worker_type)
+
+        self.logger = logging.getLogger(f"{self.worker_type}_worker")
 
         self.host = CONFIG["C3Tracker"].get("host", "").strip()
         if not self.host:
             self.host = socket.getfqdn()
 
-        logging.debug("creating C3TTClient")
+        self.logger.debug("creating C3TTClient")
         try:
             self.c3tt = C3TTClient(
                 CONFIG["C3Tracker"]["url"],
@@ -147,7 +119,7 @@ class Worker:
         Decide based on the information provided by the tracker where to publish.
         """
         if not self.ticket:
-            logging.debug("not ticket, returning")
+            self.logger.debug("not ticket, returning")
             return
 
         # check source file and filesystem permissions
@@ -186,19 +158,21 @@ class Worker:
             self.thumbs.generate()
 
         # voctoweb
-        logging.debug(f"#voctoweb {self.ticket.voctoweb_enable}")
+        self.logger.debug(f"#voctoweb {self.ticket.voctoweb_enable}")
         if self.ticket.voctoweb_enable:
             self._publish_to_voctoweb()
 
         # YouTube
-        logging.debug(f"#youtube {self.ticket.youtube_enable}")
+        self.logger.debug(f"#youtube {self.ticket.youtube_enable}")
         if self.ticket.youtube_enable:
             if (
                 self.ticket.has_youtube_url
                 and self.ticket.youtube_update != "force"
                 and len(self.ticket.languages) <= 1
             ):
-                logging.debug(f"{self.ticket.youtube_urls=} {self.ticket.youtube_update=}")
+                self.logger.debug(
+                    f"{self.ticket.youtube_urls=} {self.ticket.youtube_update=}"
+                )
                 if self.ticket.youtube_update != "ignore":
                     raise PublisherException(
                         "YouTube URLs already exist in ticket, wont publish to YouTube."
@@ -206,7 +180,7 @@ class Worker:
             else:
                 self._publish_to_youtube()
 
-        logging.debug(f"#rclone {self.ticket.rclone_enable}")
+        self.logger.debug(f"#rclone {self.ticket.rclone_enable}")
         rclone = None
         if self.ticket.rclone_enable:
             if self.ticket.master or not self.ticket.rclone_only_master:
@@ -222,7 +196,7 @@ class Worker:
                     },
                 )
             else:
-                logging.debug(
+                self.logger.debug(
                     "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
                 )
 
@@ -267,24 +241,24 @@ class Worker:
         if self.ticket.googlechat_webhook_url and self.ticket.master:
             googlechat.send_chat_message(self.ticket, CONFIG)
 
-        logging.debug("#done")
+        self.logger.debug("#done")
 
     def get_ticket_from_tracker(self):
         """
         Request the next unassigned ticket for the configured states
         :return: a ticket object or None in case no ticket is available
         """
-        logging.info("requesting ticket from tracker")
+        self.logger.info("requesting ticket from tracker")
         ticket_meta = self.c3tt.assign_next_unassigned_for_state(
             self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
         )
         if ticket_meta:
             ticket_id = ticket_meta["id"]
             self.ticket_id = ticket_id
-            logging.info("Ticket ID:" + str(ticket_id))
+            self.logger.info("Ticket ID:" + str(ticket_id))
             try:
                 ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
-                logging.debug("Ticket Properties: " + str(ticket_properties))
+                self.logger.debug("Ticket Properties: " + str(ticket_properties))
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
@@ -293,14 +267,14 @@ class Worker:
             elif self.ticket_type == "recording":
                 self.ticket = RecordingTicket(ticket_properties, ticket_id, CONFIG)
             else:
-                logging.info(
+                self.logger.info(
                     "Unknown ticket type "
                     + self.ticket_type
                     + " aborting, please check config "
                 )
                 raise PublisherException("Unknown ticket type " + self.ticket_type)
         else:
-            logging.info(
+            self.logger.info(
                 "No ticket of type " + self.ticket_type + " for state " + self.to_state
             )
 
@@ -308,7 +282,7 @@ class Worker:
         """
         Create an event on a voctoweb instance. This includes creating a recording for each media file.
         """
-        logging.info("publishing to voctoweb")
+        self.logger.info("publishing to voctoweb")
         try:
             vw = VoctowebClient(
                 self.ticket,
@@ -326,22 +300,22 @@ class Worker:
 
         if self.ticket.master:
             # if this is master ticket we need to check if we need to create an event on voctoweb
-            logging.debug("this is a master ticket")
+            self.logger.debug("this is a master ticket")
             if self.ticket.voctoweb_event_id or self.ticket.recording_id:
-                logging.debug("ticket has a voctoweb_event_id or recording_id")
+                self.logger.debug("ticket has a voctoweb_event_id or recording_id")
                 # ticket has a recording id or voctoweb event id. We assume the event exists on voctoweb
             else:
                 # ticket has no recording id therefore we create the event on voctoweb
                 r = vw.create_or_update_event()
                 if r.status_code in [200, 201]:
-                    logging.info("new event created")
+                    self.logger.info("new event created")
                     # generate thumbnails and a visual timeline for video releases (will not overwrite existing files)
                     if self.ticket.mime_type.startswith("video"):
                         vw.generate_thumbs()
                         vw.upload_thumbs()
                         vw.generate_timelens()
                         vw.upload_timelens()
-                    logging.debug("response: " + str(r.json()))
+                    self.logger.debug("response: " + str(r.json()))
                     try:
                         # TODO only set recording id when new recording was created, and not when it was only updated
                         self.c3tt.set_ticket_properties(
@@ -355,7 +329,7 @@ class Worker:
                 elif r.status_code == 422:
                     # If this happens tracker and voctoweb are out of sync regarding the event id
                     # TODO write voctoweb event_id to ticket properties --Andi
-                    logging.warning("event already exists => publishing")
+                    self.logger.warning("event already exists => publishing")
                 else:
                     raise PublisherException(
                         "Voctoweb returned an error while creating an event: "
@@ -366,7 +340,9 @@ class Worker:
 
             # in case of a multi language release we create here the single language files
             if len(self.ticket.languages) > 1:
-                logging.info("remuxing multi-language video into single audio files")
+                self.logger.info(
+                    "remuxing multi-language video into single audio files"
+                )
                 self._mux_to_single_language(vw)
 
         # set hq filed based on ticket encoding profile slug
@@ -422,7 +398,7 @@ class Worker:
         This is only implemented for the h264 hd files as we only do it for them
         :return:
         """
-        logging.debug("Languages: " + str(self.ticket.languages))
+        self.logger.debug("Languages: " + str(self.ticket.languages))
         for language in self.ticket.languages:
             out_filename = (
                 self.ticket.fahrplan_id
@@ -440,7 +416,9 @@ class Worker:
                 + self.ticket.profile_extension
             )
 
-            logging.info("remuxing " + self.ticket.local_filename + " to " + out_path)
+            self.logger.info(
+                "remuxing " + self.ticket.local_filename + " to " + out_path
+            )
 
             try:
                 subprocess.call(
@@ -505,7 +483,7 @@ class Worker:
         """
         Publish the file to YouTube.
         """
-        logging.debug("publishing to youtube")
+        self.logger.debug("publishing to youtube")
 
         yt = YoutubeAPI(
             self.ticket,
@@ -537,7 +515,7 @@ class Worker:
             )
             yt_voctoweb.setup(CONFIG["youtube"]["playlist_token"])
         else:
-            logging.info("using same token for publishing and playlist management")
+            self.logger.info("using same token for publishing and playlist management")
             yt_voctoweb = yt
 
         for url in youtube_urls:
@@ -555,7 +533,7 @@ class Worker:
             self.ticket.fuse_path, self.ticket.fuse_room, self.ticket.fahrplan_id
         )
         file = os.path.join(path, "uncut.ts")
-        logging.info(
+        self.logger.info(
             "Downloading input file from: " + self.ticket.download_url + " to " + file
         )
 
@@ -563,12 +541,11 @@ class Worker:
             try:
                 os.makedirs(path)
             except Exception as e:
-                logging.error(e)
-                logging.exception(e)
+                self.logger.exception(f"could not create directory path {path}")
                 raise PublisherException(e)
 
         if os.path.exists(file) and not self.ticket.redownload_enabled:
-            logging.error(
+            self.logger.error(
                 'video file "' + path + '" already exists, please remove file'
             )
             raise PublisherException("video file already exists, please remove file")
@@ -576,7 +553,7 @@ class Worker:
         url = self.ticket.download_url
         url_decoded = urllib.parse.unquote(url)
         if len(url) > len(url_decoded):
-            logging.warning(
+            self.logger.warning(
                 f"Download URL {url} was urlencoded, using {url_decoded} instead"
             )
             url = url_decoded
@@ -603,7 +580,7 @@ class Worker:
                 self.ticket_id,
                 "unknown language, please set language in the recording ticket to proceed",
             )
-            logging.error(
+            self.logger.error(
                 "unknown language, please set language in the recording ticket to proceed"
             )
 
@@ -627,7 +604,7 @@ class Worker:
         this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
         :return:
         """
-        logging.info("Downloading file from: " + source)
+        self.logger.info("Downloading file from: " + source)
         if self.ticket.download_command in (None, True, False):
             with open(target, "wb") as fh:
                 with urllib.request.urlopen(
@@ -649,16 +626,16 @@ class Worker:
                     command.append(target)
                 else:
                     command.append(part)
-            logging.debug(f"download command is: {command}")
+            self.logger.debug(f"download command is: {command}")
             out = None
             try:
                 out = subprocess.check_output(command)
             except subprocess.CalledProcessError as e:
-                logging.exception("could not download file")
-                logging.error(out)
+                self.logger.exception("could not download file")
+                self.logger.error(out)
                 raise PublisherException from e
             else:
-                logging.debug(out)
+                self.logger.debug(out)
 
 
 class PublisherException(Exception):
@@ -681,7 +658,7 @@ def process_single_ticket():
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             w.c3tt.set_ticket_failed(w.ticket_id, f"{exc_type.__name__}: {e}")
-            logging.exception(f"could not process ticket {w.ticket_id}")
+            self.logger.exception(f"could not process ticket {w.ticket_id}")
     return False
 
 
