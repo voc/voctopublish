@@ -231,7 +231,7 @@ class Worker:
                     self.ticket,
                     CONFIG,
                     getattr(self, "voctoweb_filename", None),
-                    getattr(self, "voctoweb_language", ticket.language),
+                    getattr(self, "voctoweb_language", self.ticket.language),
                     rclone,
                 )
                 if (
