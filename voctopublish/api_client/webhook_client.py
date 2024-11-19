@@ -125,7 +125,7 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
                 ticket.voctoweb_filename_base + "_preview.jpg",
             ),
             "enabled": True,
-            "format": self.folder,
+            "format": ticket.folder,
             "frontend_url": "{}/v/{}".format(
                 config["voctoweb"]["frontend_url"],
                 ticket.slug,
