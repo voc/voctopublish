@@ -658,7 +658,7 @@ def process_single_ticket():
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             w.c3tt.set_ticket_failed(w.ticket_id, f"{exc_type.__name__}: {e}")
-            self.logger.exception(f"could not process ticket {w.ticket_id}")
+            logging.exception(f"could not process ticket {w.ticket_id}")
     return False
 
 
