@@ -310,11 +310,6 @@ class Worker:
                 if r.status_code in [200, 201]:
                     self.logger.info("new event created")
                     # generate thumbnails and a visual timeline for video releases (will not overwrite existing files)
-                    if self.ticket.mime_type.startswith("video"):
-                        vw.generate_thumbs()
-                        vw.upload_thumbs()
-                        vw.generate_timelens()
-                        vw.upload_timelens()
                     self.logger.debug("response: " + str(r.json()))
                     try:
                         # TODO only set recording id when new recording was created, and not when it was only updated
@@ -337,6 +332,12 @@ class Worker:
                         + " - "
                         + str(r.text)
                     )
+            # generate thumbnails and timelens
+            if self.ticket.mime_type.startswith("video"):
+                vw.generate_thumbs()
+                vw.upload_thumbs()
+                vw.generate_timelens()
+                vw.upload_timelens()
 
             # in case of a multi language release we create here the single language files
             if len(self.ticket.languages) > 1:
