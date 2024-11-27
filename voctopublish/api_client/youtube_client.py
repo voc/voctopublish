@@ -314,23 +314,21 @@ class YoutubeAPI:
         LOG.debug(f"{r.headers=}")
 
         if 200 != r.status_code:
-            if 400 == r.status_code:
-                raise YouTubeException(
-                    r.json()["error"]["message"]
-                    + "\n"
-                    + r.text
-                    + "\n\n"
-                    + json.dumps(metadata, indent=2)
-                )
+            error_from_youtube = r.json().get("error", {}).get("message", None)
+            exception_message = []
+
+            if error_from_youtube:
+                exception_message.append(error_from_youtube)
             else:
-                raise YouTubeException(
-                    "Video creation failed with error-code %u: %s"
-                    % (r.status_code, r.text)
-                )
+                exception_message.append(f"Video creation failed with http status code {r.status_code}")
+            exception_message.append(r.text)
+            exception_message.append(json.dumps(metadata, indent=2))
+
+            raise YouTubeException("\n\n".join(exception_message))
 
         if "location" not in r.headers:
             raise YouTubeException(
-                "Video creation did not return a location-header to upload to: %s"
+                "Video creation did not return a location-header to upload to:\n%s"
                 % (r.headers,)
             )
 
@@ -460,7 +458,7 @@ class YoutubeAPI:
                 translation = self.translation_strings[lang]
                 language_name = self.lang_map[lang]
             else:
-                raise YouTubeException("language not defined in translation strings")
+                raise YouTubeException("language not defined in translation strings, got")
 
         return (
             string.replace("${translation}", translation)
@@ -563,19 +561,17 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             LOG.debug(metadata)
-            if 400 == r.status_code:
-                raise YouTubeException(
-                    r.json()["error"]["message"]
-                    + "\n"
-                    + r.text
-                    + "\n\n"
-                    + json.dumps(metadata, indent=2)
-                )
+            error_from_youtube = r.json().get("error", {}).get("message", None)
+            exception_message = []
+
+            if error_from_youtube:
+                exception_message.append(error_from_youtube)
             else:
-                raise YouTubeException(
-                    "Video update failed with error-code %u: %s"
-                    % (r.status_code, r.text)
-                )
+                exception_message.append(f"Video update failed with http status code {r.status_code}")
+            exception_message.append(r.text)
+            exception_message.append(json.dumps(metadata, indent=2))
+
+            raise YouTubeException("\n\n".join(exception_message))
         return r
 
     def add_to_playlists(self, video_id: str, playlist_ids):
@@ -611,7 +607,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                "Adding video to playlist failed with error-code %u: %s"
+                "Adding video to playlist failed with error-code %u\n\n%s"
                 % (r.status_code, r.text)
             )
 
@@ -638,7 +634,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                "Could not lookup playlist item ids, failed with error-code %u: %s"
+                "Could not lookup playlist item ids, failed with error-code %u\n\n%s"
                 % (r.status_code, r.text)
             )
 
@@ -666,7 +662,7 @@ class YoutubeAPI:
 
         if 204 != r.status_code:
             raise YouTubeException(
-                "Removing video from playlist failed with error-code %u: %s"
+                "Removing video from playlist failed with error-code %u\n\n%s"
                 % (r.status_code, r.text)
             )
 
@@ -694,7 +690,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                "Video update failed with error-code %u: %s" % (r.status_code, r.text)
+                "Video update failed with error-code %u\n\n%s" % (r.status_code, r.text)
             )
 
         LOG.info(f"Thumbnails for {video_id} updated")
@@ -718,7 +714,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                "Video add to playlist failed with error-code %u: %s"
+                "Video add to playlist failed with error-code %u\n\n%s"
                 % (r.status_code, r.text)
             )
 
@@ -749,14 +745,14 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                "fetching a fresh authToken failed with error-code %u: %s"
+                "fetching a fresh authToken failed with error-code %u\n\n%s"
                 % (r.status_code, r.text)
             )
 
         data = r.json()
         if "access_token" not in data:
             raise YouTubeException(
-                "fetching a fresh authToken did not return a access_token: %s" % r.text
+                "fetching a fresh authToken did not return a access_token\n\n%s" % r.text
             )
 
         LOG.info("successfully fetched Access-Token %s" % data["access_token"])
@@ -785,7 +781,7 @@ class YoutubeAPI:
 
         if 200 != r.status_code:
             raise YouTubeException(
-                "fetching channelID failed with error-code %u: %s"
+                "fetching channelID failed with error-code %u\n\n%s"
                 % (r.status_code, r.text)
             )
 
