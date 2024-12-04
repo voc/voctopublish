@@ -48,6 +48,9 @@ def make_message(ticket, config, max_length=None, override_url_length=None):
     if not targets:
         raise EmptyAnnouncementMessage()
 
+    if ticket.url:
+        urls.append(ticket.url)
+
     msg = " has been released on {}".format(" and ".join(targets))
 
     length_for_title = max_length - len(msg)
