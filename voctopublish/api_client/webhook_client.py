@@ -31,6 +31,7 @@ LOG = logging.getLogger("Webhook")
         "is_master": true,
         "fahrplan": {
             "conference": "democon",
+            "guid": "973b0236-3c1c-4bda-8c1b-1d51929d819e", # or null if not available
             "id": 123,
             "language": "eng",
             "slug": "my-super-cool-talk",
@@ -108,6 +109,7 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
         "is_master": ticket.master,
         "fahrplan": {
             "conference": ticket.acronym,
+            "guid": ticket.guid,
             "id": ticket.fahrplan_id,
             "language": language,
             "slug": ticket.slug,

@@ -340,9 +340,11 @@ class PublishingTicket(Ticket):
         else:
             self.voctoweb_enable = False
 
+        # guid is only required if voctoweb is enabled.
+        self.guid = self._get_str("Fahrplan.GUID", optional=not self.voctoweb_enable)
+
         # we will fill the following variables only if voctoweb is enabled
         if self.voctoweb_enable:
-            self.guid = self._get_str("Fahrplan.GUID")
             self.voctoweb_filename_base = self.fahrplan_id + "-" + self.guid
 
             self.mime_type = self._get_str("Publishing.Voctoweb.MimeType")
