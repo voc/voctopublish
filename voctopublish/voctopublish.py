@@ -33,7 +33,6 @@ except ImportError:
 import api_client.bluesky_client as bluesky
 import api_client.googlechat_client as googlechat
 import api_client.mastodon_client as mastodon
-import api_client.twitter_client as twitter
 import api_client.webhook_client as webhook
 from api_client.rclone_client import RCloneClient
 from api_client.voctoweb_client import VoctowebClient
@@ -224,10 +223,6 @@ class Worker:
                     )
 
         self.c3tt.set_ticket_done(self.ticket_id)
-
-        # Twitter
-        if self.ticket.twitter_enable and self.ticket.master:
-            twitter.send_tweet(self.ticket, CONFIG)
 
         # Mastodon
         if self.ticket.mastodon_enable and self.ticket.master:

@@ -65,7 +65,6 @@ class TestTicket(unittest.TestCase):
             "Publishing.Voctoweb.Thumbpath": "/static.media.ccc.de/events/test/2021",
             "Publishing.Voctoweb.Path": "/cdn.media.ccc.de/events/test/2021",
             "Publishing.Voctoweb.Slug": "test2021",
-            "Publishing.Twitter.Enable": "no",
             "Publishing.Mastodon.Enable": "yes",
         }
 

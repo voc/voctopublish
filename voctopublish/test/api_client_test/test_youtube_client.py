@@ -29,7 +29,6 @@ class TestYouTubeClient(unittest.TestCase):
             "Publishing.YouTube.Token": "TheToken",
             "Publishing.Voctoweb.EnableProfile": "no",
             "Publishing.Voctoweb.Enable": "no",
-            "Publishing.Twitter.Enable": "no",
             "Publishing.Mastodon.Enable": "no",
             "Encoding.Language": "eng",
         }

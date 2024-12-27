@@ -394,9 +394,6 @@ class PublishingTicket(Ticket):
             )
 
         # various announcement bots
-        self.twitter_enable = self._get_bool(
-            "Publishing.Twitter.Enable", optional=True, try_default=True
-        )
         self.mastodon_enable = self._get_bool(
             "Publishing.Mastodon.Enable", optional=True, try_default=True
         )
