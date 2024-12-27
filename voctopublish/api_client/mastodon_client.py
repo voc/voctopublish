@@ -64,7 +64,12 @@ def send_toot(ticket, config):
             access_token="mastodon_usercred.secret",
             api_base_url=config["mastodon"]["api_base_url"],
         )
-        mastodon.toot(message)
+        toot = mastodon.toot(message)
+        LOG.debug(toot)
+        return {
+            'id': toot['id'],
+            'uri': toot['uri'],
+        }
     except Exception as e_:
         # we don't care if tooting fails here.
         LOG.exception("Tooting failed")
