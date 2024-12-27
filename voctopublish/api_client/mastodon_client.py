@@ -64,7 +64,10 @@ def send_toot(ticket, config):
             access_token="mastodon_usercred.secret",
             api_base_url=config["mastodon"]["api_base_url"],
         )
-        toot = mastodon.toot(message)
+        toot = mastodon.status_post(
+            message,
+            language="en", # announcements are always in english
+        )
         LOG.debug(toot)
         return {
             'id': toot['id'],
