@@ -232,13 +232,7 @@ class PublishingTicket(Ticket):
             "Publishing.Thumbnail.PathOverride", optional=True
         )
 
-        self.publishing_tags = [
-            self.acronym,
-            self.track,
-            self.room,
-            self.date.split("-")[0],
-            *self._get_list("Publishing.Tags", optional=True),
-        ]
+        self.publishing_tags = self._get_list("Publishing.Tags", optional=True)
         self.license = self._get_str("Meta.License", optional=True, try_default=True)
 
         # youtube properties
@@ -293,6 +287,11 @@ class PublishingTicket(Ticket):
             )
 
             self.youtube_tags = [
+                self.acronym,
+                self.date.split("-")[0],
+                self.track,
+                self.room,
+                self.day,
                 *self._get_list("Publishing.YouTube.Tags", optional=True),
                 *self.publishing_tags,
             ]
@@ -355,13 +354,17 @@ class PublishingTicket(Ticket):
                 "Voctoweb.RecordingId.Master", optional=True
             )
             self.voctoweb_event_id = self._get_str("Voctoweb.EventId", optional=True)
+
+            # ATTENTION: the tag order here is really important. Do not change, without talking to voctoweb DEVs!
             self.voctoweb_tags = [
+                self.acronym,
                 self.fahrplan_id,
-                *self._get_list("Publishing.Voctoweb.Tags", optional=True),
+                self.date.split("-")[0],
+                self.track,
+                self.room, # TODO: do we really want the room in this position?
                 *self.publishing_tags,
+                *self._get_list("Publishing.Voctoweb.Tags", optional=True),
             ]
-            if self.day:
-                self.voctoweb_tags.append(f"Day {self.day}")
 
         # rclone properties
         self.rclone_enable = self._get_bool(
