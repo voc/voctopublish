@@ -25,7 +25,7 @@ def _replace_special_chars(maybe_string):
     return sub(r"[^A-Za-z0-9]+", "", string)
 
 
-def make_message(ticket, config, max_length=None, override_url_length=None):
+def make_message(ticket, config, max_length=None):
     if max_length is None:
         # if max_length is not set, set it to something very big here.
         # saves us a bunch of isinstance() calls below
@@ -71,12 +71,7 @@ def make_message(ticket, config, max_length=None, override_url_length=None):
             message += " #" + tag
 
     for url in urls:
-        if override_url_length:
-            url_len = override_url_length
-        else:
-            url_len = len(url)
-
-        if url_len <= (max_length - len(message)):
+        if len(url) <= (max_length - len(message)):
             message = message + " " + url
 
     LOG.info(f"{len(message)} chars: {message}")
