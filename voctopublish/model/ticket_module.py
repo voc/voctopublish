@@ -274,14 +274,6 @@ class PublishingTicket(Ticket):
                 "Publishing.YouTube.TranslationTitleSuffix", optional=True
             )
 
-            self.youtube_urls = {}
-            self.has_youtube_url = False
-            # check if this event has already been published to youtube
-            for key in ticket:
-                if key.lower().startswith("youtube."):
-                    self.has_youtube_url = True
-                    self.youtube_urls[key] = self._get_str(key)
-
             self.youtube_playlists = self._get_list(
                 "Publishing.YouTube.Playlists", optional=True
             )
@@ -330,6 +322,13 @@ class PublishingTicket(Ticket):
                         self.youtube_publish_at = datetime.now(
                             timezone.utc
                         ) + timedelta(**kwargs)
+        self.youtube_urls = {}
+        self.has_youtube_url = False
+        # check if this event has already been published to youtube
+        for key in ticket:
+            if key.lower().startswith("youtube."):
+                self.has_youtube_url = True
+                self.youtube_urls[key] = self._get_str(key)
 
         # voctoweb properties
         if self._get_bool(
