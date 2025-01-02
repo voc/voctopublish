@@ -524,26 +524,22 @@ class YoutubeAPI:
         i = 0
         depublished_urls = []
         props = {}
-        for lang in self.t.languages:
-            video_url = self.t._get_str(f"YouTube.Url{i}", optional=True)
-            if video_url:
-                try:
-                    video_id = video_url.split("=", 2)[1]
-                    self.update_metadata(
-                        video_id,
-                        {"id": video_id, "status": {"privacyStatus": "private"}},
-                    )
-                    LOG.info("depublished %s video track from %s" % (lang, video_url))
-                    depublished_urls.append(video_url)
-                    props[f"YouTube.Url{i}"] = ""
+        for prop, url in self.t.youtube_urls.items():
+            try:
+                video_id = video_url.split("=", 2)[1]
+                self.update_metadata(
+                    video_id,
+                    {"id": video_id, "status": {"privacyStatus": "private"}},
+                )
+                LOG.info("depublished %s video track from %s" % (lang, video_url))
+                depublished_urls.append(video_url)
+                props[prop] = ""
 
-                    if self.t.youtube_playlists:
-                        yt.remove_from_playlists(video_id, self.t.youtube_playlists)
-                except Exception as e:
-                    LOG.error(f"debublishing of {video_url} failed with {e}")
-
-                i += 1
-            return depublished_urls, props
+                if self.t.youtube_playlists:
+                    yt.remove_from_playlists(video_id, self.t.youtube_playlists)
+            except Exception as e:
+                LOG.error(f"debublishing of {video_url} failed with {e}")
+        return depublished_urls, props
 
     def update_metadata(self, video_id, metadata):
         # https://developers.google.com/youtube/v3/docs/videos#resource
