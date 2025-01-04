@@ -232,8 +232,8 @@ class PublishingTicket(Ticket):
             "Publishing.Thumbnail.PathOverride", optional=True
         )
 
-        # CAUTION: voctoweb only shows tags 5 and 4 (in that order).
-        #   $ ruby -e 'print([0, 1,2,3,4,5,6,7,8][3,2].reverse)'
+        # CAUTION: voctoweb only shows tags 4 and 3 (in that order).
+        #   $ ruby -e 'print([0,1,2,3,4,5,6,7,8][3,2].reverse)'
         #   [4, 3]
         # tag 0 is filled with the fahrplan id, tag 1 year.
         # This list starts at tag 2.
