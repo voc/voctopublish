@@ -240,11 +240,8 @@ class PublishingTicket(Ticket):
         self.publishing_tags = [
             self.acronym,
             self.track,  # 3
-            self.room, # 4 - TODO: do we really want the room in this position?
-            *[
-                f"{self.acronym}-{lang}"
-                for lang in self.languages.values()
-            ],
+            self.room,  # 4 - TODO: do we really want the room in this position?
+            *[f"{self.acronym}-{lang}" for lang in self.languages.values()],
             *self._get_list("Publishing.Tags", optional=True),
         ]
         self.license = self._get_str("Meta.License", optional=True, try_default=True)
