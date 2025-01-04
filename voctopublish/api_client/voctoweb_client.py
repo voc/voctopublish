@@ -437,10 +437,26 @@ class VoctowebClient:
                 "subtitle": self.t.subtitle,
                 "link": event_url,
                 "original_language": self.t.languages[0],
-                "thumb_filename": (self.t.voctoweb_filename_base + ".jpg") if self.t.voctoweb_filename_base else "",
-                "poster_filename": (self.t.voctoweb_filename_base + "_preview.jpg") if self.t.voctoweb_filename_base else "",
-                "timeline_filename": (self.t.voctoweb_filename_base + ".timeline.jpg") if self.t.voctoweb_filename_base else "",
-                "thumbnails_filename": (self.t.voctoweb_filename_base + ".thumbnails.vtt") if self.t.voctoweb_filename_base else "",
+                "thumb_filename": (
+                    (self.t.voctoweb_filename_base + ".jpg")
+                    if self.t.voctoweb_filename_base
+                    else ""
+                ),
+                "poster_filename": (
+                    (self.t.voctoweb_filename_base + "_preview.jpg")
+                    if self.t.voctoweb_filename_base
+                    else ""
+                ),
+                "timeline_filename": (
+                    (self.t.voctoweb_filename_base + ".timeline.jpg")
+                    if self.t.voctoweb_filename_base
+                    else ""
+                ),
+                "thumbnails_filename": (
+                    (self.t.voctoweb_filename_base + ".thumbnails.vtt")
+                    if self.t.voctoweb_filename_base
+                    else ""
+                ),
                 "description": "\n\n".join(description),
                 "date": self.t.date,
                 "persons": self.t.people,

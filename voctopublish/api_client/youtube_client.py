@@ -320,7 +320,9 @@ class YoutubeAPI:
             if error_from_youtube:
                 exception_message.append(error_from_youtube)
             else:
-                exception_message.append(f"Video creation failed with http status code {r.status_code}")
+                exception_message.append(
+                    f"Video creation failed with http status code {r.status_code}"
+                )
             exception_message.append(r.text)
             exception_message.append(json.dumps(metadata, indent=2))
 
@@ -458,7 +460,9 @@ class YoutubeAPI:
                 translation = self.translation_strings[lang]
                 language_name = self.lang_map[lang]
             else:
-                raise YouTubeException("language not defined in translation strings, got")
+                raise YouTubeException(
+                    "language not defined in translation strings, got"
+                )
 
         return (
             string.replace("${translation}", translation)
@@ -563,7 +567,9 @@ class YoutubeAPI:
             if error_from_youtube:
                 exception_message.append(error_from_youtube)
             else:
-                exception_message.append(f"Video update failed with http status code {r.status_code}")
+                exception_message.append(
+                    f"Video update failed with http status code {r.status_code}"
+                )
             exception_message.append(r.text)
             exception_message.append(json.dumps(metadata, indent=2))
 
@@ -748,7 +754,8 @@ class YoutubeAPI:
         data = r.json()
         if "access_token" not in data:
             raise YouTubeException(
-                "fetching a fresh authToken did not return a access_token\n\n%s" % r.text
+                "fetching a fresh authToken did not return a access_token\n\n%s"
+                % r.text
             )
 
         LOG.info("successfully fetched Access-Token %s" % data["access_token"])

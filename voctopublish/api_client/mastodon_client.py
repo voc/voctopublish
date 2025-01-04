@@ -66,12 +66,12 @@ def send_toot(ticket, config):
         )
         toot = mastodon.status_post(
             message,
-            language="en", # announcements are always in english
+            language="en",  # announcements are always in english
         )
         LOG.debug(toot)
         return {
-            'id': toot['id'],
-            'uri': toot['uri'],
+            "id": toot["id"],
+            "uri": toot["uri"],
         }
     except Exception as e_:
         # we don't care if tooting fails here.
