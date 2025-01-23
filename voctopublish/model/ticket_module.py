@@ -232,7 +232,18 @@ class PublishingTicket(Ticket):
             "Publishing.Thumbnail.PathOverride", optional=True
         )
 
-        self.publishing_tags = self._get_list("Publishing.Tags", optional=True)
+        # CAUTION: voctoweb only shows tags 4 and 3 (in that order).
+        #   $ ruby -e 'print([0,1,2,3,4,5,6,7,8][3,2].reverse)'
+        #   [4, 3]
+        # tag 0 is filled with the fahrplan id, tag 1 year.
+        # This list starts at tag 2.
+        self.publishing_tags = [
+            self.acronym,
+            self.track,  # 3
+            self.room,  # 4 - TODO: do we really want the room in this position?
+            *[f"{self.acronym}-{lang}" for lang in self.languages.values()],
+            *self._get_list("Publishing.Tags", optional=True),
+        ]
         self.license = self._get_str("Meta.License", optional=True, try_default=True)
 
         # youtube properties
@@ -279,16 +290,12 @@ class PublishingTicket(Ticket):
             )
 
             self.youtube_tags = [
-                self.acronym,
-                self.date.split("-")[0],
-                self.track,
-                self.room,
-                self.day,
-                *self._get_list("Publishing.YouTube.Tags", optional=True),
                 *self.publishing_tags,
+                self.date.split("-")[0],
+                *self._get_list("Publishing.YouTube.Tags", optional=True),
             ]
             if self.day:
-                self.youtube_tags.append(f"Day {self.day}")
+                self.youtube_tags.append(f"{self.acronym} Day {self.day}")
 
             youtube_publish_at = self._get_str(
                 "Publishing.YouTube.PublishAt", optional=True, try_default=True
@@ -354,16 +361,16 @@ class PublishingTicket(Ticket):
             )
             self.voctoweb_event_id = self._get_str("Voctoweb.EventId", optional=True)
 
-            # ATTENTION: the tag order here is really important. Do not change, without talking to voctoweb DEVs!
+            # CAUTION: Order is important. See note for Publishing.Tags
+            # <https://github.com/voc/voctoweb/blob/main/app/views/frontend/events/show.html.haml#L85-L86>
             self.voctoweb_tags = [
-                self.acronym,
                 self.fahrplan_id,
                 self.date.split("-")[0],
-                self.track,
-                self.room, # TODO: do we really want the room in this position?
                 *self.publishing_tags,
                 *self._get_list("Publishing.Voctoweb.Tags", optional=True),
             ]
+            if self.day:
+                self.voctoweb_tags.append(f"Day {self.day}")
 
         # rclone properties
         self.rclone_enable = self._get_bool(
