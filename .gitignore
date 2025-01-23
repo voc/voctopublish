@@ -47,3 +47,7 @@ client.conf
 
 # mastodon config
 mastodon_*.secret
+
+# direnv shit
+.direnv
+.envrc
