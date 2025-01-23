@@ -582,6 +582,7 @@ class VoctowebClient:
                 "filename": filename,
                 "mime_type": self.t.mime_type,
                 "language": language,
+                "translated": bool(self.t.language_index), # this is either None or int. 0 is the original language
                 **recording,
             },
         }
