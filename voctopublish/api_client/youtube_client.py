@@ -528,7 +528,7 @@ class YoutubeAPI:
         i = 0
         depublished_urls = []
         props = {}
-        for prop, url in self.t.youtube_urls.items():
+        for prop, video_url in self.t.youtube_urls.items():
             try:
                 video_id = video_url.split("=", 2)[1]
                 self.update_metadata(
