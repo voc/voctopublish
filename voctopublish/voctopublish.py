@@ -639,11 +639,11 @@ class PublisherException(Exception):
 
 
 def process_single_ticket():
-    w = Worker()
-    w.get_ticket_from_tracker()
+    try:
+        w = Worker()
+        w.get_ticket_from_tracker()
 
-    if w.ticket:
-        try:
+        if w.ticket:
             if w.worker_type == "releasing":
                 w.publish()
             elif w.worker_type == "recording":
@@ -651,10 +651,13 @@ def process_single_ticket():
             else:
                 raise PublisherException(f"unknown worker type {w.worker_type}")
             return True
-        except Exception as e:
+    except Exception as e:
+        if w.ticket:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             w.c3tt.set_ticket_failed(w.ticket_id, f"{exc_type.__name__}: {e}")
             logging.exception(f"could not process ticket {w.ticket_id}")
+        else:
+            raise e
     return False
 
 
