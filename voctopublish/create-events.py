@@ -20,7 +20,6 @@ import configparser
 import logging
 import os
 import socket
-import subprocess
 import sys
 
 from api_client.c3tt_rpc_client import C3TTClient

@@ -19,9 +19,9 @@ import logging
 import os
 import shutil
 import socket
-import subprocess
 import sys
 import urllib.request
+from subprocess import CalledProcessError, check_output
 from time import sleep
 
 try:
@@ -39,6 +39,7 @@ from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from c3tt_rpc_client import C3TTClient
 from model.ticket_module import PublishingTicket, RecordingTicket, Ticket
+from tools.ffmpeg import ffmpeg
 from tools.thumbnails import ThumbnailGenerator
 
 MY_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -417,29 +418,22 @@ class Worker:
             )
 
             try:
-                subprocess.call(
-                    [
-                        "ffmpeg",
-                        "-y",
-                        "-v",
-                        "warning",
-                        "-nostdin",
-                        "-i",
-                        os.path.join(
-                            self.ticket.publishing_path, self.ticket.local_filename
-                        ),
-                        "-map",
-                        "0:0",
-                        "-map",
-                        "0:a:" + str(language),
-                        "-c",
-                        "copy",
-                        "-movflags",
-                        "faststart",
-                        out_path,
-                    ]
+                ffmpeg(
+                    "-i",
+                    os.path.join(
+                        self.ticket.publishing_path, self.ticket.local_filename
+                    ),
+                    "-map",
+                    "0:0",
+                    "-map",
+                    f"0:a:{language}",
+                    "-c",
+                    "copy",
+                    "-movflags",
+                    "faststart",
+                    out_path,
                 )
-            except Exception as e_:
+            except CalledProcessError as e_:
                 raise PublisherException(
                     "error remuxing " + self.ticket.local_filename + " to " + out_path
                 ) from e_
@@ -625,8 +619,8 @@ class Worker:
             self.logger.debug(f"download command is: {command}")
             out = None
             try:
-                out = subprocess.check_output(command)
-            except subprocess.CalledProcessError as e:
+                out = check_output(command)
+            except CalledProcessError as e:
                 self.logger.exception("could not download file")
                 self.logger.error(out)
                 raise PublisherException from e

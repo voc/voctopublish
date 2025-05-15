@@ -17,14 +17,14 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from json import loads
 from operator import itemgetter
 from os.path import isfile, join
 from shutil import move
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 
 from model.ticket_module import Ticket
+from tools.ffmpeg import ffmpeg, ffprobe_json
 from tools.select_thumbnail import calc_score
 
 
@@ -59,18 +59,7 @@ class ThumbnailGenerator:
         logging.info("generating thumbs for " + source)
 
         try:
-            r = check_output(
-                [
-                    "ffprobe",
-                    "-print_format",
-                    "json",
-                    "-show_format",
-                    "-loglevel",
-                    "quiet",
-                    source,
-                ]
-            )
-            length = int(loads(r.decode())["format"]["duration"])
+            length = int(ffprobe_json(source)["format"]["duration"])
         except Exception as e_:
             raise ThumbnailException(
                 "ERROR: could not get duration " + r.decode("utf-8")
@@ -98,20 +87,32 @@ class ThumbnailGenerator:
                 try:
                     for pos in candidates:
                         candidate = join(tmpdir, str(pos) + ".png")
-                        r = check_output(
-                            "ffmpeg -loglevel error -ss "
-                            + str(pos)
-                            + " -i "
-                            + source
-                            + ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y '
-                            + candidate,
-                            shell=True,
+                        r = ffmpeg(
+                            "-ss",
+                            pos,
+                            "-i",
+                            source,
+                            "-an",
+                            "-r",
+                            "1",
+                            "-filter:v",
+                            "scale=sar*iw:ih",
+                            "-vframes",
+                            "1",
+                            "-f",
+                            "image2",
+                            "-pix_fmt",
+                            "yuv420p",
+                            "-vcodec",
+                            "png",
+                            "-y",
+                            candidate,
                         )
                         if isfile(candidate):
                             scores[candidate] = calc_score(candidate)
                         else:
                             logging.warning(
-                                "ffmpeg was not able to create candidat for "
+                                "ffmpeg was not able to create candidate for "
                                 + str(candidate)
                             )
                 except CalledProcessError as e_:
@@ -131,12 +132,24 @@ class ThumbnailGenerator:
                 move(winner, self.path)
             else:
                 try:
-                    r = check_output(
-                        "ffmpeg -loglevel error -i "
-                        + source
-                        + ' -an -r 1 -filter:v "scale=sar*iw:ih" -vframes 1 -f image2 -pix_fmt yuv420p -vcodec png -y '
-                        + self.path,
-                        shell=True,
+                    r = ffmpeg(
+                        "-i",
+                        source,
+                        "-an",
+                        "-r",
+                        "1",
+                        "-filter:v",
+                        "scale=sar*iw:ih",
+                        "-vframes",
+                        "1",
+                        "-f",
+                        "image2",
+                        "-pix_fmt",
+                        "yuv420p",
+                        "-vcodec",
+                        "png",
+                        "-y",
+                        self.path,
                     )
                 except Exception as e_:
                     raise ThumbnailException from e_

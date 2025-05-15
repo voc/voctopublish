@@ -20,14 +20,14 @@ import json
 import logging
 import operator
 import os
-import subprocess
 import tempfile
 import time
-from json import loads
+from subprocess import CalledProcessError, check_output
 
 import paramiko
 import requests
 from model.ticket_module import Ticket
+from tools.ffmpeg import ffmpeg, ffprobe_json
 from tools.thumbnails import ThumbnailGenerator
 
 LOG = logging.getLogger("Voctoweb")
@@ -125,25 +125,41 @@ class VoctowebClient:
         # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
         # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
         try:
-            r = subprocess.check_output(
-                "ffmpeg -loglevel error -i "
-                + self.thumbnail.path
-                + ' -filter_complex:v "scale=400:-1:lanczos" -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y '
-                + outjpg,
-                shell=True,
+            r = ffmpeg(
+                "-i",
+                self.thumbnail.path,
+                "-filter_complex:v",
+                "scale=400:-1:lanczos",
+                "-f",
+                "image2",
+                "-vcodec",
+                "mjpeg",
+                "-pix_fmt",
+                "yuv420p",
+                "-q:v",
+                "0",
+                "-y",
+                outjpg,
             )
-        except subprocess.CalledProcessError as e_:
+        except CalledProcessError as e_:
             raise VoctowebException("Could not scale outjpg: " + str(e_)) from e_
 
         try:
-            r = subprocess.check_output(
-                "ffmpeg -loglevel error -i "
-                + self.thumbnail.path
-                + " -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y "
-                + outjpg_preview,
-                shell=True,
+            r = ffmpeg(
+                "-i",
+                self.thumbnail.path,
+                "-f",
+                "image2",
+                "-vcodec",
+                "mjpeg",
+                "-pix_fmt",
+                "yuv420p",
+                "-q:v",
+                "0",
+                "-y",
+                outjpg_preview,
             )
-        except Exception as e_:
+        except CalledProcessError as e_:
             raise VoctowebException(
                 "Could not scale outjpg_preview: " + r.decode("utf-8")
             ) from e_
@@ -205,7 +221,7 @@ class VoctowebClient:
         )
 
         try:
-            r = subprocess.check_output(
+            r = check_output(
                 [
                     "timelens",
                     source,
@@ -219,7 +235,7 @@ class VoctowebClient:
                     outthumbnails,
                 ]
             )
-        except subprocess.CalledProcessError as e_:
+        except CalledProcessError as e_:
             raise VoctowebException("Could not run timelens: " + str(e_)) from e_
 
         LOG.info("ran timelens successfully")
@@ -481,8 +497,6 @@ class VoctowebClient:
 
         # call voctoweb api
         try:
-            # TODO make ssl verify a config option
-            # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
             if self.t.voctoweb_event_id:
                 r = requests.patch(
                     url + "/" + self.t.guid, headers=headers, json=payload
@@ -595,8 +609,6 @@ class VoctowebClient:
         LOG.debug(f"payload: {repr(payload)}")
 
         try:
-            # todo ssl verify by config
-            # r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
             if recording_id:
                 r = requests.patch(url, headers=headers, data=json.dumps(payload))
             else:
@@ -641,19 +653,7 @@ class VoctowebClient:
         file_size = int(file_size / 1024 / 1024)
 
         try:
-            r = subprocess.check_output(
-                [
-                    "ffprobe",
-                    "-print_format",
-                    "json",
-                    "-show_format",
-                    "-show_streams",
-                    "-loglevel",
-                    "quiet",
-                    file,
-                ]
-            )
-            info_json = loads(r.decode())
+            info_json = ffprobe_json(file)
             length = int(info_json["format"]["duration"])
         except Exception as e_:
             raise VoctowebException("could not get format or streams") from e_

@@ -21,13 +21,13 @@ import logging
 import mimetypes
 import os
 import re
-import subprocess
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 
 import langcodes
 import requests
 from model.ticket_module import Ticket
+from tools.ffmpeg import ffmpeg
 from tools.thumbnails import ThumbnailGenerator
 
 LOG = logging.getLogger("YoutubeAPI")
@@ -134,16 +134,17 @@ class YoutubeAPI:
                     LOG.info("remuxing " + self.t.local_filename + " to " + out_path)
 
                     try:
-                        subprocess.check_output(
-                            "ffmpeg -y -v warning -nostdin -i "
-                            + os.path.join(
-                                self.t.publishing_path, self.t.local_filename
-                            )
-                            + " -map 0:0 -map 0:a:"
-                            + str(lang)
-                            + " -c copy "
-                            + out_path,
-                            shell=True,
+                        ffmpeg(
+                            "-i",
+                            os.path.join(self.t.publishing_path, self.t.local_filename),
+                            "-map",
+                            "0:0",
+                            "-map",
+                            "0:a:",
+                            lang,
+                            "-c",
+                            "copy",
+                            out_path,
                         )
                     except Exception as e_:
                         raise YouTubeException(
@@ -371,12 +372,19 @@ class YoutubeAPI:
         )
 
         try:
-            r = subprocess.check_output(
-                "ffmpeg -loglevel error -i "
-                + self.thumbnail.path
-                + " -f image2 -vcodec mjpeg -pix_fmt yuv420p -q:v 0 -y "
-                + outjpg,
-                shell=True,
+            r = ffmpeg(
+                "-i",
+                self.thumbnail.path,
+                "-f",
+                "image2",
+                "-vcodec",
+                "mjpeg",
+                "-pix_fmt",
+                "yuv420p",
+                "-q:v",
+                "0",
+                "-y",
+                outjpg,
             )
             LOG.info("thumbnails reformatted for youtube")
         except Exception as e_:
