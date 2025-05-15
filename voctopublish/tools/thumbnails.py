@@ -17,6 +17,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from json import loads
 from operator import itemgetter
 from os.path import isfile, join
 from shutil import move
@@ -59,17 +60,21 @@ class ThumbnailGenerator:
 
         try:
             r = check_output(
-                "ffprobe -print_format flat -show_format -loglevel quiet "
-                + source
-                + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
-                shell=True,
+                [
+                    "ffprobe",
+                    "-print_format",
+                    "json",
+                    "-show_format",
+                    "-loglevel",
+                    "quiet",
+                    source,
+                ]
             )
+            length = int(loads(r.decode())["format"]["duration"])
         except Exception as e_:
             raise ThumbnailException(
                 "ERROR: could not get duration " + r.decode("utf-8")
             ) from e_
-
-        length = int(r.decode())
 
         with TemporaryDirectory() as tmpdir:
             logging.debug("TemporaryDirectory is " + str(tmpdir))

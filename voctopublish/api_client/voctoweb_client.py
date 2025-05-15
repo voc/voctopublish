@@ -23,6 +23,7 @@ import os
 import subprocess
 import tempfile
 import time
+from json import loads
 
 import paramiko
 import requests
@@ -582,7 +583,9 @@ class VoctowebClient:
                 "filename": filename,
                 "mime_type": self.t.mime_type,
                 "language": language,
-                "translated": bool(self.t.language_index), # this is either None or int. 0 is the original language
+                "translated": bool(
+                    self.t.language_index
+                ),  # this is either None or int. 0 is the original language
                 **recording,
             },
         }
@@ -639,34 +642,39 @@ class VoctowebClient:
 
         try:
             r = subprocess.check_output(
-                "ffprobe -print_format flat -show_format -loglevel quiet "
-                + file
-                + ' 2>&1 | grep format.duration | cut -d= -f 2 | sed -e "s/\\"//g" -e "s/\..*//g" ',
-                shell=True,
+                [
+                    "ffprobe",
+                    "-print_format",
+                    "json",
+                    "-show_format",
+                    "-show_streams",
+                    "-loglevel",
+                    "quiet",
+                    file,
+                ]
             )
+            info_json = loads(r.decode())
+            length = int(info_json["format"]["duration"])
         except Exception as e_:
-            raise VoctowebException("ERROR: could not get duration " + str(e_))
+            raise VoctowebException("could not get format or streams") from e_
 
-        length = int(r.decode())
+        width = 0
+        height = 0
 
         if self.t.mime_type.startswith("video"):
             try:
-                r = subprocess.check_output(
-                    "ffmpeg -i "
-                    + file
-                    + ' 2>&1 | grep Stream | grep -oP ", \K[0-9]+x[0-9]+"',
-                    shell=True,
-                )
-            except Exception as e_:
-                raise VoctowebException("ERROR: could not get resolution " + str(e_))
+                for stream in info_json["streams"]:
+                    if "width" in stream and "height" in stream:
+                        width = stream["width"]
+                        height = stream["height"]
+            except Exception:
+                # error handling just below
+                pass
 
-            resolution = r.decode()
-            resolution = resolution.partition("x")
-            width = resolution[0]
-            height = resolution[2].strip()
-        else:  # we have an audio only release so we set a 0 resolution
-            width = 0
-            height = 0
+            if width == 0 or height == 0:
+                raise VoctowebException(
+                    f"could not determine resolution (found {width=} {height=})"
+                )
 
         if length == 0:
             raise VoctowebException("Error: file length is 0")
