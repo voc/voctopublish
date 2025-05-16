@@ -38,7 +38,7 @@ from api_client.rclone_client import RCloneClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from c3tt_rpc_client import C3TTClient
-from model.ticket_module import PublishingTicket, RecordingTicket, Ticket
+from model.ticket_module import PublishingTicket, RecordingTicket
 from tools.ffmpeg import ffmpeg
 from tools.thumbnails import ThumbnailGenerator
 
@@ -51,10 +51,9 @@ POSSIBLE_CONFIG_PATHS = [
 ]
 
 for path in POSSIBLE_CONFIG_PATHS:
-    if path:
-        if os.path.isfile(path):
-            my_config_path = path
-            break
+    if path and os.path.isfile(path):
+        my_config_path = path
+        break
 else:
     raise FileNotFoundError(
         f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
@@ -126,15 +125,11 @@ class Worker:
         if not os.path.isfile(
             os.path.join(self.ticket.publishing_path, self.ticket.local_filename)
         ):
-            raise IOError(
-                "Source file does not exist "
-                + os.path.join(self.ticket.publishing_path, self.ticket.local_filename)
+            raise FileNotFoundError(
+                os.path.join(self.ticket.publishing_path, self.ticket.local_filename)
             )
         if not os.path.exists(os.path.join(self.ticket.publishing_path)):
-            raise IOError(
-                "Output path does not exist "
-                + os.path.join(self.ticket.publishing_path)
-            )
+            raise FileNotFoundError(os.path.join(self.ticket.publishing_path))
         if (
             os.path.getsize(
                 os.path.join(self.ticket.publishing_path, self.ticket.local_filename)
@@ -142,12 +137,12 @@ class Worker:
             == 0
         ):
             raise PublisherException(
-                "Input file size is 0 " + os.path.join(self.ticket.publishing_path)
+                f"Input file size {self.ticket.local_filename} is 0"
             )
         else:
             if not os.access(self.ticket.publishing_path, os.W_OK):
-                raise IOError(
-                    "Output path is not writable (%s)" % self.ticket.publishing_path
+                raise PermissionError(
+                    f"Output path {self.ticket.publishing_path} is not writable"
                 )
 
         self.thumbs = ThumbnailGenerator(self.ticket, CONFIG)
@@ -335,7 +330,7 @@ class Worker:
                 vw.generate_timelens()
                 vw.upload_timelens()
 
-            # in case of a multi language release we create here the single language files
+            # in case of a multi-language release we create here the single language files
             if len(self.ticket.languages) > 1:
                 self.logger.info(
                     "remuxing multi-language video into single audio files"
@@ -348,7 +343,7 @@ class Worker:
         else:
             hq = False
 
-        # For multi language or slide recording we don't set the html5 flag
+        # For multi-language or slide recording we don't set the html5 flag
         if len(self.ticket.languages) == 1 and "slides" not in self.ticket.profile_slug:
             html5 = True
         else:
@@ -391,7 +386,7 @@ class Worker:
 
     def _mux_to_single_language(self, vw):
         """
-        Mux a multi language video file into multiple single language video files.
+        Mux a multi-language video file into multiple single language video files.
         This is only implemented for the h264 hd files as we only do it for them
         :return:
         """
@@ -413,9 +408,7 @@ class Worker:
                 + self.ticket.profile_extension
             )
 
-            self.logger.info(
-                "remuxing " + self.ticket.local_filename + " to " + out_path
-            )
+            self.logger.info(f"remuxing {self.ticket.local_filename} to {out_path}")
 
             try:
                 ffmpeg(
@@ -435,13 +428,13 @@ class Worker:
                 )
             except CalledProcessError as e_:
                 raise PublisherException(
-                    "error remuxing " + self.ticket.local_filename + " to " + out_path
+                    f"error remuxing {self.ticket.local_filename} to {out_path}"
                 ) from e_
 
             try:
                 vw.upload_file(out_path, filename, self.ticket.folder)
             except Exception as e_:
-                raise PublisherException("error uploading " + out_path) from e_
+                raise PublisherException(f"error uploading {out_path}") from e_
 
             try:
                 recording_id = vw.create_recording(
@@ -454,7 +447,7 @@ class Worker:
                     single_language=True,
                 )
             except Exception as e_:
-                raise PublisherException("creating recording " + out_path) from e_
+                raise PublisherException("creating recording failed") from e_
 
             try:
                 # when the ticket was created, and not only updated: write recording_id to ticket
@@ -500,6 +493,8 @@ class Worker:
         ):
             yt_voctoweb = YoutubeAPI(
                 self.ticket,
+                self.thumbs,
+                CONFIG,
                 CONFIG["youtube"]["client_id"],
                 CONFIG["youtube"]["secret"],
             )
@@ -524,7 +519,7 @@ class Worker:
         )
         file = os.path.join(path, "uncut.ts")
         self.logger.info(
-            "Downloading input file from: " + self.ticket.download_url + " to " + file
+            f"Downloading input file from: {self.ticket.download_url} to {file}"
         )
 
         if not os.path.exists(path):
@@ -535,10 +530,9 @@ class Worker:
                 raise PublisherException(e)
 
         if os.path.exists(file) and not self.ticket.redownload_enabled:
-            self.logger.error(
-                'video file "' + path + '" already exists, please remove file'
+            raise PublisherException(
+                f"video file at {path} already exists, please remove file"
             )
-            raise PublisherException("video file already exists, please remove file")
 
         url = self.ticket.download_url
         url_decoded = urllib.parse.unquote(url)
@@ -548,7 +542,7 @@ class Worker:
             )
             url = url_decoded
 
-        # if its an URL it probably will start with http ....
+        # if it's a URL it probably will start with http ....
         if self.ticket.download_url.startswith(
             "http"
         ) or self.ticket.download_url.startswith("ftp"):
@@ -565,7 +559,7 @@ class Worker:
                     "Record.Room": self.ticket.fuse_room,
                 },
             )
-        except AttributeError as err_:
+        except AttributeError:
             self.c3tt.set_ticket_failed(
                 self.ticket_id,
                 "unknown language, please set language in the recording ticket to proceed",
@@ -577,7 +571,8 @@ class Worker:
         # tell the tracker that we finished the import
         self.c3tt.set_ticket_done(self.ticket_id)
 
-    def _copy_file(self, source, target):
+    @staticmethod
+    def _copy_file(source, target):
         """
         copy a file from a local folder to the fake fuse and name it uncut.ts
         this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
@@ -590,7 +585,7 @@ class Worker:
 
     def _download_file(self, source, target):
         """
-        download a file from an http / https / ftp URL an place it as a uncut.ts in the fuse folder.
+        download a file from a http / https / ftp URL and place it as an uncut.ts in the fuse folder.
         this hack to import files not produced with the tracker into the workflow to publish it on the voctoweb / youtube
         :return:
         """
@@ -633,6 +628,7 @@ class PublisherException(Exception):
 
 
 def process_single_ticket():
+    w = None
     try:
         w = Worker()
         w.get_ticket_from_tracker()
@@ -646,7 +642,7 @@ def process_single_ticket():
                 raise PublisherException(f"unknown worker type {w.worker_type}")
             return True
     except Exception as e:
-        if w.ticket_id:
+        if w and w.ticket_id:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             w.c3tt.set_ticket_failed(w.ticket_id, f"{exc_type.__name__}: {e}")
             logging.exception(f"could not process ticket {w.ticket_id}")

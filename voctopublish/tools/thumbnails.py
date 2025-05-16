@@ -56,13 +56,13 @@ class ThumbnailGenerator:
             raise FileNotFoundError(self.path)
 
         source = join(self.ticket.publishing_path, self.ticket.local_filename)
-        logging.info("generating thumbs for " + source)
+        logging.info(f"generating thumbs for {source}")
 
         try:
             length = int(ffprobe_json(source)["format"]["duration"])
         except Exception as e_:
             raise ThumbnailException(
-                "ERROR: could not get duration " + r.decode("utf-8")
+                f"ERROR: could not get duration from {source}"
             ) from e_
 
         with TemporaryDirectory() as tmpdir:
@@ -132,7 +132,7 @@ class ThumbnailGenerator:
                 move(winner, self.path)
             else:
                 try:
-                    r = ffmpeg(
+                    ffmpeg(
                         "-i",
                         source,
                         "-an",

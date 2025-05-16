@@ -127,6 +127,7 @@ def send_chat_message(ticket, config):
             }
         )
 
+    payload = None
     try:
         payload = {
             "cardsV2": [

@@ -106,7 +106,7 @@ class YoutubeAPI:
             "publishing Ticket %s (%s) to youtube" % (self.t.fahrplan_id, self.t.title)
         )
 
-        # handle multi language events
+        # handle multi-language events
         if len(self.t.languages) > 1:
             LOG.debug("Languages: " + str(self.t.languages))
 
@@ -372,7 +372,7 @@ class YoutubeAPI:
         )
 
         try:
-            r = ffmpeg(
+            ffmpeg(
                 "-i",
                 self.thumbnail.path,
                 "-f",
@@ -388,9 +388,7 @@ class YoutubeAPI:
             )
             LOG.info("thumbnails reformatted for youtube")
         except Exception as e_:
-            raise YouTubeException(
-                "Could not scale thumbnail: " + r.decode("utf-8")
-            ) from e_
+            raise YouTubeException("Could not scale thumbnail") from e_
 
         YoutubeAPI.update_thumbnail(self.accessToken, video_id, outjpg)
 
@@ -521,7 +519,7 @@ class YoutubeAPI:
         :return:
         """
         LOG.info(
-            "depublishing Ticket %s (%s) to youtube"
+            "depublishing Ticket %s (%s) from youtube"
             % (self.t.fahrplan_id, self.t.title)
         )
 
@@ -533,14 +531,12 @@ class YoutubeAPI:
         #    LOG.debug('using same token for publishing and playlist management')
         yt = self
 
-        i = 0
         depublished_urls = []
         props = {}
         for prop, video_url in self.t.youtube_urls.items():
             try:
                 video_id = video_url.split("=", 2)[1]
                 self.update_metadata(
-                    video_id,
                     {"id": video_id, "status": {"privacyStatus": "private"}},
                 )
                 LOG.info("depublished %s video track from %s" % (lang, video_url))
@@ -553,7 +549,7 @@ class YoutubeAPI:
                 LOG.error(f"debublishing of {video_url} failed with {e}")
         return depublished_urls, props
 
-    def update_metadata(self, video_id, metadata):
+    def update_metadata(self, metadata):
         # https://developers.google.com/youtube/v3/docs/videos#resource
         r = requests.put(
             "https://youtube.googleapis.com/youtube/v3/videos",
@@ -591,7 +587,6 @@ class YoutubeAPI:
     def add_to_playlist(self, video_id: str, playlist_id: str):
         """
         documentation: https://developers.google.com/youtube/v3/docs/playlistItems/insert
-        :param access_token:
         :param video_id:
         :param playlist_id:
         """
@@ -773,7 +768,7 @@ class YoutubeAPI:
     def get_channel_id(access_token: str):
         """
         request the channel id associated with the access token
-        :param access_token: Youtube access token
+        :param access_token: YouTube access token
         :return: YouTube channel id
         """
         LOG.debug(

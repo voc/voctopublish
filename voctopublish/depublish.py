@@ -158,7 +158,7 @@ class Depublisher:
 
         if self.ticket.youtube_enable and self.ticket.has_youtube_url:
             try:
-                urls = self._depublish_from_youtube()
+                self._depublish_from_youtube()
             except Exception as e:
                 logging.exception("failed to remove video from youtube")
                 errors.add(f"Removal from youtube failed: {e!r}")

@@ -35,7 +35,7 @@ def send_post(ticket, config):
 
     try:
         LOG.info(_send_bluesky_post(message, config))
-    except Exception as e_:
+    except Exception:
         LOG.exception("Posting failed")
 
 

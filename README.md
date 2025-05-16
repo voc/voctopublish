@@ -1,6 +1,6 @@
 This is a glue script that reads information from the C3TT [1] and talks to voctoweb [2], youtube [3], twitter [4] and mastodon [5].
 
-It publishes recordings an handles all necessary steps like thumbnail generation
+It publishes recordings and handles all necessary steps like thumbnail generation
 
 ## Dependencies
 ### Debian / Ubuntu
@@ -11,7 +11,7 @@ pip3 install -r requirements.txt
 
 ## Usage
 use the provided client.conf.example to tell the script to which hosts it should talk. Most of the configuration is done in the tracker
-Some examples for usefull properties can be found on [6]
+Some examples for useful properties can be found on [6]
 
 "Viel Spaß am Gerät"
 

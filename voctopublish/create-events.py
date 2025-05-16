@@ -133,7 +133,7 @@ class RelivePublisher:
             ticket_meta = self.c3tt.get_assigned_for_state(
                 self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
             )
-        # otherwhise, or if that was not successful get the next unassigned one
+        # otherwise, or if that was not successful get the next unassigned one
         if not ticket_meta:
             ticket_meta = self.c3tt.assign_next_unassigned_for_state(
                 self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
@@ -159,7 +159,7 @@ class RelivePublisher:
 
     def _publish_to_voctoweb(self):
         """
-        Create a event on an voctomix instance. This includes creating a recording for each media file.
+        Create an event on a voctoweb instance. This includes creating a recording for each media file.
         """
         logging.info("publishing to voctoweb")
         try:
@@ -185,7 +185,7 @@ class RelivePublisher:
 
                 try:
                     # we need to write the Event ID onto the parent ticket, so the other (master) encoding tickets
-                    # also have acccess to the Voctoweb Event ID
+                    # also have access to the Voctoweb Event ID
                     self.c3tt.set_ticket_properties(
                         self.ticket.parent_id, {"Voctoweb.EventId": r.json()["id"]}
                     )

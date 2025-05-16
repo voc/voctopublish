@@ -44,7 +44,7 @@ class RCloneClient:
                 LOG.debug(line)
         except CalledProcessError as e:
             if e.returncode == 9:
-                LOG.warn(f"rclone reported no transferred files (return code 9)!")
+                LOG.warning(f"rclone reported no transferred files (return code 9)!")
             else:
                 LOG.error(f"rclone exited {e.returncode}!")
             if e.stdout:

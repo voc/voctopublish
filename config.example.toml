@@ -18,7 +18,7 @@ run_mode = "single"
 
 [C3Tracker]
 group = "<group>"
-#only set host if you don"t wont to use local machine name
+#only set host if you don't want to use local machine name
 host = "my-machine-name"
 secret = "<secret>"
 url = "<tracker url>"
@@ -38,7 +38,7 @@ api_url = "<voctoweb api url>"
 api_key = "<voctoweb key>"
 # url your frontend is reachable on, used to build urls in tweets / toots - no trailing slash
 frontend_url = "<voctoweb frontend url>"
-# instance name is the name you refer to you"re instead with, its used for the tweets / toots
+# instance name is the name you refer to you're instead with, it's used for the tweets / toots
 instance_name = "<voctoweb instance name>"
 ssh_host = "<host to release files to>"
 ssh_port = "<ssh port on the release host>"

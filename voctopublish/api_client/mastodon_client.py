@@ -41,7 +41,7 @@ def send_toot(ticket, config):
                 to_file="mastodon_clientcred.secret",
             )
         else:
-            logging.debug("Using exisiting Mastodon client credentials")
+            logging.debug("Using existing Mastodon client credentials")
 
         mastodon = Mastodon(
             client_id="mastodon_clientcred.secret",
@@ -73,6 +73,6 @@ def send_toot(ticket, config):
             "id": toot["id"],
             "uri": toot["uri"],
         }
-    except Exception as e_:
+    except Exception:
         # we don't care if tooting fails here.
         LOG.exception("Tooting failed")

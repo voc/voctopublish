@@ -123,7 +123,7 @@ class VoctowebClient:
         )
 
         # lanczos scaling algorithm produces a sharper image for small sizes than the default choice
-        # set pix_fmt to create a be more compatible output, otherwise the input format would be kept
+        # set pix_fmt to create a more compatible output, otherwise the input format would be kept
         try:
             r = ffmpeg(
                 "-i",
@@ -221,7 +221,7 @@ class VoctowebClient:
         )
 
         try:
-            r = check_output(
+            check_output(
                 [
                     "timelens",
                     source,
@@ -274,7 +274,7 @@ class VoctowebClient:
     def upload_file(self, local_filename, remote_filename, remote_folder):
         """
         Uploads a file from path relative to the output dir to the same path relative to the upload_dir
-        We can't use the file and folder names from the ticket here as we need to change these for multi language audio
+        We can't use the file and folder names from the ticket here as we need to change these for multi-language audio
         :param local_filename:
         :param remote_filename:
         :param remote_folder:
@@ -378,7 +378,7 @@ class VoctowebClient:
         )
 
         # call voctoweb api
-        r = requests.delete(url, headers=headers, json=payload)
+        requests.delete(url, headers=headers, json=payload)
 
     def delete_file(self, remote_path):
         """

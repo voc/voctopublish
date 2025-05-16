@@ -89,8 +89,8 @@ def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
             }
         r = post(ticket.webhook_url, **kwargs)
         result = r.status_code
-    except RequestException as e:
-        pass
+    except RequestException:
+        LOG.exception("could not post to webhook at {ticket.webhook_url}")
 
     if r:
         LOG.debug(f"{r.status_code=} {r.text=}")

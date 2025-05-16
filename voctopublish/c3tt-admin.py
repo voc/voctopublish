@@ -38,8 +38,6 @@ class C3TTAdmin:
             ) from e_
 
     def add_encoding_profile(self, ticket, profile, properties=None):
-        if properties is None:
-            properties = []
         print("adding profile " + str(profile) + " to ticket " + str(ticket))
         ret = self.c3tt.create_encoding_ticket(ticket, profile)
         print(ret)
@@ -79,7 +77,7 @@ parser.add_argument("--project", type=int)
 # from https://gist.github.com/vadimkantorov/37518ff88808af840884355c845049ea
 parser.add_argument(
     "--prop",
-    help="each property needs to be added as an touple like: --prop foo=bar",
+    help="each property needs to be added as an tuple like: --prop foo=bar",
     action=type(
         "",
         (argparse.Action,),

@@ -189,7 +189,6 @@ class RelivePublisher:
         :return: a ticket object or None in case no ticket is available
         """
         logging.info("requesting ticket from tracker")
-        t = None
 
         logging.info("Ticket ID:" + str(ticket_id))
         try:
@@ -217,7 +216,7 @@ class RelivePublisher:
             ticket_meta = self.c3tt.get_assigned_for_state(
                 self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
             )
-        # otherwhise, or if that was not successful get the next unassigned one
+        # otherwise, or if that was not successful get the next unassigned one
         if not ticket_meta:
             ticket_meta = self.c3tt.assign_next_unassigned_for_state(
                 self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
@@ -243,7 +242,7 @@ class RelivePublisher:
 
     def _publish_event_to_voctoweb(self, ticket):
         """
-        Create a event on an voctomix instance. This includes creating a recording for each media file.
+        Create an event on a voctoweb instance. This includes creating a recording for each media file.
         """
         try:
             vw = VoctowebClient(
@@ -261,7 +260,7 @@ class RelivePublisher:
                 "Error initializing voctoweb client. Config parameter missing"
             ) from e_
 
-        if not (ticket.voctoweb_event_id):
+        if not ticket.voctoweb_event_id:
             # if this is master ticket we need to check if we need to create an event on voctoweb
 
             # check if event exists on voctoweb instance, and abort if this is already the case
@@ -286,7 +285,7 @@ class RelivePublisher:
                 """
                 try:
                     # we need to write the Event ID onto the parent ticket, so the other (master) encoding tickets 
-                    # also have acccess to the Voctoweb Event ID
+                    # also have access to the Voctoweb Event ID
                     self.c3tt.set_ticket_properties(ticket.parent_id, {'Voctoweb.EventId': r.json()['id']})
                 except Exception as e_:
                     raise PublisherException('failed to Voctoweb EventID to parent ticket') from e_
@@ -305,7 +304,7 @@ class RelivePublisher:
                     + str(r.content)
                 )
         else:
-            logging.info("nothing to to, is already pubilshed")
+            logging.info("nothing to to, is already published")
 
         # self.c3tt.set_ticket_done(ticket)
 
