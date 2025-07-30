@@ -65,6 +65,7 @@ class YoutubeAPI:
             "ben": "Bengali",
             "ita": "Italian",
             "swe": "Swedish",
+            "nld": "Dutch",
         }
 
         self.translation_strings = {
@@ -83,6 +84,7 @@ class YoutubeAPI:
             "ben": "Bengali translation",
             "ita": "Traduzione italiana",
             "swe": "Svensk översättning",
+            "nld": "Nederlandse Vertaling",
         }
 
         self.youtube_urls = []
