@@ -51,3 +51,8 @@ mastodon_*.secret
 # direnv shit
 .direnv
 .envrc
+
+# Ignore swap files
+*.swp
+*.swo
+*.swn
