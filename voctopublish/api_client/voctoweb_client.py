@@ -655,8 +655,8 @@ class VoctowebClient:
         try:
             info_json = ffprobe_json(file)
             length = int(float(info_json["format"]["duration"]))
-        except Exception as e_:
-            raise VoctowebException("could not get format or streams") from e_
+        except Exception as e:
+            raise VoctowebException(f"could not get format or streams from {file}: {e!r}") from e
 
         width = 0
         height = 0

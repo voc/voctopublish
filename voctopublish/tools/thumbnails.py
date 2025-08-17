@@ -59,11 +59,11 @@ class ThumbnailGenerator:
         logging.info(f"generating thumbs for {source}")
 
         try:
-            length = int(ffprobe_json(source)["format"]["duration"])
-        except Exception as e_:
+            length = int(float(ffprobe_json(source)["format"]["duration"]))
+        except Exception:
             raise ThumbnailException(
-                f"ERROR: could not get duration from {source}"
-            ) from e_
+                f"ERROR: could not get duration from {source}: {e!r}"
+            ) from e
 
         with TemporaryDirectory() as tmpdir:
             logging.debug("TemporaryDirectory is " + str(tmpdir))
