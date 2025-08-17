@@ -10,7 +10,7 @@ def _run(call):
     try:
         return check_output(call)
     except CalledProcessError as e:
-        LOG.exception("error while running {call!r}")
+        LOG.exception(f"error while running {call!r}")
         LOG.debug(f"{e.output=}")
         LOG.debug(f"{e.stderr=}")
 
