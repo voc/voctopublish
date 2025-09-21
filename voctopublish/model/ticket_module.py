@@ -195,7 +195,7 @@ class PublishingTicket(Ticket):
             self.fahrplan_id + "-" + self.profile_slug + "." + self.profile_extension
         )
         self.room = self._get_str("Fahrplan.Room")
-        self.people = self._get_list("Fahrplan.Person_list")
+        self.people = self._get_list("Fahrplan.Person_list", optional=True)
         self.links = self._get_list("Fahrplan.Links", optional=True, split_by=" ")
         # the following are arguments that my not be present in every fahrplan
         self.track = self._get_str("Fahrplan.Track", optional=True)
