@@ -1,6 +1,6 @@
 from json import loads
 from logging import getLogger
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError, PIPE, check_output
 
 LOG = getLogger("ffmpeg")
 
@@ -8,7 +8,7 @@ LOG = getLogger("ffmpeg")
 def _run(call):
     LOG.debug(f"running: {call!r}")
     try:
-        return check_output(call)
+        return check_output(call, stderr=PIPE)
     except CalledProcessError as e:
         LOG.exception(f"error while running {call!r}")
         LOG.debug(f"{e.output=}")
