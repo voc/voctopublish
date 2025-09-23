@@ -105,7 +105,6 @@ class ThumbnailGenerator:
                             "yuv420p",
                             "-vcodec",
                             "png",
-                            "-y",
                             candidate,
                         )
                         if isfile(candidate):
@@ -148,7 +147,6 @@ class ThumbnailGenerator:
                         "yuv420p",
                         "-vcodec",
                         "png",
-                        "-y",
                         self.path,
                     )
                 except Exception as e_:

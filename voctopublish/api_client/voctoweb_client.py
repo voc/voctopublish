@@ -138,7 +138,6 @@ class VoctowebClient:
                 "yuv420p",
                 "-q:v",
                 "0",
-                "-y",
                 outjpg,
             )
         except CalledProcessError as e_:
@@ -156,7 +155,6 @@ class VoctowebClient:
                 "yuv420p",
                 "-q:v",
                 "0",
-                "-y",
                 outjpg_preview,
             )
         except CalledProcessError as e_:
