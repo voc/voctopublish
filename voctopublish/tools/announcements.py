@@ -22,6 +22,7 @@ def _replace_special_chars(maybe_string):
         "ẞ": "Ss",
     }.items():
         string = string.replace(search, replace)
+    string = unicodedata.normalize("NFD", string).encode("ascii", "ignore").decode("utf-8")
     return sub(r"[^A-Za-z0-9]+", "", string)
 
 
