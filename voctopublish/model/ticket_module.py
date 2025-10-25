@@ -137,7 +137,7 @@ class RecordingTicket(Ticket):
         download_tool = self._get_str("Record.DownloadHelper", try_default=True)
         if download_tool not in config["download"]["workers"]:
             raise TicketException(
-                f'Record.DownloadHelper uses invalid value {download_tool}, must be one of {", ".join(sorted(config["download"]["workers"].keys()))}'
+                f"Record.DownloadHelper uses invalid value {download_tool}, must be one of {', '.join(sorted(config['download']['workers'].keys()))}"
             )
         self.download_command = config["download"]["workers"][download_tool]
 

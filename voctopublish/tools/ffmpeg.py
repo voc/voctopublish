@@ -1,6 +1,6 @@
 from json import loads
 from logging import getLogger
-from subprocess import CalledProcessError, PIPE, check_output
+from subprocess import PIPE, CalledProcessError, check_output
 
 LOG = getLogger("ffmpeg")
 

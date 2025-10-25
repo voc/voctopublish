@@ -58,7 +58,7 @@ try:
                 break
     else:
         raise FileNotFoundError(
-            f'Could not find a valid config in any of these paths: {" ".join(POSSIBLE_CONFIG_PATHS)}'
+            f"Could not find a valid config in any of these paths: {' '.join(POSSIBLE_CONFIG_PATHS)}"
         )
 
     with open(my_config_path) as f:

@@ -94,7 +94,7 @@ def _send_bluesky_post(message, config):
     r = requests.post(
         "https://bsky.social/xrpc/com.atproto.repo.createRecord",
         headers={
-            "Authorization": f'Bearer {session["accessJwt"]}',
+            "Authorization": f"Bearer {session['accessJwt']}",
         },
         json={
             "collection": "app.bsky.feed.post",
