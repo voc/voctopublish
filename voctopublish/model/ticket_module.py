@@ -16,6 +16,7 @@
 
 import logging
 import re
+import unicodedata
 from os.path import join
 
 LOG = logging.getLogger("Ticket")
@@ -186,7 +187,6 @@ class PublishingTicket(Ticket):
         self.language_index = self._get_str("Encoding.LanguageIndex", optional=True)
 
         # fahrplan properties
-        self.slug = self._get_str("Fahrplan.Slug")
         self.fahrplan_id = self._get_str("Fahrplan.ID")
         self.title = self._get_str("Fahrplan.Title")
         self.subtitle = self._get_str("Fahrplan.Subtitle", optional=True)
@@ -208,6 +208,36 @@ class PublishingTicket(Ticket):
 
         if self.abstract == self.description:
             self.abstract = None
+
+        # get or write slug
+        rewrite_slug = self._get_bool(
+            "Publishing.RewriteSlug.Enabled", optional=True, try_default=True
+        )
+        if rewrite_slug:
+            wip_slug = self.title.lower()
+            for search, replace in {
+                "ß": "ss",
+                "ẞ": "ss",
+                "ä": "ae",
+                "ö": "oe",
+                "ü": "ue",
+            }.items():
+                wip_slug = wip_slug.replace(search, replace)
+            wip_slug = (
+                unicodedata.normalize("NFD", wip_slug)
+                .encode("ascii", "ignore")
+                .decode("utf-8")
+            )
+            wip_slug = re.sub(r"[^a-z0-9]+", "-", wip_slug).strip("-")
+
+            if self._get_bool(
+                "Publishing.RewriteSlug.IncludeID", optional=True, try_default=True
+            ):
+                self.slug = f"{self.acronym}-{self.fahrplan_id}-{wip_slug}"
+            else:
+                self.slug = f"{self.acronym}-{wip_slug}"
+        else:
+            self.slug = self._get_str("Fahrplan.Slug")
 
         # recording ticket properties
 
