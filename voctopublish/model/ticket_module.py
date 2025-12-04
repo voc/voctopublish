@@ -188,6 +188,7 @@ class PublishingTicket(Ticket):
 
         # fahrplan properties
         self.fahrplan_id = self._get_str("Fahrplan.ID")
+        self.fahrplan_code = self._get_str("Fahrplan.Code", optional=True)
         self.title = self._get_str("Fahrplan.Title")
         self.subtitle = self._get_str("Fahrplan.Subtitle", optional=True)
         self.date = self._get_str("Fahrplan.DateTime")
@@ -394,7 +395,7 @@ class PublishingTicket(Ticket):
             # CAUTION: Order is important. See note for Publishing.Tags
             # <https://github.com/voc/voctoweb/blob/main/app/views/frontend/events/show.html.haml#L85-L86>
             self.voctoweb_tags = [
-                self.fahrplan_id,
+                self.fahrplan_code or self.fahrplan_id,
                 self.date.split("-")[0],
                 *self.publishing_tags,
                 *self._get_list("Publishing.Voctoweb.Tags", optional=True),
