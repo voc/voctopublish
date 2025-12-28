@@ -38,8 +38,10 @@ LOG = logging.getLogger("Webhook")
             "title": "my super cool talk",
         },
         "voctoweb": {
-            "cdn_path": "/cdn.example.com/my-video.mp4",
-            "thumb_path": "/static.example.com/my-video.jpg",
+            "cdn_url": "https://cdn.example.com/my-video.mp4",
+            "thumb_url": "https://static.example.com/my-video.jpg",
+            "cdn_path": "https://cdn.example.com/my-video.mp4",       # DEPRECATED, use "cdn_url"
+            "thumb_path": "https://static.example.com/my-video.jpg",  # DEPRECATED, use "thumb_url"
             "enabled": true,
             "format": "h264-hd",
             "frontend_url": "https://example.com/my-video",
@@ -118,16 +120,18 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
     }
 
     if ticket.voctoweb_enable:
+        # TODO the cdn_url + thumb_url should be return by voctoweb private API in method create_upsert_event
+        # -> https://github.com/voc/voctoweb/issues/860
+        cdn_url = join("https:/" + ticket.voctoweb_path, ticket.folder, voctoweb_filename)
+        thumb_path = join(ticket.voctoweb_thumb_path, ticket.voctoweb_filename_base + "_preview.jpg").split("/", 2)
+        thumb_url = f"https:/{thumb_path[1]}/media/{thumb_path[2]}"
+
         content["voctoweb"] = {
-            "cdn_path": join(
-                ticket.voctoweb_path,
-                ticket.folder,
-                voctoweb_filename,
-            ),
-            "thumb_path": join(
-                ticket.voctoweb_thumb_path,
-                ticket.voctoweb_filename_base + "_preview.jpg",
-            ),
+            "cdn_path": cdn_url,  # DEPRECATED, use "cdn_url"
+            "cdn_url": cdn_url,
+            "thumb_path": thumb_url,  # DEPRECATED, use "thumb_url"
+            "thumb_url": thumb_url,
+            "cdn_filename": voctoweb_filename,
             "enabled": True,
             "format": ticket.folder,
             "frontend_url": "{}/v/{}".format(

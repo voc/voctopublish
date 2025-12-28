@@ -365,14 +365,7 @@ class VoctowebClient:
 
         url = self.api_url + "events/" + str(self.t.voctoweb_event_id)
         LOG.debug(
-            "api url: "
-            + url
-            + " header: "
-            + str(headers)
-            + " slug: "
-            + str(self.t.slug)
-            + " payload: "
-            + str(payload)
+            f"api url: {url} slug: {self.t.slug} payload: {payload}"
         )
 
         # call voctoweb api
@@ -483,14 +476,7 @@ class VoctowebClient:
 
         url = self.api_url + "events"
         LOG.debug(
-            "api url: "
-            + url
-            + " header: "
-            + str(headers)
-            + " slug: "
-            + str(self.t.slug)
-            + " payload: "
-            + str(payload)
+            f"api url: {url} slug: {self.t.slug} payload: {payload}"
         )
 
         # call voctoweb api
@@ -525,6 +511,8 @@ class VoctowebClient:
                     r = requests.patch(
                         url + "/" + self.t.guid, headers=headers, json=payload
                     )
+                
+                print(r.text)
 
         except requests.packages.urllib3.exceptions.MaxRetryError as e:
             raise VoctowebException("Error during creation of event: " + str(e)) from e
@@ -602,9 +590,7 @@ class VoctowebClient:
             },
         }
 
-        LOG.debug(f"api url: {url}")
-        LOG.debug(f"header: {repr(headers)}")
-        LOG.debug(f"payload: {repr(payload)}")
+        LOG.debug(f"api url: {url} payload: {repr(payload)}")
 
         try:
             if recording_id:
