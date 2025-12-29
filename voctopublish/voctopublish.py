@@ -325,10 +325,38 @@ class Worker:
                     )
             # generate thumbnails and timelens
             if self.ticket.mime_type.startswith("video"):
-                vw.generate_thumbs()
-                vw.upload_thumbs()
-                vw.generate_timelens()
-                vw.upload_timelens()
+                try:
+                    source_hash = check_output(
+                        [
+                            "sha256sum",
+                            os.path.join(
+                                self.ticket.publishing_path, self.ticket.local_filename
+                            ),
+                        ]
+                    ).split(" ", 1)[0]
+                except CalledProcessError:
+                    self.logger.exception(
+                        f"could not generate sha256sum for source file {self.ticket.local_filename}"
+                    )
+                    source_hash = None
+
+                if (
+                    source_hash is not None
+                    and self.ticket.voctoweb_source_file_hash is not None
+                    and source_hash == self.ticket.voctoweb_source_file_hash
+                ):
+                    self.logger.info(
+                        f"Skipping generation of thumbnails and timelens for {self.ticket_id} because source file {self.ticket.local_filename} has not changed since last publishing"
+                    )
+                else:
+                    vw.generate_thumbs()
+                    vw.upload_thumbs()
+                    vw.generate_timelens()
+                    vw.upload_timelens()
+                    self.c3tt.set_ticket_properties(
+                        self.ticket_id,
+                        {"Publishing.Voctoweb.SourceFileHash": source_hash},
+                    )
 
             # in case of a multi-language release we create here the single language files
             if len(self.ticket.languages) > 1:

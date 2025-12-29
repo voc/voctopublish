@@ -403,6 +403,9 @@ class PublishingTicket(Ticket):
                 "Voctoweb.RecordingId.Master", optional=True
             )
             self.voctoweb_event_id = self._get_str("Voctoweb.EventId", optional=True)
+            self.voctoweb_source_file_hash = self._get_str(
+                "Publishing.Voctoweb.SourceFileHash", optional=True
+            )
 
             # CAUTION: Order is important. See note for Publishing.Tags
             # <https://github.com/voc/voctoweb/blob/main/app/views/frontend/events/show.html.haml#L85-L86>
