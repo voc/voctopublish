@@ -368,7 +368,30 @@ class YoutubeAPI:
         return video["id"]
 
     def generate_and_upload_thumbnail(self, video_id):
-        YoutubeAPI.update_thumbnail(self.accessToken, video_id, self.thumbnail.path)
+        outjpg = os.path.join(
+            self.t.publishing_path, self.t.fahrplan_id + "_youtube.jpg"
+        )
+
+        try:
+            ffmpeg(
+                "-i",
+                self.thumbnail.path,
+                "-f",
+                "image2",
+                "-vcodec",
+                "mjpeg",
+                "-pix_fmt",
+                "yuv420p",
+                "-q:v",
+                "0",
+                "-y",
+                outjpg,
+            )
+            LOG.info("thumbnails reformatted for youtube")
+        except Exception as e_:
+            raise YouTubeException("Could not scale thumbnail") from e_
+
+        YoutubeAPI.update_thumbnail(self.accessToken, video_id, outjpg)
 
     def _build_title(self, lang=None):
         """
