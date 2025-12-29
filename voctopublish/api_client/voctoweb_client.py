@@ -364,9 +364,7 @@ class VoctowebClient:
         }
 
         url = self.api_url + "events/" + str(self.t.voctoweb_event_id)
-        LOG.debug(
-            f"api url: {url} slug: {self.t.slug} payload: {payload}"
-        )
+        LOG.debug(f"api url: {url} slug: {self.t.slug} payload: {payload}")
 
         # call voctoweb api
         requests.delete(url, headers=headers, json=payload)
@@ -475,9 +473,7 @@ class VoctowebClient:
         }
 
         url = self.api_url + "events"
-        LOG.debug(
-            f"api url: {url} slug: {self.t.slug} payload: {payload}"
-        )
+        LOG.debug(f"api url: {url} slug: {self.t.slug} payload: {payload}")
 
         # call voctoweb api
         try:
@@ -511,7 +507,7 @@ class VoctowebClient:
                     r = requests.patch(
                         url + "/" + self.t.guid, headers=headers, json=payload
                     )
-                
+
                 print(r.text)
 
         except requests.packages.urllib3.exceptions.MaxRetryError as e:

@@ -79,7 +79,9 @@ class Ticket:
             return value
         if value.isdigit():
             return int(value)
-        raise TicketException(f"Property '{key}' expected to be an integer, got {type(value)}")
+        raise TicketException(
+            f"Property '{key}' expected to be an integer, got {type(value)}"
+        )
 
     def _get_list(self, key, optional=False, try_default=False, split_by=","):
         value = self._get_str(key, optional=optional, try_default=try_default)
