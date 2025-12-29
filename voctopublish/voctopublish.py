@@ -353,13 +353,13 @@ class Worker:
         # audio tracks of the master we need to reflect that in the target filename
         if self.ticket.language_index is not None:
             self.voctoweb_filename = (
-                self.ticket.language_template % self.ticket.languages[index]
+                self.ticket.language_template % self.ticket.languages[self.ticket.language_index]
                 + "_"
                 + self.ticket.profile_slug
                 + "."
                 + self.ticket.profile_extension
             )
-            self.voctoweb_language = self.ticket.languages[index]
+            self.voctoweb_language = self.ticket.languages[self.ticket.language_index]
         else:
             self.voctoweb_filename = self.ticket.filename
             self.voctoweb_language = self.ticket.language
