@@ -351,8 +351,7 @@ class Worker:
 
         # if we have the language index the tracker wants to tell us about an encoding that does not contain all
         # audio tracks of the master we need to reflect that in the target filename
-        if self.ticket.language_index:
-            index = int(self.ticket.language_index)
+        if self.ticket.language_index is not None:
             self.voctoweb_filename = (
                 self.ticket.language_template % self.ticket.languages[index]
                 + "_"
