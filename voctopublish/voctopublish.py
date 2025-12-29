@@ -353,10 +353,11 @@ class Worker:
                     vw.upload_thumbs()
                     vw.generate_timelens()
                     vw.upload_timelens()
-                    self.c3tt.set_ticket_properties(
-                        self.ticket_id,
-                        {"Publishing.Voctoweb.SourceFileHash": source_hash},
-                    )
+                    if source_hash is not None:
+                        self.c3tt.set_ticket_properties(
+                            self.ticket_id,
+                            {"Publishing.Voctoweb.SourceFileHash": source_hash},
+                        )
 
             # in case of a multi-language release we create here the single language files
             if len(self.ticket.languages) > 1:
