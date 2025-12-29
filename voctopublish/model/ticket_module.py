@@ -74,7 +74,7 @@ class Ticket:
     def _get_int(self, key, optional=False, try_default=False):
         value = self._get_str(key, optional=optional, try_default=try_default)
         if value is None:
-            return []
+            return None
         if isinstance(value, int):
             return value
         if value.isdigit():
