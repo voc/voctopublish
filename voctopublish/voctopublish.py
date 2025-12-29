@@ -333,7 +333,7 @@ class Worker:
                                 self.ticket.publishing_path, self.ticket.local_filename
                             ),
                         ]
-                    ).split(" ", 1)[0]
+                    ).decode().split(" ", 1)[0]
                 except CalledProcessError:
                     self.logger.exception(
                         f"could not generate sha256sum for source file {self.ticket.local_filename}"
