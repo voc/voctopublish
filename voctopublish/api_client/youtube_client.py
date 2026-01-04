@@ -468,7 +468,7 @@ class YoutubeAPI:
                 language_name = self.lang_map[lang]
             else:
                 raise YouTubeException(
-                    "language not defined in translation strings, got"
+                    f"language not defined in translation strings, got {lang!r}, known languages: {self.lang_map}"
                 )
 
         return (

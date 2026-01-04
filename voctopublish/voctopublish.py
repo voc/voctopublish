@@ -326,14 +326,19 @@ class Worker:
             # generate thumbnails and timelens
             if self.ticket.mime_type.startswith("video"):
                 try:
-                    source_hash = check_output(
-                        [
-                            "sha256sum",
-                            os.path.join(
-                                self.ticket.publishing_path, self.ticket.local_filename
-                            ),
-                        ]
-                    ).decode().split(" ", 1)[0]
+                    source_hash = (
+                        check_output(
+                            [
+                                "sha256sum",
+                                os.path.join(
+                                    self.ticket.publishing_path,
+                                    self.ticket.local_filename,
+                                ),
+                            ]
+                        )
+                        .decode()
+                        .split(" ", 1)[0]
+                    )
                 except CalledProcessError:
                     self.logger.exception(
                         f"could not generate sha256sum for source file {self.ticket.local_filename}"
