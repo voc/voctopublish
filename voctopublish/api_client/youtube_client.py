@@ -66,6 +66,7 @@ class YoutubeAPI:
             "ita": "Italian",
             "swe": "Swedish",
             "nld": "Dutch",
+            "lav": "Latvian",
         }
 
         self.translation_strings = {
@@ -85,6 +86,7 @@ class YoutubeAPI:
             "ita": "traduzione italiana",
             "swe": "svensk översättning",
             "nld": "nederlandse Vertaling",
+            "lav": "tulkojums latviešu valodā",
         }
 
         self.youtube_urls = []
