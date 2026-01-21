@@ -42,12 +42,13 @@ from model.ticket_module import PublishingTicket, RecordingTicket
 from tools.ffmpeg import ffmpeg
 from tools.thumbnails import ThumbnailGenerator
 
-MY_PATH = os.path.abspath(os.path.dirname(__file__))
+MY_PATH = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 POSSIBLE_CONFIG_PATHS = [
     os.getenv("VOCTOPUBLISH_CONFIG", ""),
     os.path.expanduser("~/voctopublish.conf"),
     os.path.join(MY_PATH, "voctopublish.conf"),
     os.path.join(MY_PATH, "client.conf"),
+    os.path.join(MY_PATH, "config.toml"),
 ]
 
 for path in POSSIBLE_CONFIG_PATHS:
@@ -56,7 +57,7 @@ for path in POSSIBLE_CONFIG_PATHS:
         break
 else:
     raise FileNotFoundError(
-        f"Could not find a valid config in any of these paths: {' '.join(POSSIBLE_CONFIG_PATHS)}"
+        f"Could not find a valid config in any of these paths: {'\n   - '.join(POSSIBLE_CONFIG_PATHS)}"
     )
 
 with open(my_config_path) as f:

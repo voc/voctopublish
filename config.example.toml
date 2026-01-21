@@ -17,11 +17,13 @@ worker_type = "releasing"
 run_mode = "single"
 
 [C3Tracker]
+url = "https://tracker.c3voc.de/"
+# create a https://tracker.c3voc.de/workers or use https://tracker.c3voc.de/workers/group/92/edit
+# and add Token and Secret here:
 group = "<group>"
-#only set host if you don't want to use local machine name
-host = "my-machine-name"
 secret = "<secret>"
-url = "<tracker url>"
+#only set host if you don't want to use local machine name
+#host = "my-machine-name"
 
 [download.workers]
 # list all available download tools here. Use whatever you want, as long
@@ -29,20 +31,28 @@ url = "<tracker url>"
 python = true # the value of this does not matter
 wget = ["wget", "-q", "-O", "--TARGETPATH--", "--", "--DOWNLOADURL--"]
 
+
+[voctoweb]
+
 # "enable_default" below specifies the behaviour if the `Publishing.<service>.Enable`
 # property is missing in a ticket. If "yes", using the service is enabled,
 # otherwise it"s disabled.
-[voctoweb]
-# e.g. https://exmaple.com/api/ - with trailing slash
-api_url = "<voctoweb api url>"
+enable_default = true
+
+api_url = "https://media.ccc.de/api/" # with trailing slash!
 api_key = "<voctoweb key>"
-# url your frontend is reachable on, used to build urls in tweets / toots - no trailing slash
-frontend_url = "<voctoweb frontend url>"
+
+# for building urls e.g. in social media posts, webhooks, etc. - no trailing slashes!
+frontend_url = "https://media.ccc.de"
+cdn_url = "https://cdn.media.ccc.de"
+static_url = "https://static.media.ccc.de"
+
 # instance name is the name you refer to you're instead with, it's used for the tweets / toots
-instance_name = "<voctoweb instance name>"
-ssh_host = "<host to release files to>"
-ssh_port = "<ssh port on the release host>"
-ssh_user = "<ssh user on the release host>"
+instance_name = "media.ccc.de"
+
+#ssh_host = "<host to release files to>"
+#ssh_port = "<ssh port on the release host>"
+#ssh_user = "<ssh user on the release host>"
 
 [youtube]
 secret = "<youtube-api-secret>"
@@ -71,4 +81,12 @@ config_path = "/path/to/rclone/config"
 # For some properties, you can define defaults which get used if the
 # property is not found in the ticket itself. Note that the property being
 # empty in the ticket does also trigger a fallback to the default.
+"Publishing.Bluesky.Enable" = true
+"Publishing.Mastodon.Enable" = true
+"Publishing.Rclone.Enable" = false
 "Publishing.Twitter.Enable" = false
+"Publishing.Voctoweb.Enable" = true
+#"Publishing.RewriteSlug.Enabled" = true
+"Publishing.YouTube.Enable" = false
+"Publishing.YouTube.Privacy" = "private"
+"Record.DownloadHelper" = "python"

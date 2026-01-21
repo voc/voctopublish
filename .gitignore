@@ -51,3 +51,4 @@ mastodon_*.secret
 # direnv shit
 .direnv
 .envrc
+/config.toml
