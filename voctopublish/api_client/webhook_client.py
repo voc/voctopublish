@@ -126,8 +126,9 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
         cdn_url = join("https:/" + cdn_path)
         thumb_path = join(
             ticket.voctoweb_thumb_path, ticket.voctoweb_filename_base + "_preview.jpg"
-        ).split("/", 2)
-        thumb_url = f"https:/{thumb_path[1]}/media/{thumb_path[2]}"
+        )
+        tpc = thumb_path.split("/", 2)
+        thumb_url = f"https:/{tpc[1]}/media/{tpc[2]}"
 
         content["voctoweb"] = {
             "cdn_path": cdn_path,  # DEPRECATED, use "cdn_url"
