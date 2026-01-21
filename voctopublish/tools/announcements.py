@@ -35,7 +35,7 @@ def make_message(ticket, config, max_length=None):
         # saves us a bunch of isinstance() calls below
         max_length = 1_000_000
 
-    LOG.info(f"generating announcement message with max length of {max_length} chars")
+    LOG.debug(f"generating announcement message with max length of {max_length} chars")
 
     targets = []
     urls = []
@@ -78,5 +78,5 @@ def make_message(ticket, config, max_length=None):
         if len(url) <= (max_length - len(message)):
             message = message + " " + url
 
-    LOG.info(f"{len(message)} chars: {message}")
+    LOG.debug(f"{len(message)} chars: {message}")
     return message
