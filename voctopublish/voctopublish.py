@@ -23,6 +23,7 @@ import sys
 import urllib.request
 from subprocess import CalledProcessError, check_output
 from time import sleep
+from typing import overload, Literal
 
 try:
     # python 3.11
@@ -38,7 +39,7 @@ from api_client.rclone_client import RCloneClient
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from c3tt_rpc_client import C3TTClient
-from model.ticket_module import PublishingTicket, RecordingTicket
+from model.ticket_module import PublishingTicket, RecordingTicket, Ticket
 from tools.ffmpeg import ffmpeg
 from tools.thumbnails import ThumbnailGenerator
 
@@ -92,7 +93,7 @@ class Worker:
         elif self.worker_type == "recording":
             self.ticket_type = "recording"
             self.to_state = "recording"
-        else:
+        elif self.worker_type != "other":
             raise PublisherException("Unknown worker type " + self.worker_type)
 
         self.logger = logging.getLogger(f"{self.worker_type}_worker")
@@ -235,7 +236,30 @@ class Worker:
 
         self.logger.debug("#done")
 
-    def get_ticket_from_tracker(self):
+    @overload
+    def get_ticket(self, ticket_id: int, type: Literal["encoding", "publishing"]) -> PublishingTicket: ...
+    @overload
+    def get_ticket(self, ticket_id: int, type: Literal["recording"]) -> RecordingTicket: ...
+
+    def get_ticket(self, ticket_id: int, type: str = None, forced_properties = None) -> Ticket:
+        """
+        Get a specific ticket by its ID
+        :param ticket_id: the ticket ID to get
+        :return: a ticket object
+        """
+        properties = self.c3tt.get_ticket_properties(ticket_id)
+
+        if forced_properties:
+            properties.update(forced_properties)
+
+        if type == "encoding" or type == "publishing":
+            return PublishingTicket(properties, ticket_id, CONFIG)
+        elif type == "recording":
+            return RecordingTicket(properties, ticket_id, CONFIG)
+
+        return Ticket(properties, ticket_id, CONFIG)
+
+    def request_next_task_from_tracker(self):
         """
         Request the next unassigned ticket for the configured states
         :return: a ticket object or None in case no ticket is available
@@ -249,22 +273,10 @@ class Worker:
             self.ticket_id = ticket_id
             self.logger.info("Ticket ID:" + str(ticket_id))
             try:
-                ticket_properties = self.c3tt.get_ticket_properties(ticket_id)
-                self.logger.debug("Ticket Properties: " + str(ticket_properties))
+                self.ticket = self.get_ticket(ticket_id, self.ticket_type)
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
                 raise e_
-            if self.ticket_type == "encoding":
-                self.ticket = PublishingTicket(ticket_properties, ticket_id, CONFIG)
-            elif self.ticket_type == "recording":
-                self.ticket = RecordingTicket(ticket_properties, ticket_id, CONFIG)
-            else:
-                self.logger.info(
-                    "Unknown ticket type "
-                    + self.ticket_type
-                    + " aborting, please check config "
-                )
-                raise PublisherException("Unknown ticket type " + self.ticket_type)
         else:
             self.logger.info(
                 "No ticket of type " + self.ticket_type + " for state " + self.to_state
@@ -666,7 +678,7 @@ def process_single_ticket():
     w = None
     try:
         w = Worker()
-        w.get_ticket_from_tracker()
+        w.request_next_task_from_tracker()
 
         if w.ticket_id:
             if w.worker_type == "releasing":
