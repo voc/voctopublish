@@ -17,6 +17,7 @@
 import logging
 import re
 import unicodedata
+import json
 from os.path import join
 
 LOG = logging.getLogger("Ticket")
@@ -103,6 +104,10 @@ class Ticket:
         if value.lower() in ("yes", "1", "true"):
             return True
         return False
+
+    def __str__(self):
+        return super().__str__() + " " +json.dumps(vars(self), indent=2)
+
 
     @staticmethod
     def _get_language_from_string_(lang):
