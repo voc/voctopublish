@@ -20,6 +20,7 @@ from os.path import join
 
 from requests import RequestException, post
 from tools.announcements import EmptyAnnouncementMessage, make_message
+from voctopublish.model.ticket_module import PublishingTicket
 
 LOG = logging.getLogger("Webhook")
 
@@ -66,7 +67,7 @@ LOG = logging.getLogger("Webhook")
 """
 
 
-def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
+def send(ticket: PublishingTicket, config=None, voctoweb_filename=None, voctoweb_language=None, rclone=None):
     LOG.info(f"post webhook to {ticket.webhook_url}")
 
     r = None
@@ -100,7 +101,14 @@ def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
     return result
 
 
-def _get_json(ticket, config, voctoweb_filename, language, rclone):
+def _get_json(ticket: PublishingTicket, config=None, voctoweb_filename=None, language=None, rclone=None):
+    if not config:
+        config = ticket.config
+    if not voctoweb_filename:
+        voctoweb_filename = ticket.filename
+    if not language:
+        language = ticket.language
+
     try:
         message = make_message(ticket, config)
     except EmptyAnnouncementMessage:
