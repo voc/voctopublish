@@ -1,3 +1,4 @@
+import argparse
 import requests
 import sys
 import json
@@ -17,15 +18,17 @@ logger = logging.getLogger(__name__)
 
 
 tracker = TrackerClient()
-project = '39c3'
 
-def sync_tracker_with_hub():
+def sync_tracker_with_hub(project, args):
 
     tickets = requests.get(f'https://tracker.c3voc.de/api/v1/{project}/tickets/released.json').json()
     hd_masters = [t for t in tickets if t.get('encoding_profile_name') == 'TS| HD-Master MP4']
 
     for row in hd_masters:
-        if row['webhook_result'] != 201:
+        if int(row['webhook_result']) != 201:
+            print('---')
+            print()
+
             print(row)
 
             forced_properties = {
@@ -72,4 +75,11 @@ def sync_tracker_with_hub():
 
 
 if __name__ == "__main__":
-    sync_tracker_with_hub()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('project', action="store", help="Tracker project slug, e.g. `39C3`")
+    #parser.add_argument('year', action="store", help="Year, e.g. `2025`")
+    parser.add_argument('--debug', action="store_true", default=False)
+    parser.add_argument('--dry-run', action="store_true", default=False)
+    args = parser.parse_args()
+
+    sync_tracker_with_hub(args.project, args)
