@@ -812,6 +812,27 @@ class YoutubeAPI:
         s.feed(html)
         return s.get_data()
 
+    @staticmethod
+    def get_oembed_json(youtube_url):
+        """
+        fetch oembed json data from youtube for a given youtube url
+        :param youtube_url: youtube video url
+        :return: oembed json data
+        """
+        r = requests.get(
+            "https://www.youtube.com/oembed",
+            params={"url": youtube_url, "format": "json"},
+        )
+
+        data = {} 
+        try:
+            data = r.json()
+        except Exception:
+            pass
+    
+        data['status'] = r.status_code
+
+        return data
 
 class MLStripper(HTMLParser):
     """ """
