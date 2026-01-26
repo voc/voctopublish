@@ -109,6 +109,9 @@ class Ticket:
 
     def __str__(self):
         return super().__str__() + " " +json.dumps(vars(self), indent=2)
+    
+    def __getitem__(self, key):
+        return self.__get_property(key)
 
 
     @staticmethod
