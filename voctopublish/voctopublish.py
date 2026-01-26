@@ -82,11 +82,12 @@ class Worker:
     """
 
     def __init__(self):
-        self.ticket = None
-        self.ticket_id = None
-        self.thumbs = None
+        self.ticket: Ticket
+        self.ticket_id: int
+        self.thumbs: ThumbnailGenerator 
 
-        self.worker_type = CONFIG["general"]["worker_type"]
+        self.worker_type: Literal["releasing", "recording", "other"] = CONFIG["general"]["worker_type"]
+        self.ticket_type: Literal["meta", "recording", "encoding"]
         if self.worker_type == "releasing":
             self.ticket_type = "encoding"
             self.to_state = "releasing"
@@ -247,7 +248,7 @@ class Worker:
         :param ticket_id: the ticket ID to get
         :return: a ticket object
         """
-        properties = self.c3tt.get_ticket_properties(ticket_id)
+        properties = self.c3tt.get_ticket_properties(ticket_id) or {}
 
         if forced_properties:
             properties.update(forced_properties)
@@ -269,9 +270,9 @@ class Worker:
             self.ticket_type, self.to_state, {"EncodingProfile.Slug": "relive"}
         )
         if ticket_meta:
-            ticket_id = ticket_meta["id"]
+            ticket_id = int(ticket_meta["id"])
             self.ticket_id = ticket_id
-            self.logger.info("Ticket ID:" + str(ticket_id))
+            self.logger.info(f"Ticket ID: {ticket_id}")
             try:
                 self.ticket = self.get_ticket(ticket_id, self.ticket_type)
             except Exception as e_:

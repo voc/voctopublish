@@ -18,15 +18,13 @@ import errno
 import glob
 import json
 import logging
-import operator
 import os
-import tempfile
 import time
 from subprocess import CalledProcessError, check_output
 
 import paramiko
 import requests
-from model.ticket_module import Ticket
+from model.ticket_module import PublishingTicket
 from tools.ffmpeg import ffmpeg, ffprobe_json
 from tools.thumbnails import ThumbnailGenerator
 
@@ -36,7 +34,7 @@ LOG = logging.getLogger("Voctoweb")
 class VoctowebClient:
     def __init__(
         self,
-        t: Ticket,
+        t: PublishingTicket,
         thumb: ThumbnailGenerator,
         api_key,
         api_url,

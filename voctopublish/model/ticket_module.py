@@ -19,6 +19,7 @@ import re
 import unicodedata
 import json
 from os.path import join
+from datetime import datetime, timedelta, timezone
 
 LOG = logging.getLogger("Ticket")
 
@@ -29,10 +30,10 @@ class Ticket:
     and adds some additional information.
     """
 
-    def __init__(self, ticket, ticket_id, config):
-        if not ticket:
+    def __init__(self, properties, ticket_id, config):
+        if not properties:
             raise TicketException("Ticket was None type")
-        self._tracker_ticket = ticket
+        self._tracker_ticket = properties
         self.id = ticket_id
         self.config = config
 
@@ -57,7 +58,7 @@ class Ticket:
                 return str(v).strip()
         return None
 
-    def _get_str(self, key, optional=False, try_default=False):
+    def _get_str(self, key, optional=False, try_default=False) -> str:
         value = self.__get_property(key)
         if not value:
             if try_default:
@@ -70,21 +71,22 @@ class Ticket:
             if not optional and value in (None, ""):
                 raise TicketException(f"Property '{key}' is missing or empty in ticket")
         LOG.debug(f"{key!r} = {value!r}")
-        return value
+        # TODO
+        return value or ""
 
-    def _get_int(self, key, optional=False, try_default=False):
+    def _get_int(self, key, optional=False, try_default=False) -> int | None:
         value = self._get_str(key, optional=optional, try_default=try_default)
-        if value is None:
+        if value is None or value == "":
             return None
         if isinstance(value, int):
             return value
         if value.isdigit():
             return int(value)
         raise TicketException(
-            f"Property '{key}' expected to be an integer, got {type(value)}"
+            f"Property '{key}' expected to be an integer, got {type(value)}: {value}"
         )
 
-    def _get_list(self, key, optional=False, try_default=False, split_by=","):
+    def _get_list(self, key, optional=False, try_default=False, split_by=",") -> list:
         value = self._get_str(key, optional=optional, try_default=try_default)
         if value is None:
             return []
@@ -95,7 +97,7 @@ class Ticket:
                 result.append(v)
         return result
 
-    def _get_bool(self, key, optional=False, try_default=False):
+    def _get_bool(self, key, optional=False, try_default=False) -> bool | None:
         value = self._get_str(key, optional=optional, try_default=try_default)
         if value is None:
             return None
@@ -138,8 +140,8 @@ class RecordingTicket(Ticket):
     This is ticket we use for the download worker. This ticket has less information than an encoding ticket.
     """
 
-    def __init__(self, ticket, ticket_id, config):
-        super().__init__(ticket, ticket_id, config)
+    def __init__(self, properties, ticket_id, config):
+        super().__init__(properties, ticket_id, config)
 
         fuse_path = self._get_str("Processing.Path.Raw", optional=True)
         if not fuse_path:
@@ -174,8 +176,8 @@ class PublishingTicket(Ticket):
     This is a ticket we use for Voctopublish
     """
 
-    def __init__(self, ticket, ticket_id, config):
-        super().__init__(ticket, ticket_id, config)
+    def __init__(self, properties, ticket_id, config):
+        super().__init__(properties, ticket_id, config)
 
         # recording ticket properties
         self.language = self._get_str("Record.Language", optional=True)
@@ -260,7 +262,7 @@ class PublishingTicket(Ticket):
         # recording ticket properties
 
         # special case languages: if Encoding.Language is present, it overrides Record.Language:
-        if "Encoding.Language" in ticket:
+        if "Encoding.Language" in properties:
             self.language = self._get_str("Encoding.Language")
             self.languages = dict(
                 enumerate(self._get_list("Encoding.Language", split_by="-"))
