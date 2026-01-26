@@ -382,8 +382,9 @@ class PublishingTicket(Ticket):
         self.youtube_urls = {}
         self.has_youtube_url = False
         # check if this event has already been published to youtube
-        for key in ticket:
-            if key.lower().startswith("youtube."):
+        for key in properties:
+            # only keys like YouTube.Url0, YouTube.Url1, ... – and not Youtube.Url0.status etc.
+            if key.lower().startswith("youtube.url") and len(key) == 12:
                 self.has_youtube_url = True
                 self.youtube_urls[key] = self._get_str(key)
 
