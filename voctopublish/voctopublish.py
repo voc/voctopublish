@@ -238,11 +238,10 @@ class Worker:
         self.logger.debug("#done")
 
     @overload
-    def get_ticket(self, ticket_id: int, type: Literal["encoding", "publishing"]) -> PublishingTicket: ...
+    def get_ticket(self, ticket_id: int, type: Literal["encoding", "publishing"], forced_properties = None) -> PublishingTicket: ...
     @overload
-    def get_ticket(self, ticket_id: int, type: Literal["recording"]) -> RecordingTicket: ...
-
-    def get_ticket(self, ticket_id: int, type: str = None, forced_properties = None) -> Ticket:
+    def get_ticket(self, ticket_id: int, type: Literal["recording"], forced_properties = None) -> RecordingTicket: ...
+    def get_ticket(self, ticket_id: int, type: str | None = None, forced_properties = None) -> Ticket:
         """
         Get a specific ticket by its ID
         :param ticket_id: the ticket ID to get
@@ -250,6 +249,7 @@ class Worker:
         """
         properties = self.c3tt.get_ticket_properties(ticket_id) or {}
 
+        # in some cases we want to override certain properties, e.g. when ticket was modified in the tracker to only publish to youtube etc.
         if forced_properties:
             properties.update(forced_properties)
 
