@@ -327,6 +327,11 @@ class PublishingTicket(Ticket):
             self.youtube_translation_title_suffix = self._get_str(
                 "Publishing.YouTube.TranslationTitleSuffix", optional=True
             )
+            self.youtube_update_thumbnail = self._get_bool(
+                "Publishing.YouTube.UpdateThumbnail", optional=True, try_default=True
+            )
+            if self.youtube_update_thumbnail is None:
+                self.youtube_update_thumbnail = True
 
             self.youtube_playlists = self._get_list(
                 "Publishing.YouTube.Playlists", optional=True

@@ -364,7 +364,8 @@ class YoutubeAPI:
 
         video = upload.json()
 
-        self.generate_and_upload_thumbnail(video["id"])
+        if self.t.youtube_update_thumbnail:
+            self.generate_and_upload_thumbnail(video["id"])
 
         youtube_url = "https://www.youtube.com/watch?v=" + video["id"]
         LOG.info("successfully uploaded video as %s", youtube_url)
