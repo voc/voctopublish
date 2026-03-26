@@ -17,6 +17,7 @@
 import logging
 import re
 import unicodedata
+from datetime import datetime, timedelta, timezone
 from os.path import join
 
 LOG = logging.getLogger("Ticket")
@@ -120,11 +121,11 @@ class Ticket:
         }
 
         out = []
-        for l in lang.split("-"):
-            if l in lang_map:
-                out.append(lang_map[l])
+        for i in lang.split("-"):
+            if i in lang_map:
+                out.append(lang_map[i])
             else:
-                raise TicketException("language " + l + " not in language map")
+                raise TicketException(f"language {i} not in language map")
         return "-".join(out)
 
 

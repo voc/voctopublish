@@ -21,7 +21,6 @@ import logging
 import mimetypes
 import os
 import re
-from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 
 import langcodes
@@ -67,7 +66,7 @@ class YoutubeAPI:
             "swe": "Swedish",
             "nld": "Dutch",
             "lav": "Latvian",
-            "jpn": "Japanese"
+            "jpn": "Japanese",
         }
 
         self.translation_strings = {
@@ -88,7 +87,7 @@ class YoutubeAPI:
             "swe": "svensk översättning",
             "nld": "nederlandse Vertaling",
             "lav": "tulkojums latviešu valodā",
-            "jpn": "日本語訳"
+            "jpn": "日本語訳",
         }
 
         self.youtube_urls = []
@@ -545,7 +544,7 @@ class YoutubeAPI:
                 self.update_metadata(
                     {"id": video_id, "status": {"privacyStatus": "private"}},
                 )
-                LOG.info("depublished %s video track from %s" % (lang, video_url))
+                LOG.info(f"depublished video track from {video_url}")
                 depublished_urls.append(video_url)
                 props[prop] = ""
 
@@ -650,7 +649,7 @@ class YoutubeAPI:
             )
 
         for item in r.json()["items"]:
-            remove_playlist_item(item["id"])
+            self.remove_playlist_item(item["id"])
 
     def remove_playlist_item(self, item_id: str):
         """

@@ -18,9 +18,7 @@ import errno
 import glob
 import json
 import logging
-import operator
 import os
-import tempfile
 import time
 from subprocess import CalledProcessError, check_output
 
@@ -388,7 +386,7 @@ class VoctowebClient:
                 LOG.info("remote file does not exist " + remote_path)
             else:
                 raise
-        except:
+        except Exception:
             raise VoctowebException("Could not delete file from server " + remote_path)
 
         LOG.info("deleting " + remote_path + " done")

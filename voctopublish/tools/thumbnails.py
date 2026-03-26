@@ -23,7 +23,6 @@ from shutil import move
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 
-from model.ticket_module import Ticket
 from tools.ffmpeg import ffmpeg, ffprobe_json
 from tools.select_thumbnail import calc_score
 
@@ -60,7 +59,7 @@ class ThumbnailGenerator:
 
         try:
             length = int(float(ffprobe_json(source)["format"]["duration"]))
-        except Exception:
+        except Exception as e:
             raise ThumbnailException(
                 f"ERROR: could not get duration from {source}: {e!r}"
             ) from e

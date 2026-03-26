@@ -47,7 +47,7 @@ def make_message(ticket, config, max_length=None):
     if ticket.youtube_enable and ticket.youtube_privacy == "public":
         targets.append("YouTube")
         urls.append(ticket.youtube_urls["YouTube.Url0"])
-        LOG.debug(f"youtube is enabled")
+        LOG.debug("youtube is enabled")
 
     if not targets:
         raise EmptyAnnouncementMessage()

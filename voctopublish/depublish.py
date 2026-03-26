@@ -15,17 +15,15 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import configparser
 import logging
 import os
 import socket
 import sys
-import traceback
 
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from c3tt_rpc_client import C3TTClient
-from model.ticket_module import PublishingTicket, Ticket
+from model.ticket_module import PublishingTicket
 
 try:
     # python 3.11
@@ -121,7 +119,7 @@ class Depublisher:
                 self.config["C3Tracker"]["secret"],
             )
         except Exception as e_:
-            raise PublisherException(
+            raise DepublisherException(
                 "Config parameter missing or empty, please check config"
             ) from e_
 
@@ -164,7 +162,7 @@ class Depublisher:
                 errors.add(f"Removal from youtube failed: {e!r}")
         elif self.ticket.has_youtube_url:
             logging.warning(
-                f"ticket has youtube urls set, but youtube is disabled. NOT removing!"
+                "ticket has youtube urls set, but youtube is disabled. NOT removing!"
             )
         else:
             logging.info("ticket not on youtube")
@@ -177,7 +175,7 @@ class Depublisher:
         else:
             self.c3tt.set_ticket_done(
                 self.ticket_id,
-                f"Video depublished. YouTube videos have been set to private.",
+                "Video depublished. YouTube videos have been set to private.",
             )
 
     def _depublish_from_voctoweb(self):

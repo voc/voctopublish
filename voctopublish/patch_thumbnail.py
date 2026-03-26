@@ -15,7 +15,6 @@ except ImportError:
 from api_client.voctoweb_client import VoctowebClient
 from api_client.youtube_client import YoutubeAPI
 from c3tt_rpc_client import C3TTClient
-from c3tt_rpc_client.exceptions import C3TTException
 from model.ticket_module import PublishingTicket
 from tools.thumbnails import ThumbnailGenerator
 
@@ -145,7 +144,7 @@ if ticket.youtube_enable:
                 LOG.exception(f"could not replace thumbnail on youtube for {url}")
                 had_error = True
     except Exception:
-        LOG.exception(f"could not replace thumbnail on youtube")
+        LOG.exception("could not replace thumbnail on youtube")
         had_error = True
 
 if had_error:
