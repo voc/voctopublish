@@ -194,7 +194,11 @@ class PublishingTicket(Ticket):
         self.filename = (
             self._get_str("EncodingProfile.Basename") + "." + self.profile_extension
         )
-        self.folder = self._get_str("EncodingProfile.MirrorFolder")
+        folder_by_year = self._get_bool("Publishing.FolderByYear", optional=True)
+        if folder_by_year:
+            self.folder = self._get_str("Meta.Year") + "/" + self._get_str("EncodingProfile.MirrorFolder")
+        else:
+            self.folder = self._get_str("EncodingProfile.MirrorFolder")
 
         # encoding properties
         self.language_index = self._get_int("Encoding.LanguageIndex", optional=True)
