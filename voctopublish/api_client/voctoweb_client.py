@@ -628,7 +628,6 @@ class VoctowebClient:
         file = os.path.join(self.t.publishing_path, local_filename)
 
         file_size = os.stat(file).st_size
-        file_size = int(file_size / 1024 / 1024)
 
         try:
             info_json = ffprobe_json(file)
