@@ -196,7 +196,11 @@ class PublishingTicket(Ticket):
         )
         folder_by_year = self._get_bool("Publishing.FolderByYear", optional=True)
         if folder_by_year:
-            self.folder = self._get_str("Meta.Year") + "/" + self._get_str("EncodingProfile.MirrorFolder")
+            self.folder = (
+                self._get_str("Meta.Year")
+                + "/"
+                + self._get_str("EncodingProfile.MirrorFolder")
+            )
         else:
             self.folder = self._get_str("EncodingProfile.MirrorFolder")
 
