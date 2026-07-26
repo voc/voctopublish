@@ -112,7 +112,7 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
         "fahrplan": {
             "conference": ticket.acronym,
             "guid": ticket.guid,
-            "id": ticket.fahrplan_id,
+            "id": int(ticket.fahrplan_id),
             "language": language,
             "slug": ticket.slug,
             "title": ticket.title,
