@@ -11,9 +11,9 @@ try:
 except ImportError:
     from rtoml import load as toml_load
 
+import api_client.webhook_client as webhook
 from c3tt_rpc_client import C3TTClient
 from model.ticket_module import PublishingTicket
-import api_client.webhook_client as webhook
 
 logging.basicConfig(
     level=logging.DEBUG,

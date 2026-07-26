@@ -90,12 +90,11 @@ def send(ticket, config, voctoweb_filename, voctoweb_language, rclone):
                 "Authorization": ticket.webhook_pass,
             }
         r = post(ticket.webhook_url, **kwargs)
+        LOG.debug(f"{r.status_code=} {r.text=}")
         result = r.status_code
+        # we intentionally don't raise_for_status() here
     except RequestException:
         LOG.exception("could not post to webhook at {ticket.webhook_url}")
-
-    if r:
-        LOG.debug(f"{r.status_code=} {r.text=}")
 
     return result
 
@@ -124,11 +123,11 @@ def _get_json(ticket, config, voctoweb_filename, language, rclone):
         # -> https://github.com/voc/voctoweb/issues/860
         cdn_path = join(ticket.voctoweb_path, ticket.folder, voctoweb_filename)
         cdn_url = join("https:/" + cdn_path)
-        thumb_path = (join(
+        thumb_path = join(
             ticket.voctoweb_thumb_path, ticket.voctoweb_filename_base + "_preview.jpg"
         )
-        thumb_path_split = thumb_path.split("/", 2))
-        thumb_url = f"https:/{thumb_path_split[1]}/media/{thumb_path_split[2]}"
+        thumb_path_split = thumb_path.split("/", 2)
+        thumb_url = f"https://{thumb_path_split[1]}/media/{thumb_path_split[2]}"
 
         content["voctoweb"] = {
             "cdn_path": cdn_path,  # DEPRECATED, use "cdn_url"
