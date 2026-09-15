@@ -36,7 +36,7 @@ class RelivePublisher:
     def __init__(self, args={}):
         # load config
         if not os.path.exists("client.conf"):
-            raise IOError("Error: config file not found")
+            raise OSError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
         self.config.read("client.conf")

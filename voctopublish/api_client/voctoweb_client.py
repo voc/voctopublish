@@ -99,11 +99,11 @@ class VoctowebClient:
             try:
                 self.sftp.stat(path)
                 LOG.debug(f"{dir_type} directory {path} already exists")
-            except IOError as e:
+            except OSError as e:
                 if e.errno == errno.ENOENT:
                     try:
                         self.sftp.mkdir(path)
-                    except IOError as e:
+                    except OSError as e:
                         raise VoctowebException(
                             f"Could not create {dir_type} dir {path} - {e!r}"
                         ) from e
@@ -192,7 +192,7 @@ class VoctowebClient:
                 raise VoctowebException(
                     "could not upload thumb because of SSH problem: " + str(e)
                 ) from e
-            except IOError as e:
+            except OSError as e:
                 raise VoctowebException(
                     "could not upload thumb to "
                     + target
@@ -260,7 +260,7 @@ class VoctowebClient:
                 raise VoctowebException(
                     "could not upload thumb because of SSH problem " + str(e)
                 ) from e
-            except IOError as e:
+            except OSError as e:
                 raise VoctowebException(
                     "could not upload thumb because of " + str(e)
                 ) from e
@@ -286,11 +286,11 @@ class VoctowebClient:
         # Check if the directory exists and if not create it.
         try:
             self.sftp.stat(format_folder)
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 try:
                     self.sftp.mkdir(format_folder)
-                except IOError as e:
+                except OSError as e:
                     raise VoctowebException(
                         "Could not create format subdir "
                         + format_folder
@@ -303,12 +303,12 @@ class VoctowebClient:
         # Check if the file already exists and remove it
         try:
             self.sftp.stat(upload_target)
-        except IOError:
+        except OSError:
             pass  # if the file not exists we can go to the upload
         else:
             try:
                 self.sftp.remove(upload_target)
-            except IOError as e:
+            except OSError as e:
                 raise VoctowebException("Could not replace recording " + str(e)) from e
 
         # Upload the file
@@ -320,7 +320,7 @@ class VoctowebClient:
             raise VoctowebException(
                 "Could not upload recording because of SSH problem " + str(e)
             ) from e
-        except IOError as e:
+        except OSError as e:
             raise VoctowebException(
                 "Could not create file in upload directory " + str(e)
             ) from e
@@ -381,7 +381,7 @@ class VoctowebClient:
         # Check if the file already exists and remove it
         try:
             self.sftp.remove(remote_path)
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 LOG.info("remote file does not exist " + remote_path)
             else:
@@ -532,7 +532,7 @@ class VoctowebClient:
         :param html5:
         :return:
         """
-        LOG.info(("publishing " + filename + " to " + self.api_url))
+        LOG.info("publishing " + filename + " to " + self.api_url)
 
         recording_id = self.t.recording_id
         if single_language:
@@ -584,7 +584,7 @@ class VoctowebClient:
             },
         }
 
-        LOG.debug(f"api url: {url} payload: {repr(payload)}")
+        LOG.debug(f"api url: {url} payload: {payload!r}")
 
         try:
             if recording_id:
@@ -598,15 +598,15 @@ class VoctowebClient:
         #    raise VoctowebException("Error during creating of event: " + str(e)) from e
         if r.status_code != 200 and r.status_code != 201:
             raise VoctowebException(
-                (
+                
                     "ERROR: Could not create_recording talk: "
                     + str(r.status_code)
                     + " "
                     + r.text
-                )
+                
             )
 
-        LOG.info(("publishing " + filename + " done"))
+        LOG.info("publishing " + filename + " done")
 
         if recording_id:
             # Recording was only updated, we do not need return the recording_id as it is already part of the ticket

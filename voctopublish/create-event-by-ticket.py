@@ -45,7 +45,7 @@ class RelivePublisher:
         config_path = "../client.conf"
 
         if not os.path.exists(config_path):
-            raise IOError("Error: config file not found")
+            raise OSError("Error: config file not found")
 
         self.config = toml_load(open(config_path))
 

@@ -614,7 +614,7 @@ class Worker:
         """
         try:
             shutil.copyfile(source, target)
-        except IOError as e_:
+        except OSError as e_:
             raise PublisherException(e_)
 
     def _download_file(self, source, target):

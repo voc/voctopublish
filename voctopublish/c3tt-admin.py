@@ -14,7 +14,7 @@ class C3TTAdmin:
 
     def __init__(self):
         if not os.path.exists("../client.conf"):
-            raise IOError("Error: config file not found")
+            raise OSError("Error: config file not found")
 
         self.config = configparser.ConfigParser()
         self.config.read("../client.conf")

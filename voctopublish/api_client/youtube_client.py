@@ -120,9 +120,7 @@ class YoutubeAPI:
                 video_url = self.t._get_str(f"YouTube.Url{i}", optional=True)
                 if video_url and self.t.youtube_update != "force":
                     LOG.info(
-                        "Video track {} is already on youtube, returning previous URL {}".format(
-                            i, video_url
-                        )
+                        f"Video track {i} is already on youtube, returning previous URL {video_url}"
                     )
                 else:
                     out_filename = (
