@@ -385,10 +385,9 @@ class YoutubeAPI:
                 "-vcodec",
                 "mjpeg",
                 "-pix_fmt",
-                "yuv420p",
+                "yuvj420p",
                 "-q:v",
                 "0",
-                "-y",
                 outjpg,
             )
             LOG.info("thumbnails reformatted for youtube")
