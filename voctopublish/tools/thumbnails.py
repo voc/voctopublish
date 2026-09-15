@@ -26,6 +26,8 @@ from tempfile import TemporaryDirectory
 from tools.ffmpeg import ffmpeg, ffprobe_json
 from tools.select_thumbnail import calc_score
 
+LOG = logging.getLogger("ThumbnailGenerator")
+
 
 class ThumbnailGenerator:
     def __init__(self, ticket, config):
@@ -55,7 +57,7 @@ class ThumbnailGenerator:
             raise FileNotFoundError(self.path)
 
         source = join(self.ticket.publishing_path, self.ticket.local_filename)
-        logging.info(f"generating thumbs for {source}")
+        LOG.info(f"generating thumbs for {source}")
 
         try:
             length = int(float(ffprobe_json(source)["format"]["duration"]))
@@ -65,7 +67,7 @@ class ThumbnailGenerator:
             ) from e
 
         with TemporaryDirectory() as tmpdir:
-            logging.debug("TemporaryDirectory is " + str(tmpdir))
+            LOG.debug("TemporaryDirectory is " + str(tmpdir))
 
             # now extract candidates and convert to non-anamorphic images
             # we use equidistant sampling, but skip parts of the file that
@@ -77,7 +79,7 @@ class ThumbnailGenerator:
                 scores = {}
                 interval = 180
                 candidates = [20, 30, 40]  # some fixed candidates we always want to hit
-                logging.debug(
+                LOG.debug(
                     "length of video used for thumbnail generation " + str(length)
                 )
                 candidates.extend(
@@ -109,7 +111,7 @@ class ThumbnailGenerator:
                         if isfile(candidate):
                             scores[candidate] = calc_score(candidate)
                         else:
-                            logging.warning(
+                            LOG.warning(
                                 "ffmpeg was not able to create candidate for "
                                 + str(candidate)
                             )
@@ -125,7 +127,7 @@ class ThumbnailGenerator:
 
                 sorted_scores = sorted(scores.items(), key=itemgetter(1), reverse=True)
                 winner = sorted_scores[0][0]
-                logging.debug("Winner: " + winner)
+                LOG.debug("Winner: " + winner)
 
                 move(winner, self.path)
             else:
@@ -151,7 +153,7 @@ class ThumbnailGenerator:
                 except Exception as e_:
                     raise ThumbnailException from e_
 
-            logging.info("thumbnails generated")
+            LOG.info("thumbnails generated")
 
 
 class ThumbnailException(Exception):

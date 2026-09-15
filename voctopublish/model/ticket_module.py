@@ -101,9 +101,7 @@ class Ticket:
             return None
         if isinstance(value, bool):
             return value
-        if value.lower() in ("yes", "1", "true"):
-            return True
-        return False
+        return (value.lower() in ("yes", "1", "true"))
 
     @staticmethod
     def _get_language_from_string_(lang):

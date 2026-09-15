@@ -4,7 +4,7 @@ import logging
 import os
 import re
 import socket
-from sys import argv
+from sys import argv, exit
 
 try:
     # python 3.11
@@ -51,10 +51,9 @@ try:
     ]
 
     for path in POSSIBLE_CONFIG_PATHS:
-        if path:
-            if os.path.isfile(path):
-                my_config_path = path
-                break
+        if path and os.path.isfile(path):
+            my_config_path = path
+            break
     else:
         raise FileNotFoundError(
             f"Could not find a valid config in any of these paths: {' '.join(POSSIBLE_CONFIG_PATHS)}"

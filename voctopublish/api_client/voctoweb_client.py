@@ -647,6 +647,7 @@ class VoctowebClient:
                         width = stream["width"]
                         height = stream["height"]
             except Exception:
+                LOG.exception('could not determine resolution of video')
                 # error handling just below
                 pass
 

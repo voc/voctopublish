@@ -1,4 +1,3 @@
-#!/bin/python3
 #    Copyright (C) 2018  derpeter, 2023 kunsi
 #    derpeter@berlin.ccc.de
 #
@@ -34,14 +33,14 @@ def send_toot(ticket, config):
     try:
         # check if we already have our client token and secret and if not get a new one
         if not Path("./mastodon_clientcred.secret").exists():
-            logging.debug("no mastodon client credentials found, get fresh ones")
+            LOG.debug("no mastodon client credentials found, get fresh ones")
             Mastodon.create_app(
                 "voctopublish",
                 api_base_url=config["mastodon"]["api_base_url"],
                 to_file="mastodon_clientcred.secret",
             )
         else:
-            logging.debug("Using existing Mastodon client credentials")
+            LOG.debug("Using existing Mastodon client credentials")
 
         mastodon = Mastodon(
             client_id="mastodon_clientcred.secret",
@@ -50,14 +49,14 @@ def send_toot(ticket, config):
 
         # check if we already have an access token, if not get a fresh one
         if not Path("./mastodon_usercred.secret").exists():
-            logging.debug("no mastodon user credentials found, getting a fresh token")
+            LOG.debug("no mastodon user credentials found, getting a fresh token")
             mastodon.log_in(
                 config["mastodon"]["email"],
                 config["mastodon"]["password"],
                 to_file="mastodon_usercred.secret",
             )
         else:
-            logging.debug("Using existing Mastodon user token")
+            LOG.debug("Using existing Mastodon user token")
 
         # Create actual API instance
         mastodon = Mastodon(

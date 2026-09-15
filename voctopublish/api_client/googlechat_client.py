@@ -1,4 +1,3 @@
-#!/bin/python3
 #    Copyright (C) 2021 kunsi
 #    voc@kunsmann.eu
 #

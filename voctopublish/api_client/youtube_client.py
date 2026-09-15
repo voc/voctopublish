@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #    Copyright (C) 2017  andi, derpeter
 #    andi@muc.ccc.de
 #    derpeter@berlin.ccc.de

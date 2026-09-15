@@ -42,6 +42,8 @@ from model.ticket_module import PublishingTicket, RecordingTicket
 from tools.ffmpeg import ffmpeg
 from tools.thumbnails import ThumbnailGenerator
 
+LOG = logging.getLogger('voctopublish')
+
 MY_PATH = os.path.abspath(os.path.dirname(__file__))
 POSSIBLE_CONFIG_PATHS = [
     os.getenv("VOCTOPUBLISH_CONFIG", ""),
@@ -53,6 +55,7 @@ POSSIBLE_CONFIG_PATHS = [
 for path in POSSIBLE_CONFIG_PATHS:
     if path and os.path.isfile(path):
         my_config_path = path
+        LOG.debug(f'using config file at {path}')
         break
 else:
     raise FileNotFoundError(
@@ -195,28 +198,27 @@ class Worker:
                     "skipping rclone because Publishing.Rclone.OnlyMaster is set to 'yes'"
                 )
 
-        if self.ticket.webhook_url:
-            if self.ticket.master or not self.ticket.webhook_only_master:
-                result = webhook.send(
-                    self.ticket,
-                    CONFIG,
-                    getattr(self, "voctoweb_filename", None),
-                    getattr(self, "voctoweb_language", self.ticket.language),
-                    rclone,
+        if self.ticket.webhook_url and (self.ticket.master or not self.ticket.webhook_only_master):
+            result = webhook.send(
+                self.ticket,
+                CONFIG,
+                getattr(self, "voctoweb_filename", None),
+                getattr(self, "voctoweb_language", self.ticket.language),
+                rclone,
+            )
+            if (
+                not isinstance(result, int) or result >= 300
+            ) and self.ticket.webhook_fail_on_error:
+                raise PublisherException(
+                    f"POSTing webhook to {self.ticket.webhook_url} failed with http status code {result}"
                 )
-                if (
-                    not isinstance(result, int) or result >= 300
-                ) and self.ticket.webhook_fail_on_error:
-                    raise PublisherException(
-                        f"POSTing webhook to {self.ticket.webhook_url} failed with http status code {result}"
-                    )
-                elif isinstance(result, int):
-                    self.c3tt.set_ticket_properties(
-                        self.ticket_id,
-                        {
-                            "Webhook.StatusCode": result,
-                        },
-                    )
+            elif isinstance(result, int):
+                self.c3tt.set_ticket_properties(
+                    self.ticket_id,
+                    {
+                        "Webhook.StatusCode": result,
+                    },
+                )
 
         self.c3tt.set_ticket_done(self.ticket_id)
 
@@ -252,7 +254,7 @@ class Worker:
                 self.logger.debug("Ticket Properties: " + str(ticket_properties))
             except Exception as e_:
                 self.c3tt.set_ticket_failed(ticket_id, e_)
-                raise e_
+                raise
             if self.ticket_type == "encoding":
                 self.ticket = PublishingTicket(ticket_properties, ticket_id, CONFIG)
             elif self.ticket_type == "recording":
@@ -677,11 +679,11 @@ def process_single_ticket():
             return True
     except Exception as e:
         if w and w.ticket_id:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
+            exc_type, _, _ = sys.exc_info()
             w.c3tt.set_ticket_failed(w.ticket_id, f"{exc_type.__name__}: {e}")
-            logging.exception(f"could not process ticket {w.ticket_id}")
+            LOG.exception(f"could not process ticket {w.ticket_id}")
         else:
-            raise e
+            raise
     return False
 
 
@@ -707,5 +709,5 @@ if __name__ == "__main__":
         sys.exit(0)
 
     else:
-        logging.error(f"unknown run_mode {run_mode}")
+        LOG.error(f"unknown run_mode {run_mode}")
         sys.exit(1)

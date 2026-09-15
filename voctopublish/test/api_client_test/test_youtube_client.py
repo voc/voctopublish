@@ -221,9 +221,10 @@ class TestYouTubeClient(unittest.TestCase):
             "Test Event - Russian (русский) translation - rus - Russian (Translation)",
         )
 
-    def build_client(self, additional_ticket_data={}):
+    def build_client(self, additional_ticket_data=None):
         ticket_data = self.ticket_data.copy()
-        ticket_data.update(additional_ticket_data)
+        if additional_ticket_data is not None:
+            ticket_data.update(additional_ticket_data)
         client = YoutubeAPI(Ticket(ticket_data, 1), "my-client", "my-secret")
         client.accessToken = "my-access-token"
 

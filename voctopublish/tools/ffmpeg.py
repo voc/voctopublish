@@ -2,7 +2,7 @@ from json import loads
 from logging import getLogger
 from subprocess import PIPE, CalledProcessError, check_output
 
-LOG = getLogger("ffmpeg")
+LOG = getLogger("FFmpeg")
 
 
 def _run(call):
@@ -15,7 +15,7 @@ def _run(call):
         LOG.debug(f"{e.stderr=}")
 
         # will be propagated to tracker
-        raise e
+        raise
 
 
 def ffmpeg(*args):

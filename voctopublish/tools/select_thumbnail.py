@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #    Copyright (C) 2017  Florian Larysch, derpeter
 #    Florian Larysch <fl@n621.de>
 #    derpeter derpeter@berlin.ccc.de
